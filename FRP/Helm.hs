@@ -96,7 +96,7 @@ render'' w h element = do
 
 renderElement :: Element -> Cairo.Render ()
 renderElement (CollageElement _ _ forms) = mapM renderForm forms >> return ()
-renderElement (ImageElement _ ) = return ()
+renderElement (ImageElement _ ) = return () -- TODO
 
 withTransform :: Double -> Double -> Double -> Double -> Cairo.Render () -> Cairo.Render ()
 withTransform s t x y f = Cairo.save >> Cairo.scale s s >> Cairo.rotate t >> Cairo.translate x y >> f >> Cairo.restore
@@ -142,6 +142,6 @@ renderForm (Form { style = ShapeForm style shape, .. }) =
     where
       (hx, hy) = head shape
 
-renderForm (Form { style = ImageForm _ _ _ _, .. }) = return ()
+renderForm (Form { style = ImageForm _ _ _ _, .. }) = return ()  -- TODO
 renderForm (Form { style = ElementForm element, .. }) = withTransform scalar theta x y $ renderElement element
 renderForm (Form { style = GroupForm m forms, .. }) = withTransform scalar theta x y $ Cairo.setMatrix m >> mapM renderForm forms >> return ()

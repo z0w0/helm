@@ -1,8 +1,8 @@
 name: helm
 version: 0.1
 synopsis: A functionally reactive game engine.
-description: Helm is a functionally reactive game engine inspired by the Elm programming language.
-             Protective head gear for preventing headaches from game development provided!
+description: A functionally reactive game engine, with headgear to protect you
+             from the headache of game development provided.
 homepage: http://github.com/z0w0/helm
 bug-reports: http://github.com/z0w0/helm/issues
 license: MIT

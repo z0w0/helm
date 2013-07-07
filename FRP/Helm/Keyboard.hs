@@ -306,7 +306,7 @@ enter = isDown EnterKey
 space :: SignalGen (Signal Bool)
 space = isDown SpaceKey
 
-{-
+{- TODO:
 keysDown :: SignalGen (Signal [Key])
 -}
 

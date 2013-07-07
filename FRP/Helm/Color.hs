@@ -61,7 +61,7 @@ violet = rgb 0.923 0.508 0.923
 forestGreen :: Color
 forestGreen = rgb 0.133 0.543 0.133
 
-{-
+{- TODO:
 
 complement :: Color -> Color
 

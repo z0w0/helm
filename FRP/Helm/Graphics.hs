@@ -60,9 +60,11 @@ data LineStyle = LineStyle {
   dashOffset :: Double
 }
 
+{-| Creates the default line style. By default, the line is black with a width of 1,
+    flat caps and regular sharp joints. -}
 defaultLine :: LineStyle
 defaultLine = LineStyle {
-  color = Color.rgb 0 0 0,
+  color = Color.black,
   width = 1,
   cap = Flat,
   join = Sharp 10,
@@ -70,12 +72,15 @@ defaultLine = LineStyle {
   dashOffset = 0
 }
 
+-- |Create a solid line style with a color.
 solid :: Color -> LineStyle
 solid color = defaultLine { color = color }
 
+-- |Create a dashed line style with a color.
 dashed :: Color -> LineStyle
 dashed color = defaultLine { color = color, dashing = [8, 4] }
 
+-- |Create a dotted line style with a color.
 dotted :: Color -> LineStyle
 dotted color = defaultLine { color = color, dashing = [3, 3] }
 
@@ -91,73 +96,94 @@ form style = Form { theta = 0, scalar = 1, x = 0, y = 0, style = style }
 fill :: FillStyle -> Shape -> Form
 fill style shape = form (ShapeForm (Right style) shape)
 
+-- |Creates a form from a shape by filling it with a specific color.
 filled :: Color -> Shape -> Form
 filled color shape = fill (Solid color) shape
 
-{-
+{- TODO:
 textured :: String -> Shape -> Form
 
 gradient :: Gradient -> 
  -}
 
+-- |Creates a form from a shape by outlining it with a specific line style.
 outlined :: LineStyle -> Shape -> Form
 outlined style shape = form (ShapeForm (Left style) shape)
 
+-- |Creates a form from a path by tracing it with a specific line style.
 traced :: LineStyle -> Path -> Form
 traced style p = form (PathForm style p)
 
+{-| Creates a form from an image with additional width, height and position arguments.
+    Allows you to splice smaller parts from a single image. -}
 sprite :: Int -> Int -> (Int, Int) -> String -> Form
 sprite w h pos src = form (ImageForm w h pos src)
 
+-- |Creates an element from a form.
 toForm :: Element -> Form
 toForm element = form (ElementForm element)
 
+-- |Groups a collection of forms into a single one.
 group :: [Form] -> Form
 group forms = form (GroupForm identity forms)
 
+-- |Groups a collection of forms into a single one, also applying a matrix transformation.
 groupTransform :: Matrix -> [Form] -> Form
 groupTransform matrix forms = form (GroupForm matrix forms)
 
+-- |Rotates a form by an amount (in radians).
 rotate :: Double -> Form -> Form
-rotate t f= f { theta = t + theta f }
+rotate t f = f { theta = t + theta f }
 
+-- |Scales a form by an amount, e.g. scaling by 2 will double the size.
 scale :: Double -> Form -> Form
 scale n f = f { scalar = n + scalar f }
 
+-- |Moves a form relative to its current position.
 move :: (Double, Double) -> Form -> Form
 move (rx, ry) f = f { x = rx + x f, y = ry + y f }
 
+-- |Moves a form's x-coordinate relative to its current position.
 moveX :: Double -> Form -> Form
 moveX x f = move (x, 0) f
 
+-- |Moves a form's y-coordinate relative to its current position.
 moveY :: Double -> Form -> Form
 moveY y f = move (0, y) f
 
+{-| Create an element from a collection of forms.
+    Can be used to directly render a collection of forms. -}
 collage :: Int -> Int -> [Form] -> Element
 collage w h forms = CollageElement w h forms
 
 type Path = [(Double, Double)]
 
+-- |Creates a path for a collection of points.
 path :: [(Double, Double)] -> Path
 path points = points
 
+-- |Creates a path from a line segment, i.e. a start and end point.
 segment :: (Double, Double) -> (Double, Double) -> Path
 segment p1 p2 = [p1,p2]
 
 type Shape = [(Double, Double)]
 
+-- |Creates a shape from a set of points.
 polygon :: [(Double, Double)] -> Shape
 polygon points = points
 
+-- |Creates a rectangular shape with a specific width and height.
 rect :: Double -> Double -> Shape
 rect w h = [(-hw, -hh), (-hw, hh), (hw, hh), (hw, -hh)]
   where
     hw = w / 2
     hh = h / 2
 
+-- |Creates a square shape with a specific side length.
 square :: Double -> Shape
 square n = rect n n
 
+-- |Creates an oval shape with a specific width and height.
 oval :: Double -> Double -> Shape
 oval w h = map (\i -> (hw * cos (t * i), hh * sin (t * i))) [0 .. n - 1]
   where
@@ -166,9 +192,11 @@ oval w h = map (\i -> (hw * cos (t * i), hh * sin (t * i))) [0 .. n - 1]
     hw = w / 2
     hh = h / 2
 
+-- |Creates an oval shape with a specific radius.
 circle :: Double -> Shape
 circle r = oval (2 * r) (2 * r)
 
+-- |Creates a generic n-sided polygon (e.g. octagon) with a specific amount of sides and radius.
 ngon :: Int -> Double -> Shape
 ngon n r = map (\i -> (r * cos (t * i), r * sin (t * i))) [0 .. fromIntegral (n - 1)]
   where 
