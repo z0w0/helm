@@ -12,7 +12,7 @@ But for now, Cairo performs pretty well.
 
 In Helm, every piece of input that can be gathered from a user (or the operating system)
 is hidden behind a signal. For those unfamiliar with FRP, signals are essentially
-a value that changes over time. This sort of architecture used for a game allows pretty
+a value that changes over time. This sort of architecture used for a game allows for pretty
 simplistic (and in my opinion, artistic) code.
 
 ## Example
@@ -47,7 +47,7 @@ main = run $ do
 
 ## Installing and Building
 
-Helm requires GHC 7.6.4 -- Elerea doesn't work with older versions due to a compiler bug.
+Helm requires GHC 7.6.4 (Elerea doesn't work with older versions due to a compiler bug).
 To install the latest (stable) version from the Hackage repository, use:
 
 ```
