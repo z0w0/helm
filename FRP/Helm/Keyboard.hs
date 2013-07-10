@@ -9,153 +9,46 @@ module FRP.Helm.Keyboard (
 ) where
 
 import Control.Applicative
-import Data.IORef
+import Data.List
+import Foreign hiding (shift)
+import Foreign.C.Types
 import FRP.Elerea.Simple
-import FRP.Helm.Internal (keyState)
-import qualified Data.Map as Map
 import qualified Graphics.UI.SDL as SDL
+import qualified Graphics.UI.SDL.Utilities as Utilities
 
-data Key = BackspaceKey |
-           TabKey |
-           ClearKey |
-           EnterKey |
-           PauseKey |
-           EscapeKey |
-           SpaceKey |
-           ExclaimKey |
-           QuotedBlKey |
-           HashKey |
-           DollarKey |
-           AmpersandKey |
-           QuoteKey |
-           LeftParenKey |
-           RightParenKey |
-           AsteriskKey |
-           PlusKey |
-           CommaKey |
-           MinusKey |
-           PeriodKey |
-           SlashKey |
-           Num0Key |
-           Num1Key |
-           Num2Key |
-           Num3Key |
-           Num4Key |
-           Num5Key |
-           Num6Key |
-           Num7Key |
-           Num8Key |
-           Num9Key |
-           ColonKey |
-           SemicolonKey |
-           LessKey |
-           EqualsKey |
-           GreaterKey |
-           QuestionKey |
-           AtKey |
-           LeftBracketKey |
-           BackslashKey |
-           RightBracketKey |
-           CaretKey |
-           UnderscoreKey |
-           BackquoteKey |
-           AKey |
-           BKey |
-           CKey |
-           DKey |
-           EKey |
-           FKey |
-           GKey |
-           HKey |
-           IKey |
-           JKey |
-           LKey |
-           MKey |
-           NKey |
-           OKey |
-           PKey |
-           QKey |
-           RKey |
-           SKey |
-           TKey |
-           UKey |
-           VKey |
-           WKey |
-           XKey |
-           YKey |
-           ZKey |
-           DeleteKey |
-           Keypad0Key |
-           Keypad1Key |
-           Keypad2Key |
-           Keypad3Key |
-           Keypad4Key |
-           Keypad5Key |
-           Keypad6Key |
-           Keypad7Key |
-           Keypad8Key |
-           Keypad9Key |
-           KeypadPeriodKey |
-           KeypadDivideKey |
-           KeypadMultiplyKey |
-           KeypadMinusKey |
-           KeypadPlusKey |
-           KeypadEnterKey |
-           KeypadEqualsKey |
-           UpKey |
-           DownKey |
-           RightKey |
-           LeftKey |
-           InsertKey |
-           HomeKey |
-           EndKey |
-           PageUpKey |
-           PageDownKey |
-           F1Key |
-           F2Key |
-           F3Key |
-           F4Key |
-           F5Key |
-           F6Key |
-           F7Key |
-           F8Key |
-           F9Key |
-           F10Key |
-           F11Key |
-           F12Key |
-           F13Key |
-           F14Key |
-           F15Key |
-           NumLockKey |
-           CapsLockKey |
-           ScrollLockKey |
-           RShiftKey |
-           LShiftKey |
-           RCtrlKey |
-           LCtrlKey |
-           RAltKey |
-           LAltKey |
-           RMetaKey |
-           LMetaKey |
-           RSuperKey |
-           LSuperKey |
-           ComposeKey |
-           HelpKey |
-           PrintKey |
-           SysReqKey |
-           BreakKey |
-           MenuKey |
-           PowerKey |
-           EuroKey |
+-- The SDL bindings for Haskell don't wrap this, so we have to use the FFI ourselves.
+foreign import ccall unsafe "SDL_GetKeyState" sdlGetKeyState :: Ptr CInt -> IO (Ptr Word8)
+
+-- Based on http://coderepos.org/share/browser/lang/haskell/nario/Main.hs?rev=22646#L49
+getKeyState :: IO [SDL.SDLKey]
+getKeyState = alloca $ \numkeysPtr -> do
+  keysPtr <- sdlGetKeyState numkeysPtr
+  numkeys <- peek numkeysPtr
+  (map Utilities.toEnum . map fromIntegral . findIndices (== 1)) <$> peekArray (fromIntegral numkeys) keysPtr
+
+data Key = BackspaceKey | TabKey | ClearKey | EnterKey | PauseKey | EscapeKey |
+           SpaceKey | ExclaimKey | QuotedBlKey | HashKey | DollarKey | AmpersandKey |
+           QuoteKey | LeftParenKey | RightParenKey | AsteriskKey | PlusKey | CommaKey |
+           MinusKey | PeriodKey | SlashKey | Num0Key | Num1Key | Num2Key |
+           Num3Key | Num4Key | Num5Key | Num6Key | Num7Key | Num8Key |
+           Num9Key | ColonKey | SemicolonKey | LessKey | EqualsKey | GreaterKey |
+           QuestionKey | AtKey | LeftBracketKey | BackslashKey | RightBracketKey | CaretKey |
+           UnderscoreKey | BackquoteKey | AKey | BKey | CKey | DKey |
+           EKey | FKey | GKey | HKey | IKey | JKey |
+           LKey | MKey | NKey | OKey | PKey | QKey |
+           RKey | SKey | TKey | UKey | VKey | WKey |
+           XKey | YKey | ZKey | DeleteKey | Keypad0Key | Keypad1Key |
+           Keypad2Key | Keypad3Key | Keypad4Key | Keypad5Key | Keypad6Key | Keypad7Key |
+           Keypad8Key | Keypad9Key | KeypadPeriodKey | KeypadDivideKey | KeypadMultiplyKey | KeypadMinusKey |
+           KeypadPlusKey | KeypadEnterKey | KeypadEqualsKey | UpKey | DownKey | RightKey |
+           LeftKey | InsertKey | HomeKey | EndKey | PageUpKey | PageDownKey |
+           F1Key | F2Key | F3Key | F4Key |  F5Key | F6Key |
+           F7Key | F8Key | F9Key | F10Key | F11Key | F12Key |
+           F13Key | F14Key | F15Key | NumLockKey | CapsLockKey | ScrollLockKey |
+           RShiftKey | LShiftKey | RCtrlKey | LCtrlKey | RAltKey | LAltKey |
+           RMetaKey | LMetaKey | RSuperKey | LSuperKey | ComposeKey | HelpKey |
+           PrintKey | SysReqKey | BreakKey | MenuKey | PowerKey | EuroKey |
            UndoKey
-
--- |Whether either shift key is pressed.
-shift :: SignalGen (Signal Bool)
-shift = effectful $ (elem SDL.KeyModShift) <$> SDL.getModState
-
--- |Whether either control key is pressed.
-ctrl :: SignalGen (Signal Bool)
-ctrl = effectful $ (elem SDL.KeyModCtrl) <$> SDL.getModState
 
 mapKey :: Key -> SDL.SDLKey
 mapKey k =
@@ -294,9 +187,17 @@ mapKey k =
     EuroKey -> SDL.SDLK_EURO
     UndoKey -> SDL.SDLK_UNDO
 
+-- |Whether either shift key is pressed.
+shift :: SignalGen (Signal Bool)
+shift = effectful $ (elem SDL.KeyModShift) <$> SDL.getModState
+
+-- |Whether either control key is pressed.
+ctrl :: SignalGen (Signal Bool)
+ctrl = effectful $ (elem SDL.KeyModCtrl) <$> SDL.getModState
+
 -- |Whether a specific key is pressed.
 isDown :: Key -> SignalGen (Signal Bool)
-isDown k = effectful $ (Map.findWithDefault False (mapKey k)) <$> readIORef keyState
+isDown k = effectful $ (elem (mapKey k)) <$> getKeyState
 
 -- |Whether the shift key is pressed.
 enter :: SignalGen (Signal Bool)

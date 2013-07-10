@@ -1,5 +1,7 @@
 module FRP.Helm.Graphics (
   Element(..),
+  image,
+  croppedImage,
   Form(..),
   FillStyle(..),
   LineCap(..),
@@ -11,6 +13,8 @@ module FRP.Helm.Graphics (
   dotted,
   FormStyle(..),
   filled,
+  textured,
+  gradient,
   outlined,
   traced,
   sprite,
@@ -39,7 +43,25 @@ import FRP.Helm.Color as Color
 import Graphics.Rendering.Cairo.Matrix (Matrix, identity)
 
 data Element = CollageElement Int Int [Form] |
-               ImageElement String
+               ImageElement (Int, Int) Int Int FilePath Bool
+
+{-| Create an element from an image with a given width, height and image file path.
+    If the image dimensions are not the same as given, then it will stretch/shrink to fit. -}
+image :: Int -> Int -> FilePath -> Element
+image w h src = ImageElement (0, 0) w h src True
+
+{- TODO:
+{-| Create an element from an image with a given width, height and image file path.
+    If the image dimensions are not the same as given, then it will only use the relevant pixels
+    (i.e. cut out the given width instead of scaling). If the given dimensions are bigger than
+    the actual image, than irrelevant pixels are ignored. -}
+fittedImage :: Int -> Int -> FilePath -> Element
+fittedImage w h src = ImageElement (0, 0) w h src False -}
+
+{-| Create an element from an image by cropping it with a certain position, width, height
+    and image file path. This can be used to divide a single image up into smaller ones. -}
+croppedImage :: (Int, Int) -> Int -> Int -> FilePath -> Element
+croppedImage pos w h src = ImageElement pos w h src False
 
 data Form = Form {
   theta :: Double,
@@ -48,7 +70,7 @@ data Form = Form {
   y :: Double,
   style :: FormStyle
 }
-data FillStyle = Solid Color -- Texture String | Gradient Gradient
+data FillStyle = Solid Color | Texture String | Gradient Gradient
 data LineCap = Flat | Round | Padded
 data LineJoin = Smooth | Sharp Double | Clipped
 data LineStyle = LineStyle {
@@ -86,7 +108,6 @@ dotted color = defaultLine { color = color, dashing = [3, 3] }
 
 data FormStyle = PathForm LineStyle Path |
                  ShapeForm (Either LineStyle FillStyle) Shape |
-                 ImageForm Int Int (Int, Int) String |
                  ElementForm Element |
                  GroupForm Matrix [Form]
 
@@ -100,11 +121,13 @@ fill style shape = form (ShapeForm (Right style) shape)
 filled :: Color -> Shape -> Form
 filled color shape = fill (Solid color) shape
 
-{- TODO:
+-- |Creates a form from a shape with a tiled texture and image file path.
 textured :: String -> Shape -> Form
+textured src shape = fill (Texture src) shape
 
-gradient :: Gradient -> 
- -}
+-- |Creates a form from a shape filled with a gradient.
+gradient :: Gradient -> Shape -> Form
+gradient grad shape = fill (Gradient grad) shape
 
 -- |Creates a form from a shape by outlining it with a specific line style.
 outlined :: LineStyle -> Shape -> Form
@@ -114,12 +137,12 @@ outlined style shape = form (ShapeForm (Left style) shape)
 traced :: LineStyle -> Path -> Form
 traced style p = form (PathForm style p)
 
-{-| Creates a form from an image with additional width, height and position arguments.
+{-| Creates a form from a image file path with additional position, width and height arguments.
     Allows you to splice smaller parts from a single image. -}
-sprite :: Int -> Int -> (Int, Int) -> String -> Form
-sprite w h pos src = form (ImageForm w h pos src)
+sprite :: Int -> Int -> (Int, Int) -> FilePath -> Form
+sprite w h pos src = form (ElementForm (ImageElement pos w h src False))
 
--- |Creates an element from a form.
+-- |Creates a form from an element.
 toForm :: Element -> Form
 toForm element = form (ElementForm element)
 

@@ -70,7 +70,6 @@ hsva :: Double -> Double -> Double -> Double -> Color
 hsv :: Double -> Double -> Double -> Color
 -}
 
-{-
 data Gradient = Linear (Double, Double) (Double, Double) [(Double, Color)] |
                 Radial (Double, Double) Double (Double, Double) Double [(Double, Color)]
 
@@ -82,4 +81,3 @@ linear = Linear
 -- |Creates a radial gradient.
 radial :: (Double, Double) -> Double -> (Double, Double) -> Double -> [(Double, Color)] -> Gradient
 radial = Radial
--}
