@@ -15,6 +15,44 @@ is hidden behind a signal. For those unfamiliar with FRP, signals are essentiall
 a value that changes over time. This sort of architecture used for a game allows for pretty
 simplistic (and in my opinion, artistic) code.
 
+## Features
+
+* Allows you to express game logic dependent on input in a straightforward manner,
+  treating events as (almost) first class objects (the essence of FRP).
+* Vector graphics based rendering, allow you to either write art
+  designed for any resolution or still load generic images and render
+  those as you would with any pixel-based direct blitting game engine.
+* Straightforward API heavily inspired by the Elm programming language.
+
+## Future Work
+
+* Improve the API. There's a few API calls from Elm that would work
+  just as nicely in Helm. These are marked inside TODOs in the code.
+  There also other important things that it's missing,
+  such as audio, text rendering, joysticks and loading a larger range of
+  image formats.
+* Backend wise, it would be nice to use OpenGL instead of Cairo.
+  Cairo isn't particuarly that well performing for graphic intensive games,
+  although work is done being towards to fix that. However, using
+  OpenGL would make the engine more lightweight, easier to port
+  and be incredibly easier to accelerate. This means I have
+  to write the full vector graphics stack myself, but the worse part
+  will probably just be line styles, the rest should be moderately easy.
+  This will also allow loading of multiple image formats, as the current
+  reason for not using SDL_image is that it's annoying as fuck
+  to integrate with Cairo.
+* Optimizations and testing. This is the first release of the engine so
+  obviously little testing or optimizations have been done.
+  It's a little hard to set up a test framework for a game engine,
+  but I have a few ideas, such as writing a dummy version of the backend
+  that simply renders to a PNG file that is fed fake (but predictable) input,
+  which is then compared to a static PNG file to see if the final expected
+  rendering outcome was achieved.
+* Port and support multiple platforms. I've only been testing it on
+  Linux, but there's really no reason that it wouldn't work out of the box
+  on Windows or OSX after setting up the dependencies. But I'd definitely
+  also like to investigate Android and iOS.
+
 ## Example
 
 The following examples is the barebones of a game. It shows how to create
@@ -22,6 +60,8 @@ an accumulated state that depends on the values sampled from signals (e.g. mouse
 You should see a white square on the screen and pressing the arrow keys allows you to move it.
 
 ```haskell
+{-# LANGUAGE RecordWildCards #-}
+
 import Control.Applicative
 import FRP.Elerea.Simple
 import FRP.Helm
@@ -47,7 +87,7 @@ main = run $ do
 
 ## Installing and Building
 
-Helm requires GHC 7.6.4 (Elerea doesn't work with older versions due to a compiler bug).
+Helm requires GHC 7.6 (Elerea doesn't work with older versions due to a compiler bug).
 To install the latest (stable) version from the Hackage repository, use:
 
 ```

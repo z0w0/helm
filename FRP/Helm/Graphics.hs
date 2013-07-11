@@ -46,7 +46,8 @@ data Element = CollageElement Int Int [Form] |
                ImageElement (Int, Int) Int Int FilePath Bool
 
 {-| Create an element from an image with a given width, height and image file path.
-    If the image dimensions are not the same as given, then it will stretch/shrink to fit. -}
+    If the image dimensions are not the same as given, then it will stretch/shrink to fit.
+    Only PNG files are supported currently. -}
 image :: Int -> Int -> FilePath -> Element
 image w h src = ImageElement (0, 0) w h src True
 
@@ -216,6 +217,8 @@ oval w h = map (\i -> (hw * cos (t * i), hh * sin (t * i))) [0 .. n - 1]
     hh = h / 2
 
 -- |Creates an oval shape with a specific radius.
+{- TODO: Make a separate variant of a shape that is based on an arc.
+   as this sort of thing is going to be pretty unaccurate and slower. -}
 circle :: Double -> Shape
 circle r = oval (2 * r) (2 * r)
 
