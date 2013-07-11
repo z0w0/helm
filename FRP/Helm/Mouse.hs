@@ -18,6 +18,8 @@ x = effectful $ (\(x_, _, _) -> x_) <$> SDL.getMouseState
 y :: SignalGen (Signal Int)
 y = effectful $ (\(_, y_, _) -> y_) <$> SDL.getMouseState
 
+
+mapMouse :: Mouse -> SDL.MouseButton
 mapMouse m =
   case m of
     LeftMouse -> SDL.ButtonLeft
