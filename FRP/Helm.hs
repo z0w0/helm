@@ -138,28 +138,40 @@ render'' w h state element = do
 
 {-| A utility function that lazily grabs an image surface from the cache,
     i.e. creating it if it's not already stored in it. -}
-getSurface :: EngineState -> FilePath -> IO Cairo.Surface
+getSurface :: EngineState -> FilePath -> IO (Cairo.Surface, Int, Int)
 getSurface (EngineState { cache }) src = do
   cached <- Cairo.liftIO (readIORef cache)
 
   case Map.lookup src cached of
-    Just surface -> return surface
+    Just surface -> do
+      w <- Cairo.imageSurfaceGetWidth surface
+      h <- Cairo.imageSurfaceGetHeight surface
+
+      return (surface, w, h)
     Nothing -> do
       -- TODO: Use SDL_image to support more formats. I gave up after it was painful
       -- to convert between the two surface types safely.
       -- FIXME: Does this throw an error?
       surface <- Cairo.imageSurfaceCreateFromPNG src
+      w <- Cairo.imageSurfaceGetWidth surface
+      h <- Cairo.imageSurfaceGetHeight surface
 
-      writeIORef cache (Map.insert src surface cached) >> return surface
+      writeIORef cache (Map.insert src surface cached) >> return (surface, w, h)
 
 {-| A utility function for rendering a specific element. -}
 renderElement :: EngineState -> Element -> Cairo.Render ()
 renderElement state (CollageElement _ _ forms) = mapM (renderForm state) forms >> return ()
-renderElement state (ImageElement (sx, sy) sw sh src _) = do
-  surface <- Cairo.liftIO $ getSurface state (normalise src)
+renderElement state (ImageElement (sx, sy) sw sh src stretch) = do
+  (surface, w, h) <- Cairo.liftIO $ getSurface state (normalise src)
 
   Cairo.save
   Cairo.translate (-fromIntegral sx) (-fromIntegral sy)
+
+  if stretch then
+    Cairo.scale (fromIntegral sw / fromIntegral w) (fromIntegral sh / fromIntegral h)
+  else
+    Cairo.scale 1 1
+
   Cairo.setSourceSurface surface 0 0
   Cairo.translate (fromIntegral sx) (fromIntegral sy)
   Cairo.rectangle 0 0 (fromIntegral sw) (fromIntegral sh)
@@ -200,7 +212,7 @@ setLineStyle (LineStyle { color = Color r g b a, .. }) =
 setFillStyle :: EngineState -> FillStyle -> Cairo.Render ()
 setFillStyle _ (Solid (Color r g b a)) = Cairo.setSourceRGBA r g b a >> Cairo.fill
 setFillStyle state (Texture src) = do
-  surface <- Cairo.liftIO $ getSurface state (normalise src)
+  (surface, w, h) <- Cairo.liftIO $ getSurface state (normalise src)
 
   Cairo.setSourceSurface surface 0 0 >> Cairo.getSource >>= (flip Cairo.patternSetExtend) Cairo.ExtendRepeat
   Cairo.fill
@@ -235,7 +247,6 @@ renderForm state (Form { style = ShapeForm style (PolygonShape points), .. }) =
 
 renderForm state (Form { style = ShapeForm style (RectangleShape (w, h)), .. }) =
   withTransform scalar theta x y $ do
-    Cairo.translate (-w / 2) (-h / 2)
     Cairo.rectangle 0 0 w h
 
     case style of
@@ -251,7 +262,6 @@ renderForm state (Form { style = ShapeForm style (ArcShape (cx, cy) a1 a2 r (sx,
     case style of
       Left lineStyle -> setLineStyle lineStyle
       Right fillStyle -> setFillStyle state fillStyle
-
 
 renderForm state (Form { style = ElementForm element, .. }) = withTransform scalar theta x y $ renderElement state element
 renderForm state (Form { style = GroupForm m forms, .. }) = withTransform scalar theta x y $ Cairo.setMatrix m >> mapM (renderForm state) forms >> return ()

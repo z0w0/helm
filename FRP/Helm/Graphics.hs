@@ -13,6 +13,7 @@ module FRP.Helm.Graphics (
   Shape(..),
   -- * Elements
   image,
+  fittedImage,
   croppedImage,
   collage,
   -- * Styles & Forms
@@ -67,13 +68,12 @@ data Element = CollageElement Int Int [Form] |
 image :: Int -> Int -> FilePath -> Element
 image w h src = ImageElement (0, 0) w h src True
 
-{- TODO:
 {-| Create an element from an image with a given width, height and image file path.
     If the image dimensions are not the same as given, then it will only use the relevant pixels
-    (i.e. cut out the given width instead of scaling). If the given dimensions are bigger than
+    (i.e. cut out the given dimensions instead of scaling). If the given dimensions are bigger than
     the actual image, than irrelevant pixels are ignored. -}
 fittedImage :: Int -> Int -> FilePath -> Element
-fittedImage w h src = ImageElement (0, 0) w h src False -}
+fittedImage w h src = ImageElement (0, 0) w h src False
 
 {-| Create an element from an image by cropping it with a certain position, width, height
     and image file path. This can be used to divide a single image up into smaller ones. -}
