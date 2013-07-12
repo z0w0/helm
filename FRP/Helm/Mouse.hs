@@ -39,7 +39,3 @@ mapMouse m =
     True if the mouse is down, false otherwise. -}
 isDown :: Mouse -> SignalGen (Signal Bool)
 isDown m = effectful $ (\(_, _, b_) -> elem (mapMouse m) b_) <$> SDL.getMouseState
-
-{- TODO:
-isClicked :: SignalGen (Signal Bool)
- -}

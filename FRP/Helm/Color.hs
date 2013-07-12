@@ -6,6 +6,9 @@ module FRP.Helm.Color (
 	-- * Composing
 	rgba,
 	rgb,
+  hsva,
+  hsv,
+  complement,
 	linear,
 	radial,
 	-- * Constants
@@ -109,14 +112,41 @@ violet = rgb 0.923 0.508 0.923
 forestGreen :: Color
 forestGreen = rgb 0.133 0.543 0.133
 
-{- TODO:
-
+{-| Calculate a complementary color for a provided color. Useful for outlining
+    a filled shape in a color clearly distinguishable from the fill color. -}
 complement :: Color -> Color
+complement (Color r g b a) = hsva (fromIntegral ((round (h + 180) :: Int) `mod` 360)) (s / mx) mx a
+  where
+    mx = r `max` g `max` b
+    mn = r `min` g `min` b
+    s = mx - mn
+    h | mx == r = (g - b) / s * 60
+      | mx == g = (b - r) / s * 60 + 120
+      | mx == b = (r - g) / s * 60 + 240
+      | otherwise = undefined
 
+{-| Create an RGBA color from HSVA values. -}
 hsva :: Double -> Double -> Double -> Double -> Color
+hsva h s v a
+  | h'' == 0 = rgba v t p a
+  | h'' == 1 = rgba q v p a
+  | h'' == 2 = rgba p v t a
+  | h'' == 3 = rgba p q v a
+  | h'' == 4 = rgba t p v a
+  | h'' == 5 = rgba v p q a
+  | otherwise = undefined
 
+  where
+    h' = h / 60
+    h'' = (floor h') `mod` 6 :: Int
+    f = h' - fromIntegral h''
+    p = v * (1 - s)
+    q = v * (1 - f * s)
+    t = v * (1 - (1 - f) * s)    
+
+{-| Create an RGB color from HSV values. -}
 hsv :: Double -> Double -> Double -> Color
--}
+hsv h s v = hsva h s v 1
 
 {-| A data structure describing a gradient. There are two types of gradients:
     radial and linear. Radial gradients are based on a set of colors transitioned

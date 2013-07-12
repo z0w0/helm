@@ -246,7 +246,7 @@ square n = rect n n
 
 {-| Creates an oval shape with a width and height. -}
 oval :: Double -> Double -> Shape
-oval w h = ArcShape (0, 0) 0 (2 * pi) 1 (h / 2, h / 2)
+oval w h = ArcShape (0, 0) 0 (2 * pi) 1 (w / 2, h / 2)
 
 {-| Creates a circle shape with a radius. -}
 circle :: Double -> Shape
