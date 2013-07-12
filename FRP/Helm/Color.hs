@@ -129,7 +129,15 @@ data Gradient = Linear (Double, Double) (Double, Double) [(Double, Color)] |
 {-| Creates a linear gradient. Takes a starting position, ending position and a list
     of color stops (which are colors combined with a floating value between /0.0/ and /1.0/
     that describes at what step along the line between the starting position
-    and ending position the paired color should be transitioned to). -}
+    and ending position the paired color should be transitioned to).
+
+	> linear (0, 0) (100, 100) [(0, black), (1, white)]
+
+	The above example creates a gradient that starts at /(0, 0)/
+	and ends at /(100, 100)/. In other words, it's a diagonal gradient, transitioning from the top-left
+	to the bottom-right. The provided color stops result in the gradient transitioning from
+	black to white.
+ -}
 linear :: (Double, Double) -> (Double, Double) -> [(Double, Color)] -> Gradient
 linear = Linear
 

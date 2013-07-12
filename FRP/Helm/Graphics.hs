@@ -208,8 +208,12 @@ moveX x f = move (x, 0) f
 moveY :: Double -> Form -> Form
 moveY y f = move (0, y) f
 
-{-| Create an element from a collection of forms.
-    Can be used to directly render a collection of forms. -}
+{-| Create an element from a collection of forms, with width and height arguments.
+    Can be used to directly render a collection of forms.
+
+    > collage 800 600 [move (100, 100) $ filled red $ square 100,
+    >                  move (100, 100) $ outlined (solid white) $ circle 50]
+ -}
 collage :: Int -> Int -> [Form] -> Element
 collage w h forms = CollageElement w h forms
 
@@ -242,11 +246,11 @@ square n = rect n n
 
 {-| Creates an oval shape with a width and height. -}
 oval :: Double -> Double -> Shape
-oval w h = ArcShape (0,0) 0 (2 * pi) 1 (w / 2, h / 2)
+oval w h = ArcShape (0, 0) 0 (2 * pi) 1 (h / 2, h / 2)
 
 {-| Creates a circle shape with a radius. -}
 circle :: Double -> Shape
-circle r = ArcShape (0,0) 0 (2 * pi) r (1, 1)
+circle r = ArcShape (0, 0) 0 (2 * pi) r (1, 1)
 
 {-| Creates a generic n-sided polygon (e.g. octagon, pentagon, etc) with
     an amount of sides and radius. -}

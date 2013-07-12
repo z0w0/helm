@@ -68,7 +68,20 @@ newEngineState smp = do
   return EngineState { smp = smp, cache = cache }
 
 {-| Initializes and runs the game engine. The supplied signal generator is
-    constantly sampled  for an element to render until the user quits. -}
+    constantly sampled  for an element to render until the user quits.
+
+    > import FRP.Helm
+    > import qualified FRP.Helm.Window as Window
+    >
+    > render :: (Int, Int) -> Element
+    > render (w, h) = collage w h [filled red $ rect (fromIntegral w) (fromIntegral h)]
+    >
+    > main :: IO ()
+    > main = run $ do
+    >   dims <- Window.dimensions
+    >
+    >   return $ fmap render dims
+ -}
 run :: SignalGen (Signal Element) -> IO ()
 run gen = SDL.init [SDL.InitVideo] >> requestDimensions 800 600 >> start gen >>= newEngineState >>= run'
 
@@ -222,6 +235,7 @@ renderForm state (Form { style = ShapeForm style (PolygonShape points), .. }) =
 
 renderForm state (Form { style = ShapeForm style (RectangleShape (w, h)), .. }) =
   withTransform scalar theta x y $ do
+    Cairo.translate (-w / 2) (-h / 2)
     Cairo.rectangle 0 0 w h
 
     case style of
@@ -230,10 +244,9 @@ renderForm state (Form { style = ShapeForm style (RectangleShape (w, h)), .. }) 
 
 renderForm state (Form { style = ShapeForm style (ArcShape (cx, cy) a1 a2 r (sx, sy)), .. }) =
   withTransform scalar theta x y $ do
-    Cairo.save
     Cairo.scale sx sy
     Cairo.arc cx cy r a1 a2
-    Cairo.restore
+    Cairo.scale 1 1
 
     case style of
       Left lineStyle -> setLineStyle lineStyle
