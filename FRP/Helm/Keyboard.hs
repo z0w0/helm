@@ -1,11 +1,11 @@
+{-| Contains signals that sample input from the keyboard. -}
 module FRP.Helm.Keyboard (
-  shift,
-  ctrl,
-  enter,
+  -- * Types
   Key(..),
-  space,
-  arrows,
-  wasd
+  -- * Key State
+  shift, ctrl, enter, space,
+  -- * Directions
+  arrows, wasd
 ) where
 
 import Control.Applicative
@@ -16,16 +16,18 @@ import FRP.Elerea.Simple
 import qualified Graphics.UI.SDL as SDL
 import qualified Graphics.UI.SDL.Utilities as Utilities
 
--- The SDL bindings for Haskell don't wrap this, so we have to use the FFI ourselves.
+{-| The SDL bindings for Haskell don't wrap this, so we have to use the FFI ourselves. -}
 foreign import ccall unsafe "SDL_GetKeyState" sdlGetKeyState :: Ptr CInt -> IO (Ptr Word8)
 
--- Based on http://coderepos.org/share/browser/lang/haskell/nario/Main.hs?rev=22646#L49
+{-| A utility function for getting a list of SDL keys currently pressed.
+    Based on <http://coderepos.org/share/browser/lang/haskell/nario/Main.hs?rev=22646#L49> -}
 getKeyState :: IO [SDL.SDLKey]
 getKeyState = alloca $ \numkeysPtr -> do
   keysPtr <- sdlGetKeyState numkeysPtr
   numkeys <- peek numkeysPtr
   (map Utilities.toEnum . map fromIntegral . findIndices (== 1)) <$> peekArray (fromIntegral numkeys) keysPtr
 
+{-| A data structure describing a physical key on a keyboard. -}
 data Key = BackspaceKey | TabKey | ClearKey | EnterKey | PauseKey | EscapeKey |
            SpaceKey | ExclaimKey | QuotedBlKey | HashKey | DollarKey | AmpersandKey |
            QuoteKey | LeftParenKey | RightParenKey | AsteriskKey | PlusKey | CommaKey |
@@ -37,9 +39,9 @@ data Key = BackspaceKey | TabKey | ClearKey | EnterKey | PauseKey | EscapeKey |
            EKey | FKey | GKey | HKey | IKey | JKey |
            LKey | MKey | NKey | OKey | PKey | QKey |
            RKey | SKey | TKey | UKey | VKey | WKey |
-           XKey | YKey | ZKey | DeleteKey | Keypad0Key | Keypad1Key |
-           Keypad2Key | Keypad3Key | Keypad4Key | Keypad5Key | Keypad6Key | Keypad7Key |
-           Keypad8Key | Keypad9Key | KeypadPeriodKey | KeypadDivideKey | KeypadMultiplyKey | KeypadMinusKey |
+           XKey | YKey | ZKey | DeleteKey | KeypadNum0Key | KeypadNum1Key |
+           KeypadNum2Key | KeypadNum3Key | KeypadNum4Key | KeypadNum5Key | KeypadNum6Key | KeypadNum7Key |
+           KeypadNum8Key | KeypadNum9Key | KeypadPeriodKey | KeypadDivideKey | KeypadMultiplyKey | KeypadMinusKey |
            KeypadPlusKey | KeypadEnterKey | KeypadEqualsKey | UpKey | DownKey | RightKey |
            LeftKey | InsertKey | HomeKey | EndKey | PageUpKey | PageDownKey |
            F1Key | F2Key | F3Key | F4Key |  F5Key | F6Key |
@@ -50,6 +52,7 @@ data Key = BackspaceKey | TabKey | ClearKey | EnterKey | PauseKey | EscapeKey |
            PrintKey | SysReqKey | BreakKey | MenuKey | PowerKey | EuroKey |
            UndoKey
 
+{-| A (temporary) utility function for mapping from our key type to SDL. -}
 mapKey :: Key -> SDL.SDLKey
 mapKey k =
   case k of
@@ -123,16 +126,16 @@ mapKey k =
     YKey -> SDL.SDLK_y
     ZKey -> SDL.SDLK_z
     DeleteKey -> SDL.SDLK_DELETE
-    Keypad0Key -> SDL.SDLK_KP0
-    Keypad1Key -> SDL.SDLK_KP1
-    Keypad2Key -> SDL.SDLK_KP2
-    Keypad3Key -> SDL.SDLK_KP3
-    Keypad4Key -> SDL.SDLK_KP4
-    Keypad5Key -> SDL.SDLK_KP5
-    Keypad6Key -> SDL.SDLK_KP6
-    Keypad7Key -> SDL.SDLK_KP7
-    Keypad8Key -> SDL.SDLK_KP8
-    Keypad9Key -> SDL.SDLK_KP9
+    KeypadNum0Key -> SDL.SDLK_KP0
+    KeypadNum1Key -> SDL.SDLK_KP1
+    KeypadNum2Key -> SDL.SDLK_KP2
+    KeypadNum3Key -> SDL.SDLK_KP3
+    KeypadNum4Key -> SDL.SDLK_KP4
+    KeypadNum5Key -> SDL.SDLK_KP5
+    KeypadNum6Key -> SDL.SDLK_KP6
+    KeypadNum7Key -> SDL.SDLK_KP7
+    KeypadNum8Key -> SDL.SDLK_KP8
+    KeypadNum9Key -> SDL.SDLK_KP9
     KeypadPeriodKey -> SDL.SDLK_KP_PERIOD
     KeypadDivideKey -> SDL.SDLK_KP_DIVIDE
     KeypadMultiplyKey -> SDL.SDLK_KP_MULTIPLY
@@ -187,23 +190,23 @@ mapKey k =
     EuroKey -> SDL.SDLK_EURO
     UndoKey -> SDL.SDLK_UNDO
 
--- |Whether either shift key is pressed.
+{-| Whether either shift key is pressed. -}
 shift :: SignalGen (Signal Bool)
 shift = effectful $ (elem SDL.KeyModShift) <$> SDL.getModState
 
--- |Whether either control key is pressed.
+{-| Whether either control key is pressed. -}
 ctrl :: SignalGen (Signal Bool)
 ctrl = effectful $ (elem SDL.KeyModCtrl) <$> SDL.getModState
 
--- |Whether a specific key is pressed.
+{-| Whether a key is pressed. -}
 isDown :: Key -> SignalGen (Signal Bool)
 isDown k = effectful $ (elem (mapKey k)) <$> getKeyState
 
--- |Whether the shift key is pressed.
+{-| Whether the enter (a.k.a. return) key is pressed. -}
 enter :: SignalGen (Signal Bool)
 enter = isDown EnterKey
 
--- |Whether the space key is pressed.
+{-| Whether the space key is pressed. -}
 space :: SignalGen (Signal Bool)
 space = isDown SpaceKey
 
@@ -211,10 +214,10 @@ space = isDown SpaceKey
 keysDown :: SignalGen (Signal [Key])
 -}
 
-{-| A unit vector combined from the arrow keys. When no keys are being pressed
-    this signal samples to (0, 0), otherwise it samples to a specific direction
+{-| A vector combined from the arrow keys. When none of the arrow keys are being
+    pressed this signal samples to /(0, 0)/, otherwise it samples to a direction
     based on which keys are pressed. For example, pressing the left key results
-    in (-1, 0), the down key (0, 1), etc. -}
+    in /(-1, 0)/, the down key /(0, 1)/, up and right /(1, -1)/, etc. -}
 arrows :: SignalGen (Signal (Int, Int))
 arrows = do
   up <- isDown UpKey
@@ -224,10 +227,11 @@ arrows = do
 
   return $ arrows' <$> up <*> left <*> down <*> right
 
+{-| A utility function for setting up a vector signal from directional keys. -}
 arrows' :: Bool -> Bool -> Bool -> Bool -> (Int, Int)
 arrows' u l d r = (-1 * fromEnum l + 1 * fromEnum r, -1 * fromEnum u + 1 * fromEnum d)
 
--- |Similar to the 'arrows' signal, but uses the W, A, S and D keys instead.
+{-| Similar to the 'arrows' signal, but uses the popular WASD movement controls instead. -}
 wasd :: SignalGen (Signal (Int, Int))
 wasd = do
   w <- isDown WKey

@@ -1,4 +1,8 @@
-module FRP.Helm.Window (dimensions, width, height) where
+{-| Contains signals that sample input from the game window. -}
+module FRP.Helm.Window (
+	-- * Dimensions
+	dimensions, width, height
+) where
 
 import Control.Applicative
 import FRP.Elerea.Simple
