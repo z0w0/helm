@@ -49,7 +49,25 @@ simplistic (and in my opinion, artistic) code.
 
 ## Example
 
-The following example is the barebones of a game. It shows how to create
+The simplest example of a Helm game that doesn't require any input from the user is the following:
+
+```haskell
+import FRP.Helm
+import qualified FRP.Helm.Window as Window
+
+render :: (Int, Int) -> Element
+render (w, h) = collage w h [move (100, 100) $ filled red $ square 64]
+
+main :: IO ()
+main = run $ do
+  dims <- Window.dimensions
+
+  return $ fmap render dims
+```
+
+It renders a red square at the position `(100, 100)` with a side length of 64px.  
+  
+The next example is the barebones of a game that depends on input. It shows how to create
 an accumulated state that depends on the values sampled from signals (e.g. mouse input).
 You should see a white square on the screen and pressing the arrow keys allows you to move it.
 
