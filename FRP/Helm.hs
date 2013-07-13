@@ -26,7 +26,6 @@ import qualified Graphics.Rendering.Cairo as Cairo
 {-| Attempt to change the window dimensions (and initialize the video mode if not already).
     Will try to get a hardware accelerated window and then fallback to a software one.
     Throws an exception if the software mode can't be used as a fallback. -}
--- TODO: userland version of this
 requestDimensions :: Int -> Int -> IO SDL.Surface
 requestDimensions w h =	do
   mayhaps <- SDL.trySetVideoMode w h 32 [SDL.HWSurface, SDL.DoubleBuf, SDL.Resizable]
@@ -84,7 +83,7 @@ newEngineState smp = do
     >   return $ fmap render dims
  -}
 run :: SignalGen (Signal Element) -> IO ()
-run gen = SDL.init [SDL.InitVideo] >> requestDimensions 800 600 >> start gen >>= newEngineState >>= run'
+run gen = SDL.init [SDL.InitVideo, SDL.InitJoystick] >> requestDimensions 800 600 >> start gen >>= newEngineState >>= run'
 
 {-| A utility function called by 'run' that samples the element
     or quits the entire engine if SDL events say to do so. -}

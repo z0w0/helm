@@ -11,9 +11,21 @@ module FRP.Helm.Mouse (
 import Control.Applicative
 import FRP.Elerea.Simple
 import qualified Graphics.UI.SDL as SDL
+import qualified Graphics.UI.SDL.Utilities as Util
 
 {-| A data structure describing a button on a mouse. -}
 data Mouse = LeftMouse | MiddleMouse | RightMouse
+
+{- All integer values of this enum are equivalent to the SDL key enum. -}
+instance Enum Mouse where
+  fromEnum LeftMouse = 1
+  fromEnum MiddleMouse = 2
+  fromEnum RightMouse = 3
+
+  toEnum 1 = LeftMouse
+  toEnum 2 = MiddleMouse
+  toEnum 3 = RightMouse
+  toEnum _ = error "FRP.Helm.Mouse.Mouse.toEnum: bad argument"
 
 {-| The current position of the mouse. -}
 position :: SignalGen (Signal (Int, Int))
@@ -27,15 +39,7 @@ x = effectful $ (\(x_, _, _) -> x_) <$> SDL.getMouseState
 y :: SignalGen (Signal Int)
 y = effectful $ (\(_, y_, _) -> y_) <$> SDL.getMouseState
 
-{-| Maps our mouse type into SDL's one. -}
-mapMouse :: Mouse -> SDL.MouseButton
-mapMouse m =
-  case m of
-    LeftMouse -> SDL.ButtonLeft
-    MiddleMouse -> SDL.ButtonMiddle
-    RightMouse -> SDL.ButtonRight
-
 {-| The current state of a certain mouse button.
     True if the mouse is down, false otherwise. -}
 isDown :: Mouse -> SignalGen (Signal Bool)
-isDown m = effectful $ (\(_, _, b_) -> elem (mapMouse m) b_) <$> SDL.getMouseState
+isDown m = effectful $ (\(_, _, b_) -> elem (Util.toEnum $ fromIntegral $ fromEnum m) b_) <$> SDL.getMouseState
