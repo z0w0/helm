@@ -83,7 +83,8 @@ import qualified FRP.Helm.Window as Window
 data State = State { mx :: Double, my :: Double }
 
 step :: (Int, Int) -> State -> State
-step (dx, dy) state = state { mx = (realToFrac dx) + mx state, my = (realToFrac dy) + my state }
+step (dx, dy) state = state { mx = (realToFrac dx) + mx state,
+                              my = (realToFrac dy) + my state }
 
 render :: (Int, Int) -> State -> Element
 render (w, h) (State { .. }) = collage w h [move (mx, my) $ filled white $ square 100]
