@@ -22,38 +22,22 @@ simplistic (and in my opinion, artistic) code.
 * Vector graphics based rendering, allow you to either write art
   designed for any resolution or still load generic images and render
   those as you would with any pixel-based direct blitting game engine.
-* Straightforward API heavily inspired by the Elm programming language.
+* Straightforward API heavily inspired by the Elm programming language. The API
+  is broken up into the following areas:
 
-## Future Work
-
-* Improve the API. There's a few API calls from Elm that would work
-  just as nicely in Helm. These are marked inside TODOs in the code.
-  There also other important things that it's missing,
-  such as audio, joysticks and loading a larger range of
-  image formats.
-* Backend wise, it would be nice to use OpenGL instead of Cairo.
-  Cairo isn't particuarly that well performing for graphic intensive games,
-  although work is done being towards to fix that. However, using
-  OpenGL would make the engine more lightweight, easier to port
-  and be incredibly easier to accelerate. This means I have
-  to write the full vector graphics stack myself, but the worse part
-  will probably just be line styles, the rest should be moderately easy.
-  This will also allow loading of multiple image formats, as the current
-  reason for not using SDL_image is that it's annoying as fuck
-  to integrate with Cairo. Helm also currently uses the Cairo toy text
-  API for rendering, which isn't suppose to be used in production. If switched
-  to OpenGL, SDL_ttf would be a better fit.
-* Optimizations and testing. This is the first release of the engine so
-  obviously little testing or optimizations have been done.
-  It's a little hard to set up a test framework for a game engine,
-  but I have a few ideas, such as writing a dummy version of the backend
-  that simply renders to a PNG file that is fed fake (but predictable) input,
-  which is then compared to a static PNG file to see if the final expected
-  rendering outcome was achieved.
-* Port and support multiple platforms. I've only been testing it on
-  Linux, but there's really no reason that it wouldn't work out of the box
-  on Windows or OSX after setting up the dependencies. But I'd definitely
-  also like to investigate Android and iOS.
+  * `FRP.Helm` contains the main code for interfacing with the game engine but
+    also includes some utility functions and `FRP.Helm.Color` and `FRP.Helm.Graphics`
+    in the style of a sort of prelude library, allowing it to be included and readily
+    make the most basic of games.
+  * `FRP.Helm.Color` contains the `Color` data structure, functions for composing
+    colors and a few pre-defined colors that are usually used in games.
+  * `FRP.Helm.Graphics` contains all the graphics data structures, functions
+    for composing these structures and other general graphical utilities.
+  * `FRP.Helm.Keyboard` contains signals for working with keyboard state.
+  * `FRP.Helm.Mouse` contains signals for working with mouse state.
+  * `FRP.Helm.Text` contains functions for composing text, formatting it
+    and then turning it into an element.
+  * `FRP.Helm.Window` contains signals for working with the game window state.
 
 ## Example
 
@@ -108,3 +92,47 @@ which unfortunately is out of my hands.
 ## License
 
 Helm is licensed under the MIT license. See the `LICENSE` file for more details.
+
+## Contributing
+
+Helm would benefit from either of the following contributions:
+
+1. Try out the engine, reporting an issues or suggestions you have.
+2. Look through the source and get a feel for the code and then
+   contribute some features or fixes. If you plan on contributing
+   code please submit a pull request and follow the formatting
+   styles set out in the current code: 2 space indents, documentation
+   on every top-level function, favouring monadic operators over
+   do blocks, etc.
+
+The following is a list of areas I want to tackle in the future, 
+and possible targets that others could try for:
+
+* Improve the API. There's a few API calls from Elm that would work
+  just as nicely in Helm. These are marked inside TODOs in the code.
+  There also other important things that it's missing,
+  such as audio, joysticks and loading a larger range of
+  image formats.
+* Backend wise, it would be nice to use OpenGL instead of Cairo.
+  Cairo isn't particuarly that well performing for graphic intensive games,
+  although work is done being towards to fix that. However, using
+  OpenGL would make the engine more lightweight, easier to port
+  and be incredibly easier to accelerate. This means I have
+  to write the full vector graphics stack myself, but the worse part
+  will probably just be line styles, the rest should be moderately easy.
+  This will also allow loading of multiple image formats, as the current
+  reason for not using SDL_image is that it's annoying as fuck
+  to integrate with Cairo. Helm also currently uses the Cairo toy text
+  API for rendering, which isn't suppose to be used in production. If switched
+  to OpenGL, SDL_ttf would be a better fit.
+* Optimizations and testing. This is a early release of the engine so
+  obviously little testing or optimizations have been done.
+  It's a little hard to set up a test framework for a game engine,
+  but I have a few ideas, such as writing a dummy version of the backend
+  that simply renders to a PNG file that is fed fake (but predictable) input,
+  which is then compared to a static PNG file to see if the final expected
+  rendering outcome was achieved.
+* Port and support multiple platforms. I've only been testing it on
+  Linux, but there's really no reason that it wouldn't work out of the box
+  on Windows or OSX after setting up the dependencies. But I'd definitely
+  also like to investigate Android and iOS.
