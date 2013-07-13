@@ -32,11 +32,20 @@ simplistic (and in my opinion, artistic) code.
     in the style of a sort of prelude library, allowing it to be included and readily
     make the most basic of games.
 
+  * `FRP.Helm.Automaton` contains the `Automaton` data structure and functions
+    for composing, creating and calculating them. Automatons are a useful
+    abstraction of a dynamic process that is fed input from a signal
+    and feeds output through a signal. This is really useful for things
+    like animation systems, accumulating network packets and other
+    stateful but input dependent things.
+
   * `FRP.Helm.Color` contains the `Color` data structure, functions for composing
     colors and a few pre-defined colors that are usually used in games.
 
   * `FRP.Helm.Graphics` contains all the graphics data structures, functions
     for composing these structures and other general graphical utilities.
+
+  * `FRP.Helm.Joystick` contains signals for working with joystick state.
 
   * `FRP.Helm.Keyboard` contains signals for working with keyboard state.
 
