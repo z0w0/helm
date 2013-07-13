@@ -29,7 +29,7 @@ simplistic (and in my opinion, artistic) code.
 * Improve the API. There's a few API calls from Elm that would work
   just as nicely in Helm. These are marked inside TODOs in the code.
   There also other important things that it's missing,
-  such as audio, text rendering, joysticks and loading a larger range of
+  such as audio, joysticks and loading a larger range of
   image formats.
 * Backend wise, it would be nice to use OpenGL instead of Cairo.
   Cairo isn't particuarly that well performing for graphic intensive games,
@@ -40,7 +40,9 @@ simplistic (and in my opinion, artistic) code.
   will probably just be line styles, the rest should be moderately easy.
   This will also allow loading of multiple image formats, as the current
   reason for not using SDL_image is that it's annoying as fuck
-  to integrate with Cairo.
+  to integrate with Cairo. Helm also currently uses the Cairo toy text
+  API for rendering, which isn't suppose to be used in production. If switched
+  to OpenGL, SDL_ttf would be a better fit.
 * Optimizations and testing. This is the first release of the engine so
   obviously little testing or optimizations have been done.
   It's a little hard to set up a test framework for a game engine,

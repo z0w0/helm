@@ -1,5 +1,5 @@
 name: helm
-version: 0.2.0
+version: 0.3.0
 synopsis: A functionally reactive game engine.
 description: A functionally reactive game engine, with headgear to protect you
              from the headache of game development provided.
@@ -27,6 +27,7 @@ library
     FRP.Helm.Graphics
     FRP.Helm.Keyboard
     FRP.Helm.Mouse
+    FRP.Helm.Text
     FRP.Helm.Window
   build-depends:
     base >= 4 && < 5,

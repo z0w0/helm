@@ -178,6 +178,12 @@ renderElement state (ImageElement (sx, sy) sw sh src stretch) = do
   Cairo.fill
   Cairo.restore
 
+renderElement _ (TextElement (Text { textColor = (Color r g b a), .. })) = do
+  Cairo.setSourceRGBA r g b a
+  Cairo.selectFontFace fontTypeface fontSlant fontWeight
+  Cairo.setFontSize fontSize
+  Cairo.showText textUTF8
+
 {-| A utility function that goes into a state of transformation and then pops it when finished. -}
 withTransform :: Double -> Double -> Double -> Double -> Cairo.Render () -> Cairo.Render ()
 withTransform s t x y f = Cairo.save >> Cairo.scale s s >> Cairo.rotate t >> Cairo.translate x y >> f >> Cairo.restore
@@ -212,7 +218,7 @@ setLineStyle (LineStyle { color = Color r g b a, .. }) =
 setFillStyle :: EngineState -> FillStyle -> Cairo.Render ()
 setFillStyle _ (Solid (Color r g b a)) = Cairo.setSourceRGBA r g b a >> Cairo.fill
 setFillStyle state (Texture src) = do
-  (surface, w, h) <- Cairo.liftIO $ getSurface state (normalise src)
+  (surface, _, _) <- Cairo.liftIO $ getSurface state (normalise src)
 
   Cairo.setSourceSurface surface 0 0 >> Cairo.getSource >>= (flip Cairo.patternSetExtend) Cairo.ExtendRepeat
   Cairo.fill

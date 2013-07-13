@@ -3,6 +3,7 @@
 module FRP.Helm.Graphics (
   -- * Types
   Element(..),
+  Text(..),
   Form(..),
   FormStyle(..),
   FillStyle(..),
@@ -49,8 +50,9 @@ module FRP.Helm.Graphics (
   ngon
 ) where
 
-import FRP.Helm.Color as Color
+import FRP.Helm.Color (Color, black, Gradient)
 import Graphics.Rendering.Cairo.Matrix (Matrix, identity)
+import qualified Graphics.Rendering.Cairo as Cairo
 
 {-| A data structure describing something that can be rendered
     to the screen. Elements are the most important structure
@@ -60,7 +62,18 @@ import Graphics.Rendering.Cairo.Matrix (Matrix, identity)
     off to the 'collage' function, which essentially
     renders a collection of forms together. -}
 data Element = CollageElement Int Int [Form] |
-               ImageElement (Int, Int) Int Int FilePath Bool
+               ImageElement (Int, Int) Int Int FilePath Bool |
+               TextElement Text
+
+{-| A data structure describing a piece of formatted text. -}
+data Text = Text {
+  textUTF8 :: String,
+  textColor :: Color,
+  fontTypeface :: String,
+  fontSize :: Double,
+  fontWeight :: Cairo.FontWeight,
+  fontSlant :: Cairo.FontSlant
+}
 
 {-| Create an element from an image with a given width, height and image file path.
     If the image dimensions are not the same as given, then it will stretch/shrink to fit.
@@ -116,7 +129,7 @@ data LineStyle = LineStyle {
     flat caps and regular sharp joints. -}
 defaultLine :: LineStyle
 defaultLine = LineStyle {
-  color = Color.black,
+  color = black,
   width = 1,
   cap = Flat,
   join = Sharp 10,
