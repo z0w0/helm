@@ -25,7 +25,7 @@ getKeyState :: IO [Int]
 getKeyState = alloca $ \numkeysPtr -> do
   keysPtr <- sdlGetKeyState numkeysPtr
   numkeys <- peek numkeysPtr
-  (map fromIntegral . findIndices (== 1)) <$> peekArray (fromIntegral numkeys) keysPtr
+  (map fromIntegral . elemIndices 1) <$> peekArray (fromIntegral numkeys) keysPtr
 
 {-| A data structure describing a physical key on a keyboard. -}
 data Key = BackspaceKey | TabKey | ClearKey | EnterKey | PauseKey | EscapeKey |
@@ -329,15 +329,15 @@ instance Enum Key where
 
 {-| Whether either shift key is pressed. -}
 shift :: SignalGen (Signal Bool)
-shift = effectful $ (elem SDL.KeyModShift) <$> SDL.getModState
+shift = effectful $ elem SDL.KeyModShift <$> SDL.getModState
 
 {-| Whether either control key is pressed. -}
 ctrl :: SignalGen (Signal Bool)
-ctrl = effectful $ (elem SDL.KeyModCtrl) <$> SDL.getModState
+ctrl = effectful $ elem SDL.KeyModCtrl <$> SDL.getModState
 
 {-| Whether a key is pressed. -}
 isDown :: Key -> SignalGen (Signal Bool)
-isDown k = effectful $ (elem $ fromEnum k) <$> getKeyState
+isDown k = effectful $ elem (fromEnum k) <$> getKeyState
 
 {-| Whether the enter (a.k.a. return) key is pressed. -}
 enter :: SignalGen (Signal Bool)
@@ -349,7 +349,7 @@ space = isDown SpaceKey
 
 {-| A list of keys that are currently being pressed. -}
 keysDown :: SignalGen (Signal [Key])
-keysDown = effectful $ (map toEnum) <$> getKeyState
+keysDown = effectful $ map toEnum <$> getKeyState
 
 {-| A directional tuple combined from the arrow keys. When none of the arrow keys
     are being pressed this signal samples to /(0, 0)/, otherwise it samples to a

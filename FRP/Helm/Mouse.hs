@@ -1,11 +1,11 @@
 {-| Contains signals that sample input from the mouse. -}
 module FRP.Helm.Mouse (
-	-- * Types
-	Mouse(..),
-	-- * Position
-	isDown,
-	-- * Mouse State
-	position, x, y
+  -- * Types
+  Mouse(..),
+  -- * Position
+  isDown,
+  -- * Mouse State
+  position, x, y
 ) where
 
 import Control.Applicative

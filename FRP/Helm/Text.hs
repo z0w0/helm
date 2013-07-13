@@ -49,7 +49,7 @@ asText val = text $ monospace $ toText $ show val
 
 {-| Creates an element from a text. -}
 text :: Text -> Element
-text txt = TextElement txt
+text = TextElement
 
 {- TODO:
 centered

@@ -12,6 +12,7 @@ module FRP.Helm (
   module FRP.Helm.Graphics,
 ) where
 
+import Control.Monad (void)
 import Data.IORef
 import Foreign.Ptr (castPtr)
 import FRP.Elerea.Simple
@@ -160,7 +161,7 @@ getSurface (EngineState { cache }) src = do
 
 {-| A utility function for rendering a specific element. -}
 renderElement :: EngineState -> Element -> Cairo.Render ()
-renderElement state (CollageElement _ _ forms) = mapM (renderForm state) forms >> return ()
+renderElement state (CollageElement _ _ forms) = void $ mapM_ (renderForm state) forms
 renderElement state (ImageElement (sx, sy) sw sh src stretch) = do
   (surface, w, h) <- Cairo.liftIO $ getSurface state (normalise src)
 
@@ -220,29 +221,29 @@ setFillStyle _ (Solid (Color r g b a)) = Cairo.setSourceRGBA r g b a >> Cairo.fi
 setFillStyle state (Texture src) = do
   (surface, _, _) <- Cairo.liftIO $ getSurface state (normalise src)
 
-  Cairo.setSourceSurface surface 0 0 >> Cairo.getSource >>= (flip Cairo.patternSetExtend) Cairo.ExtendRepeat
+  Cairo.setSourceSurface surface 0 0 >> Cairo.getSource >>= flip Cairo.patternSetExtend Cairo.ExtendRepeat
   Cairo.fill
 
-setFillStyle _ (Gradient (Linear (sx, sy) (ex, ey) points)) = do
-  Cairo.withLinearPattern sx sy ex ey $ \pattern -> do
-    Cairo.setSource pattern >> mapM (\(o, (Color r g b a)) -> Cairo.patternAddColorStopRGBA pattern o r g b a) points >> Cairo.fill
+setFillStyle _ (Gradient (Linear (sx, sy) (ex, ey) points)) =
+  Cairo.withLinearPattern sx sy ex ey $ \pattern ->
+    Cairo.setSource pattern >> mapM (\(o, Color r g b a) -> Cairo.patternAddColorStopRGBA pattern o r g b a) points >> Cairo.fill
 
-setFillStyle _ (Gradient (Radial (sx, sy) sr (ex, ey) er points)) = do
-  Cairo.withRadialPattern sx sy sr ex ey er $ \pattern -> do
-    Cairo.setSource pattern >> mapM (\(o, (Color r g b a)) -> Cairo.patternAddColorStopRGBA pattern o r g b a) points >> Cairo.fill
+setFillStyle _ (Gradient (Radial (sx, sy) sr (ex, ey) er points)) =
+  Cairo.withRadialPattern sx sy sr ex ey er $ \pattern ->
+    Cairo.setSource pattern >> mapM (\(o, Color r g b a) -> Cairo.patternAddColorStopRGBA pattern o r g b a) points >> Cairo.fill
 
 {-| A utility that renders a form. -}
 renderForm :: EngineState -> Form -> Cairo.Render ()
 renderForm _ (Form { style = PathForm style p, .. }) =
   withTransform scalar theta x y $ 
-      setLineStyle style >> Cairo.moveTo hx hy >> mapM (\(x_, y_) -> Cairo.lineTo x_ y_) p >> return ()
+      void $ setLineStyle style >> Cairo.moveTo hx hy >> mapM (uncurry Cairo.lineTo) p
 
     where
       (hx, hy) = head p
 
 renderForm state (Form { style = ShapeForm style (PolygonShape points), .. }) =
   withTransform scalar theta x y $ do
-      Cairo.newPath >> Cairo.moveTo hx hy >> mapM (\(x_, y_) -> Cairo.lineTo x_ y_) points >> Cairo.closePath
+      Cairo.newPath >> Cairo.moveTo hx hy >> mapM (uncurry Cairo.lineTo) points >> Cairo.closePath
 
       case style of
         Left lineStyle -> setLineStyle lineStyle
@@ -270,4 +271,4 @@ renderForm state (Form { style = ShapeForm style (ArcShape (cx, cy) a1 a2 r (sx,
       Right fillStyle -> setFillStyle state fillStyle
 
 renderForm state (Form { style = ElementForm element, .. }) = withTransform scalar theta x y $ renderElement state element
-renderForm state (Form { style = GroupForm m forms, .. }) = withTransform scalar theta x y $ Cairo.setMatrix m >> mapM (renderForm state) forms >> return ()
+renderForm state (Form { style = GroupForm m forms, .. }) = withTransform scalar theta x y $ void $ Cairo.setMatrix m >> mapM (renderForm state) forms

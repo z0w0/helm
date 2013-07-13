@@ -1,34 +1,34 @@
 {-| Contains all data structures and functions for composing colors. -}
 module FRP.Helm.Color (
-	-- * Types
-	Color(..),
-	Gradient(..),
-	-- * Composing
-	rgba,
-	rgb,
+  -- * Types
+  Color(..),
+  Gradient(..),
+  -- * Composing
+  rgba,
+  rgb,
   hsva,
   hsv,
   complement,
-	linear,
-	radial,
-	-- * Constants
-	red,
-	lime,
-	blue,
-	yellow,
-	cyan,
-	magenta,
-	black,
-	white,
-	gray,
-	grey,
-	maroon,
-	navy,
-	green,
-	teal,
-	purple,
-	violet,
-	forestGreen
+  linear,
+  radial,
+  -- * Constants
+  red,
+  lime,
+  blue,
+  yellow,
+  cyan,
+  magenta,
+  black,
+  white,
+  gray,
+  grey,
+  maroon,
+  navy,
+  green,
+  teal,
+  purple,
+  violet,
+  forestGreen
 ) where
 
 {-| A data structure describing a color. It is represented interally as an RGBA
@@ -138,7 +138,7 @@ hsva h s v a
 
   where
     h' = h / 60
-    h'' = (floor h') `mod` 6 :: Int
+    h'' = floor h' `mod` 6 :: Int
     f = h' - fromIntegral h''
     p = v * (1 - s)
     q = v * (1 - f * s)

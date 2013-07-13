@@ -166,15 +166,15 @@ fill style shape = form (ShapeForm (Right style) shape)
 
 {-| Creates a form from a shape by filling it with a specific color. -}
 filled :: Color -> Shape -> Form
-filled color shape = fill (Solid color) shape
+filled color = fill (Solid color)
 
 {-| Creates a form from a shape with a tiled texture and image file path. -}
 textured :: String -> Shape -> Form
-textured src shape = fill (Texture src) shape
+textured src = fill (Texture src)
 
 {-| Creates a form from a shape filled with a gradient. -}
 gradient :: Gradient -> Shape -> Form
-gradient grad shape = fill (Gradient grad) shape
+gradient grad = fill (Gradient grad)
 
 {-| Creates a form from a shape by outlining it with a specific line style. -}
 outlined :: LineStyle -> Shape -> Form
@@ -215,11 +215,11 @@ move (rx, ry) f = f { x = rx + x f, y = ry + y f }
 
 {-| Moves a form's x-coordinate relative to its current position. -}
 moveX :: Double -> Form -> Form
-moveX x f = move (x, 0) f
+moveX x = move (x, 0)
 
 {-| Moves a form's y-coordinate relative to its current position. -}
 moveY :: Double -> Form -> Form
-moveY y f = move (0, y) f
+moveY y = move (0, y)
 
 {-| Create an element from a collection of forms, with width and height arguments.
     Can be used to directly render a collection of forms.
@@ -228,7 +228,7 @@ moveY y f = move (0, y) f
     >                  move (100, 100) $ outlined (solid white) $ circle 50]
  -}
 collage :: Int -> Int -> [Form] -> Element
-collage w h forms = CollageElement w h forms
+collage = CollageElement
 
 {-| A data type made up a collection of points that form a path when joined. -}
 type Path = [(Double, Double)]
@@ -247,7 +247,7 @@ data Shape = PolygonShape Path | RectangleShape (Double, Double) | ArcShape (Dou
 
 {-| Creates a shape from a path (a set of points). -}
 polygon :: Path -> Shape
-polygon points = PolygonShape points
+polygon = PolygonShape
 
 {-| Creates a rectangular shape with a width and height. -}
 rect :: Double -> Double -> Shape
