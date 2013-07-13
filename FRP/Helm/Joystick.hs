@@ -70,7 +70,7 @@ hat j i = effectful $ SDL.update >> hat' <$> SDL.getHat j (fromIntegral i)
 
 {-| A utility function for mapping a list of hat states to an averaged directional tuple. -}
 hat' :: [SDL.Hat] -> (Int, Int)
-hat' hats = if l > 0 then (round $ (fromIntegral hx) / l, round $ (fromIntegral hy) / l) else (0, 0)
+hat' hats = if l > 0 then (round $ fromIntegral hx / l, round $ fromIntegral hy / l) else (0, 0)
   where
     l = realToFrac $ length hats :: Double
     (hx, hy) = foldl hat'' (0, 0) hats
