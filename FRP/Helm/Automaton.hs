@@ -6,14 +6,15 @@ module FRP.Helm.Automaton (
   pure,
   stateful,
   combine,
-  (>>>),
-  (<<<),
   -- * Computing
   step,
   run,
   counter
 ) where
 
+import Control.Arrow
+import Control.Category
+import Prelude hiding (id, (.))
 import FRP.Elerea.Simple (Signal, SignalGen, transfer)
 
 {-| A data structure describing an automaton.
@@ -24,6 +25,15 @@ import FRP.Elerea.Simple (Signal, SignalGen, transfer)
     to create composable dynamic behavior, like animation systems. -}
 data Automaton a b = Step (a -> (Automaton a b, b))
 
+instance Category Automaton where
+  id = Step (\a -> (id, a))
+  (Step f) . (Step g) = Step (\a -> let (g', b) = g a
+                                        (f', c) = f b in (f' . g', c))
+
+instance Arrow Automaton where
+  arr f = pure f
+  first (Step f) = Step (\(b, d) -> let (f', c) = f b in (first f', (c, d)))
+
 {-| Creates a pure automaton that has no accumulated state. It applies input to
     a function at each step. -}
 pure :: (a -> b) -> Automaton a b
@@ -32,8 +42,7 @@ pure f = Step (\x -> (pure f, f x))
 {-| Creates an automaton that has an initial and accumulated state. It applies
     input and the last state to a function at each step. -}
 stateful :: b -> (a -> b -> b) -> Automaton a b
-stateful s f = Step (\x -> let s' = f x s
-                           in (stateful s' f, s'))
+stateful state f = Step (\x -> let state' = f x state in (stateful state' f, state'))
 
 {-| Steps an automaton forward, returning the next automaton to step
     and output of the step in a tuple. -}
@@ -49,20 +58,6 @@ combine autos =
   Step (\a -> let (autos', bs) = unzip $ map (step a) autos
               in  (combine autos', bs))
 
-{-| Pipes two automatons together. It essentially
-    returns an automaton that takes the input of the first
-    automaton and outputs the output of the second automaton,
-    with the directly connected values being discarded. -}
-(>>>) :: Automaton a b -> Automaton b c -> Automaton a c
-f >>> g =
-  Step (\a -> let (f', b) = step a f
-                  (g', c) = step b g
-              in (f' >>> g', c))
-
-{-| Pipes two automatons in the opposite order of '>>>'. -}
-(<<<) :: Automaton b c -> Automaton a b -> Automaton a c
-g <<< f = f >>> g
-
 {-| A useful automaton that outputs the amount of times it has been stepped,
     discarding its input value. -}
 counter :: Automaton a Int
@@ -72,7 +67,7 @@ counter = stateful 0 (\_ c -> c + 1)
     and creates an output signal generator that contains a signal that can be
     sampled for the output value. -}
 run :: Automaton a b -> b -> SignalGen (Signal a) -> SignalGen (Signal b)
-run auto initial feeder = do
-  stepper <- feeder >>= transfer (auto, initial) (\a (Step f, _) -> f a)
+run auto ini feeder = do
+  food <- feeder >>= transfer (auto, ini) (\a (Step f, _) -> f a)
 
-  return $ fmap snd stepper
+  return $ fmap snd food
