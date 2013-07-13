@@ -3,10 +3,10 @@
 ## Introduction
 
 Helm is a functionally reactive game engine written in Haskell and built around
-the [Elerea](https://github.com/cobbpg/elerea) FRP framework. Helm is
+the [Elerea FRP framework](https://github.com/cobbpg/elerea). Helm is
 heavily inspired by the [Elm programming language](http://elm-lang.org) (especially the API).
 All rendering is done through a vector-graphics based API. At the core, Helm is
-built on SDL and the Cairo vector graphics library. This may change to a more
+built on SDL and the Cairo vector graphics library. The plan is to change to a more
 robust setup in the future, such as a lightweight homebrewed renderer built on OpenGL.
 But for now, Cairo performs pretty well.
 
@@ -18,31 +18,39 @@ simplistic (and in my opinion, artistic) code.
 ## Features
 
 * Allows you to express game logic dependent on input in a straightforward manner,
-  treating events as (almost) first class objects (the essence of FRP).
+  treating events as first class values (the essence of FRP).
+
 * Vector graphics based rendering, allow you to either write art
   designed for any resolution or still load generic images and render
   those as you would with any pixel-based direct blitting game engine.
+
 * Straightforward API heavily inspired by the Elm programming language. The API
   is broken up into the following areas:
 
   * `FRP.Helm` contains the main code for interfacing with the game engine but
-    also includes some utility functions and `FRP.Helm.Color` and `FRP.Helm.Graphics`
+    also includes some utility functions and the modules `FRP.Helm.Color` and `FRP.Helm.Graphics`
     in the style of a sort of prelude library, allowing it to be included and readily
     make the most basic of games.
+
   * `FRP.Helm.Color` contains the `Color` data structure, functions for composing
     colors and a few pre-defined colors that are usually used in games.
+
   * `FRP.Helm.Graphics` contains all the graphics data structures, functions
     for composing these structures and other general graphical utilities.
+
   * `FRP.Helm.Keyboard` contains signals for working with keyboard state.
+
   * `FRP.Helm.Mouse` contains signals for working with mouse state.
+
   * `FRP.Helm.Text` contains functions for composing text, formatting it
     and then turning it into an element.
+
   * `FRP.Helm.Window` contains signals for working with the game window state.
 
 ## Example
 
-The following examples is the barebones of a game. It shows how to create
-an accumulated state that depends on the values sampled from signals (e.g. mouse input and such).
+The following example is the barebones of a game. It shows how to create
+an accumulated state that depends on the values sampled from signals (e.g. mouse input).
 You should see a white square on the screen and pressing the arrow keys allows you to move it.
 
 ```haskell
@@ -97,12 +105,13 @@ Helm is licensed under the MIT license. See the `LICENSE` file for more details.
 
 Helm would benefit from either of the following contributions:
 
-1. Try out the engine, reporting an issues or suggestions you have.
-2. Look through the source and get a feel for the code and then
+1. Try out the engine, reporting any issues or suggestions you have.
+
+2. Look through the source, get a feel for the code and then
    contribute some features or fixes. If you plan on contributing
    code please submit a pull request and follow the formatting
    styles set out in the current code: 2 space indents, documentation
-   on every top-level function, favouring monadic operators over
+   on every top-level function, favouring monad operators over
    do blocks, etc.
 
 The following is a list of areas I want to tackle in the future, 
@@ -113,6 +122,7 @@ and possible targets that others could try for:
   There also other important things that it's missing,
   such as audio, joysticks and loading a larger range of
   image formats.
+
 * Backend wise, it would be nice to use OpenGL instead of Cairo.
   Cairo isn't particuarly that well performing for graphic intensive games,
   although work is done being towards to fix that. However, using
@@ -125,6 +135,7 @@ and possible targets that others could try for:
   to integrate with Cairo. Helm also currently uses the Cairo toy text
   API for rendering, which isn't suppose to be used in production. If switched
   to OpenGL, SDL_ttf would be a better fit.
+
 * Optimizations and testing. This is a early release of the engine so
   obviously little testing or optimizations have been done.
   It's a little hard to set up a test framework for a game engine,
@@ -132,6 +143,7 @@ and possible targets that others could try for:
   that simply renders to a PNG file that is fed fake (but predictable) input,
   which is then compared to a static PNG file to see if the final expected
   rendering outcome was achieved.
+
 * Port and support multiple platforms. I've only been testing it on
   Linux, but there's really no reason that it wouldn't work out of the box
   on Windows or OSX after setting up the dependencies. But I'd definitely
