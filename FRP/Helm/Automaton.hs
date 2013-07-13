@@ -31,7 +31,7 @@ instance Category Automaton where
                                         (f', c) = f b in (f' . g', c))
 
 instance Arrow Automaton where
-  arr f = pure f
+  arr = pure
   first (Step f) = Step (\(b, d) -> let (f', c) = f b in (first f', (c, d)))
 
 {-| Creates a pure automaton that has no accumulated state. It applies input to
