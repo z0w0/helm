@@ -14,7 +14,7 @@ import qualified Graphics.UI.SDL as SDL
 import qualified Graphics.UI.SDL.Utilities as Util
 
 {-| A data structure describing a button on a mouse. -}
-data Mouse = LeftMouse | MiddleMouse | RightMouse
+data Mouse = LeftMouse | MiddleMouse | RightMouse deriving (Show, Eq, Ord)
 
 {- All integer values of this enum are equivalent to the SDL key enum. -}
 instance Enum Mouse where

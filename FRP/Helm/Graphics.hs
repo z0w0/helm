@@ -63,7 +63,7 @@ import qualified Graphics.Rendering.Cairo as Cairo
     renders a collection of forms together. -}
 data Element = CollageElement Int Int [Form] |
                ImageElement (Int, Int) Int Int FilePath Bool |
-               TextElement Text
+               TextElement Text deriving (Show, Eq)
 
 {-| A data structure describing a piece of formatted text. -}
 data Text = Text {
@@ -73,7 +73,7 @@ data Text = Text {
   fontSize :: Double,
   fontWeight :: Cairo.FontWeight,
   fontSlant :: Cairo.FontSlant
-}
+} deriving (Show, Eq)
 
 {-| Create an element from an image with a given width, height and image file path.
     If the image dimensions are not the same as given, then it will stretch/shrink to fit.
@@ -102,18 +102,18 @@ data Form = Form {
   x :: Double,
   y :: Double,
   style :: FormStyle
-}
+} deriving (Show, Eq)
 
 {-| A data structure describing how a shape or path looks when filled. -}
-data FillStyle = Solid Color | Texture String | Gradient Gradient
+data FillStyle = Solid Color | Texture String | Gradient Gradient deriving (Show, Eq)
 
 {-| A data structure describing the shape of the ends of a line. -}
-data LineCap = Flat | Round | Padded
+data LineCap = Flat | Round | Padded deriving (Show, Eq, Enum, Ord)
 
 {-| A data structure describing the shape of the join of a line, i.e.
     where separate line segments join. The 'Sharp' variant takes
     an argument to limit the length of the join. -}
-data LineJoin = Smooth | Sharp Double | Clipped
+data LineJoin = Smooth | Sharp Double | Clipped deriving (Show, Eq)
 
 {-| A data structure describing how a shape or path looks when stroked. -}
 data LineStyle = LineStyle {
@@ -123,7 +123,7 @@ data LineStyle = LineStyle {
   join :: LineJoin,
   dashing :: [Double],
   dashOffset :: Double
-}
+} deriving (Show, Eq)
 
 {-| Creates the default line style. By default, the line is black with a width of 1,
     flat caps and regular sharp joints. -}
@@ -154,7 +154,7 @@ dotted color = defaultLine { color = color, dashing = [3, 3] }
 data FormStyle = PathForm LineStyle Path |
                  ShapeForm (Either LineStyle FillStyle) Shape |
                  ElementForm Element |
-                 GroupForm Matrix [Form]
+                 GroupForm Matrix [Form] deriving (Show, Eq)
 
 {-| Utility function for creating a form. -}
 form :: FormStyle -> Form
@@ -243,7 +243,9 @@ segment p1 p2 = [p1, p2]
 
 {-| A data structure describing a some sort of graphically representable object,
     such as a polygon formed from a set of points or a rectangle. -}
-data Shape = PolygonShape Path | RectangleShape (Double, Double) | ArcShape (Double, Double) Double Double Double (Double, Double)
+data Shape = PolygonShape Path |
+             RectangleShape (Double, Double) |
+             ArcShape (Double, Double) Double Double Double (Double, Double) deriving (Show, Eq)
 
 {-| Creates a shape from a path (a set of points). -}
 polygon :: Path -> Shape
