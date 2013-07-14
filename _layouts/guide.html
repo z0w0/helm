@@ -7,9 +7,14 @@ layout: default
 </div>
 
 <div class="one-third column add-bottom">
-  <ul>
+  <ul class="side-nav">
     <li><h5>Getting Started</h5></li>
     <hr class="half-bottom"/>
-    <li><a href="/guide">Introduction</a></li>
+    <li><a href="/guide">Introduction</a> {% if page.section == "Introduction" %} <span>&larr;</span> {% endif %} </li>
+    <li><a href="/guide/installing">Installing</a> {% if page.section == "Installing" %} <span>&larr;</span> {% endif %} </li>
+
+    <li><h5>Drawing</h5></li>
+    <hr class="half-bottom"/>
+    <li><a href="/guide/gradients">Gradients</a> {% if page.section == "Gradients" %} <span>&larr;</span> {% endif %} </li>
   </ul>
 </div>
