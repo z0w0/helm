@@ -13,8 +13,13 @@
 /* Mobile Portrait Size to Mobile Landscape Size (devices and browsers) */
 @media only screen and (max-width: 479px) {}
 
+body { font-family: "Roboto Slab", sans-serif; }
+h1, h2, h3, h4, h5, h6 { font-family: "Roboto Slab", sans-serif; }
+
 .center { text-align: center; }
+
 ul.nav { margin-left: auto; }
 ul.nav > li { display: inline-block; margin-right: 20px; }
 ul.nav > li > a { text-decoration: none; font-size: 1.5em; }
+
 .highlight { background-color: transparent; }
