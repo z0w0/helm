@@ -1,1 +1,75 @@
-wip
+---
+layout: default
+title: Helm, a functionally reactive game engine
+---
+
+<div class="sixteen columns add-bottom">
+  <h2 class="center">
+    A functionally reactive game engine, with headgear to protect you
+    from the headache of game development provided. Inspired by <a href="http://elm-lang.org">Elm</a>.
+  </h2>
+</div>
+
+<div class="one-third column">
+  <h3>Simple</h3>
+  <p>
+    Helm's API provides a simplistic and elegant way to make games.
+    Besides a straight forward vector-graphics based drawing API,
+    there are also higher-level concepts like automatons which
+    allow you to compose dynamic behavior like animation systems easily.
+  </p>
+  <p><a href="http://hackage.haskell.org/package/helm">Take a gander at the API documentation &rarr;</a></p>
+</div>
+
+<div class="one-third column">
+  <h3>Dynamic</h3>
+  <p>
+    In Helm, input events like key presses and mouse clicks
+    are accessed through a concept called signals &mdash; essentially
+    values that change over time. This allows you to write
+    logic dependent on input events like window resizes
+    dynamically, without having to go to the extra effort
+    to write callbacks that listen to events like in a regular
+    game engine.
+  </p>
+</div>
+
+<div class="one-third column">
+  <h3>Powerful</h3>
+  <p>
+    Built on the <a href="http://hackage.haskell.org/package/elerea">Elerea FRP framework</a> in
+    <a href="http://haskell.org">Haskell</a>, Helm is designed to be simple at the frontend but
+    powerful at the backend. Helm also provides an implementation of piped-based signals called
+    <em>automatons</em> that allow you to use and compose the concept of signals to do factory-like logic,
+    i.e. operations that take an input and output something valuable.
+  </p>
+</div>
+
+<hr/>
+
+<div class="one-third column">
+  <h3>Get Started</h3>
+  <p>
+    Install the <a href="http://www.haskell.org/platform/">Haskell Platform</a> and then
+    install Helm using the Cabal build system. Here's some example code to give you
+    an idea of how to work with the API. It samples the window dimensions signal
+    at every render, using the sampled values to render a red square with a side length of
+    <em>64</em> at <em>(100, 100)</em>.
+  </p>
+</div>
+
+<div class="two-third column">
+  {% highlight haskell %}
+    import FRP.Helm
+    import qualified FRP.Helm.Window as Window
+
+    render :: (Int, Int) -> Element
+    render (w, h) = collage w h [move (100, 100) $ filled red $ square 64]
+
+    main :: IO ()
+    main = run $ do
+      dims <- Window.dimensions
+
+      return $ fmap render dims
+  {% endhighlight %}
+</div>
