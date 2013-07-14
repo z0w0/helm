@@ -23,3 +23,4 @@ ul.nav > li { display: inline-block; margin-right: 20px; }
 ul.nav > li > a { text-decoration: none; font-size: 1.5em; }
 
 .highlight { background-color: transparent; }
+.highlight pre { word-wrap: break-word; }
