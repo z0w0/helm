@@ -68,9 +68,6 @@ render :: (Int, Int) -> Element
 render (w, h) = collage w h [move (100, 100) $ filled red $ square 64]
 
 main :: IO ()
-main = run $ do
-  dims <- Window.dimensions
-
-  return $ fmap render dims
+main = run $ fmap (fmap render) Window.dimensions
   {% endhighlight %}
 </div>
