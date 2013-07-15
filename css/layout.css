@@ -1,26 +1,46 @@
 /* Smaller than standard 960 (devices and browsers) */
-@media only screen and (max-width: 959px) {}
+@media only screen and (max-width: 959px) {
+    .logo { width: 300px; height: 100px; }
+}
 
 /* Tablet Portrait size to standard 960 (devices and browsers) */
-@media only screen and (min-width: 768px) and (max-width: 959px) {}
+@media only screen and (min-width: 768px) and (max-width: 959px) {
+    .logo { width: 300px; height: 100px; }
+}
 
 /* All Mobile Sizes (devices and browser) */
-@media only screen and (max-width: 767px) {}
+@media only screen and (max-width: 767px) {
+    .logo { width: 100px; height: 34px; }
+}
 
 /* Mobile Landscape Size to Tablet Portrait (devices and browsers) */
-@media only screen and (min-width: 480px) and (max-width: 767px) {}
+@media only screen and (min-width: 480px) and (max-width: 767px) {
+    .logo { width: 200px; height: 67px; }
+}
 
 /* Mobile Portrait Size to Mobile Landscape Size (devices and browsers) */
-@media only screen and (max-width: 479px) {}
+@media only screen and (max-width: 479px) {
+    .logo { width: 200px; height: 67px; }
+}
 
 body { font-family: "Roboto Slab", sans-serif; }
 h1, h2, h3, h4, h5, h6 { font-family: "Roboto Slab", sans-serif; }
 
+.logo {
+    background-image: url("/img/logo.png");
+    background-image: none, url("/img/logo.svg"), url("/img/logo.png");
+    background-size: 100% 100%;
+    width: 300px;
+    height: 100px;
+    margin: 0 auto;
+    position: relative;
+}
 .center { text-align: center; }
+a:hover { color: #ef483d; }
 
 ul.nav { margin-left: auto; }
 ul.nav > li { display: inline-block; margin-right: 20px; }
 ul.nav > li > a { text-decoration: none; font-size: 1.5em; }
 
-.highlight { background-color: transparent; }
+.highlight { background-color: transparent; margin-bottom: 20px; }
 .highlight pre { word-wrap: break-word; }

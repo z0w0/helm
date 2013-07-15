@@ -61,16 +61,16 @@ title: Helm, a functionally reactive game engine
 
 <div class="two-thirds column">
   {% highlight haskell %}
-    import FRP.Helm
-    import qualified FRP.Helm.Window as Window
+import FRP.Helm
+import qualified FRP.Helm.Window as Window
 
-    render :: (Int, Int) -> Element
-    render (w, h) = collage w h [move (100, 100) $ filled red $ square 64]
+render :: (Int, Int) -> Element
+render (w, h) = collage w h [move (100, 100) $ filled red $ square 64]
 
-    main :: IO ()
-    main = run $ do
-      dims <- Window.dimensions
+main :: IO ()
+main = run $ do
+  dims <- Window.dimensions
 
-      return $ fmap render dims
+  return $ fmap render dims
   {% endhighlight %}
 </div>
