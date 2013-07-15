@@ -70,10 +70,7 @@ render :: (Int, Int) -> Element
 render (w, h) = collage w h [move (100, 100) $ filled red $ square 64]
 
 main :: IO ()
-main = run $ do
-  dims <- Window.dimensions
-
-  return $ fmap render dims
+main = run $ fmap (fmap render) Window.dimensions
 ```
 
 It renders a red square at the position `(100, 100)` with a side length of 64px.  
@@ -102,11 +99,11 @@ render (w, h) (State { .. }) = collage w h [move (mx, my) $ filled white $ squar
 
 main :: IO ()
 main = run $ do
-  dims <- Window.dimensions
+  dimensions <- Window.dimensions
   arrows <- Keyboard.arrows
   stepper <- transfer (State { mx = 0, my = 100 }) step arrows
 
-  return $ render <$> dims <*> stepper
+  return $ render <$> dimensions <*> stepper
 ```
 
 ## Installing and Building

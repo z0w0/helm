@@ -19,7 +19,4 @@ render (w, h) = collage w h [move (100, 100) $ gradient linearGrad $ rect 300 10
                              move (500, 300) $ gradient radialGrad $ circle 64]
 
 main :: IO ()
-main = run $ do
-  dims <- Window.dimensions
-
-  return $ fmap render dims
+main = run $ fmap (fmap render) Window.dimensions
