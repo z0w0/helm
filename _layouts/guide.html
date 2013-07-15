@@ -3,11 +3,13 @@ layout: default
 ---
 
 <div class="two-thirds column add-bottom">
-  {{ content }}
+  <div class="guide">
+    {{ content }}
+  </div>
 </div>
 
 <div class="one-third column add-bottom">
-  <ul class="side-nav">
+  <ul class="guide-nav">
     <li><h5>Getting Started</h5></li>
     <hr class="half-bottom"/>
     <li><a href="/guide">Introduction</a> {% if page.section == "Introduction" %} <span>&larr;</span> {% endif %} </li>

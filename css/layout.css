@@ -51,4 +51,5 @@ ul.nav > li > a { text-decoration: none; font-size: 1.5em; }
 .highlight { background-color: transparent; margin-bottom: 20px; }
 .highlight pre { word-wrap: break-word; }
 
-img[alt=final] { max-width: 620px; }
+.guide ul { list-style: disc inside; }
+.guide img[alt=final] { max-width: 620px; }
