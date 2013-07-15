@@ -21,6 +21,7 @@ source-repository head
   location: git://github.com/z0w0/helm.git
 
 library
+  hs-source-dirs: src
   exposed-modules:
     FRP.Helm
     FRP.Helm.Automaton

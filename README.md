@@ -1,4 +1,4 @@
-# Helm
+![Helm](http://helm-engine.org/img/logo-alt.png)
 
 ## Introduction
 
