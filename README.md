@@ -1,4 +1,6 @@
-![Helm](http://helm-engine.org/img/logo-alt.png)
+<p align="center">
+  <img src="http://helm-engine.org/img/logo-alt.png"/>
+</p>
 
 ## Introduction
 
