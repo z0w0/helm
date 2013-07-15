@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="http://helm-engine.org/img/logo-alt.png"/>
+  <a href="http://helm-engine.org" title="Homepage"><img src="http://helm-engine.org/img/logo-alt.png"/></a>
 </p>
 
 ## Introduction
