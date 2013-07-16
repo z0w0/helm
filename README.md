@@ -133,7 +133,6 @@ Helm is licensed under the MIT license. See the `LICENSE` file for more details.
 Helm would benefit from either of the following contributions:
 
 1. Try out the engine, reporting any issues or suggestions you have.
-
 2. Look through the source, get a feel for the code and then
    contribute some features or fixes. If you plan on contributing
    code please submit a pull request and follow the formatting
@@ -145,14 +144,11 @@ The following is a list of areas I want to tackle in the future,
 and possible targets that others could try for:
 
 * Improve the API. See [issue #4](https://github.com/z0w0/helm/issues/4).
-
 * Backend wise, it would be nice to use GLFW/OpenGL instead of SDL/Cairo.
   See [issue #1](https://github.com/z0w0/helm/issues/1).
-
 * Optimizations and testing. This is a early release of the engine so
   obviously little testing or optimizations have been done.
   See [issue #2](https://github.com/z0w0/helm/issues/2).
-
 * Port and support multiple platforms. I've only been testing it on
   Linux, but there's really no reason that it wouldn't work out of the box
   on Windows or OSX after setting up the dependencies.
