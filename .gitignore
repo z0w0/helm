@@ -1,3 +1,3 @@
 dist
-demos/*
-!demos/*.hs
+demo/*
+!demo/*.hs

@@ -8,9 +8,7 @@ Helm is a functionally reactive game engine written in Haskell and built around
 the [Elerea FRP framework](https://github.com/cobbpg/elerea). Helm is
 heavily inspired by the [Elm programming language](http://elm-lang.org) (especially the API).
 All rendering is done through a vector-graphics based API. At the core, Helm is
-built on SDL and the Cairo vector graphics library. The plan is to change to a more
-robust setup in the future, such as a lightweight homebrewed renderer built on OpenGL.
-But for now, Cairo performs pretty well.
+built on SDL and the Cairo vector graphics library.
 
 In Helm, every piece of input that can be gathered from a user (or the operating system)
 is hidden behind a signal. For those unfamiliar with FRP, signals are essentially
@@ -106,6 +104,8 @@ main = run $ do
   return $ render <$> dimensions <*> stepper
 ```
 
+Checkout the `demo` folder for more examples.
+
 ## Installing and Building
 
 Helm requires GHC 7.6 (Elerea doesn't work with older versions due to a compiler bug).
@@ -144,34 +144,16 @@ Helm would benefit from either of the following contributions:
 The following is a list of areas I want to tackle in the future, 
 and possible targets that others could try for:
 
-* Improve the API. There's a few API calls from Elm that would work
-  just as nicely in Helm. These are marked inside TODOs in the code.
-  There also other important things that it's missing,
-  such as audio, joysticks and loading a larger range of
-  image formats.
+* Improve the API. See [issue #4](https://github.com/z0w0/helm/issues/4).
 
-* Backend wise, it would be nice to use OpenGL instead of Cairo.
-  Cairo isn't particuarly that well performing for graphic intensive games,
-  although work is done being towards to fix that. However, using
-  OpenGL would make the engine more lightweight, easier to port
-  and be incredibly easier to accelerate. This means I have
-  to write the full vector graphics stack myself, but the worse part
-  will probably just be line styles, the rest should be moderately easy.
-  This will also allow loading of multiple image formats, as the current
-  reason for not using SDL_image is that it's annoying as fuck
-  to integrate with Cairo. Helm also currently uses the Cairo toy text
-  API for rendering, which isn't suppose to be used in production. If switched
-  to OpenGL, SDL_ttf would be a better fit.
+* Backend wise, it would be nice to use GLFW/OpenGL instead of SDL/Cairo.
+  See [issue #1](https://github.com/z0w0/helm/issues/1).
 
 * Optimizations and testing. This is a early release of the engine so
   obviously little testing or optimizations have been done.
-  It's a little hard to set up a test framework for a game engine,
-  but I have a few ideas, such as writing a dummy version of the backend
-  that simply renders to a PNG file that is fed fake (but predictable) input,
-  which is then compared to a static PNG file to see if the final expected
-  rendering outcome was achieved.
+  See [issue #2](https://github.com/z0w0/helm/issues/2).
 
 * Port and support multiple platforms. I've only been testing it on
   Linux, but there's really no reason that it wouldn't work out of the box
-  on Windows or OSX after setting up the dependencies. But I'd definitely
-  also like to investigate Android and iOS.
+  on Windows or OSX after setting up the dependencies.
+  See [issue #3](https://github.com/z0w0/helm/issues/3).
