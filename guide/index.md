@@ -11,9 +11,7 @@ Helm is a functionally reactive game engine written in Haskell and built around
 the [Elerea FRP framework](https://github.com/cobbpg/elerea). Helm is
 heavily inspired by the [Elm programming language](http://elm-lang.org) (especially the API).
 All rendering is done through a vector-graphics based API. At the core, Helm is
-built on SDL and the Cairo vector graphics library. The plan is to change to a more
-robust setup in the future, such as a lightweight homebrewed renderer built on OpenGL.
-But for now, Cairo performs pretty well.
+built on SDL and the Cairo vector graphics library.
 
 In Helm, every piece of input that can be gathered from a user (or the operating system)
 is hidden behind a signal. For those unfamiliar with FRP, signals are essentially
