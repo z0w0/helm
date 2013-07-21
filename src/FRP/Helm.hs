@@ -186,7 +186,7 @@ renderElement _ (TextElement (Text { textColor = (Color r g b a), .. })) = do
 
 {-| A utility function that goes into a state of transformation and then pops it when finished. -}
 withTransform :: Double -> Double -> Double -> Double -> Cairo.Render () -> Cairo.Render ()
-withTransform s t x y f = Cairo.save >> Cairo.scale s s >> Cairo.rotate t >> Cairo.translate x y >> f >> Cairo.restore
+withTransform s t x y f = Cairo.save >> Cairo.scale s s >> Cairo.translate x y >> Cairo.rotate t >> f >> Cairo.restore
 
 {-| A utility function that sets the Cairo line cap based off of our version. -}
 setLineCap :: LineCap -> Cairo.Render ()
