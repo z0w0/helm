@@ -28,10 +28,10 @@ defaultText :: Text
 defaultText = Text {
   textUTF8 = "",
   textColor = black,
-  fontTypeface = "sans-serif",
-  fontSize = 14,
-  fontWeight = Cairo.FontWeightNormal,
-  fontSlant = Cairo.FontSlantNormal
+  textTypeface = "sans-serif",
+  textHeight = 14,
+  textWeight = Cairo.FontWeightNormal,
+  textSlant = Cairo.FontSlantNormal
 }
 
 {-| Creates a text from a string. -}
@@ -62,11 +62,11 @@ overline
 
 {-| Sets the weight of a piece of text to bold. -}
 bold :: Text -> Text
-bold txt = txt { fontWeight = Cairo.FontWeightBold }
+bold txt = txt { textWeight = Cairo.FontWeightBold }
 
 {-| Sets the slant of a piece of text to italic. -}
 italic :: Text -> Text
-italic txt = txt { fontSlant = Cairo.FontSlantItalic }
+italic txt = txt { textSlant = Cairo.FontSlantItalic }
 
 {-| Sets the color of a piece of text. -}
 color :: Color -> Text -> Text
@@ -74,13 +74,13 @@ color col txt = txt { textColor = col }
 
 {-| Sets the typeface of the text to monospace. -}
 monospace :: Text -> Text
-monospace txt = txt { fontTypeface = "monospace" }
+monospace txt = txt { textTypeface = "monospace" }
 
 {-| Sets the typeface of the text. Only fonts
     supported by Cairo's toy font API are currently
     supported. -}
 typeface :: String -> Text -> Text
-typeface face txt = txt { fontTypeface = face }
+typeface face txt = txt { textTypeface = face }
 
 {-| Sets the size of a text noticeably large. -}
 header :: Text -> Text
@@ -88,4 +88,4 @@ header = height 32
 
 {-| Sets the size of a piece of text. -}
 height :: Double -> Text -> Text
-height size txt = txt { fontSize = size }
+height size txt = txt { textHeight = size }

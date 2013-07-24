@@ -69,10 +69,10 @@ data Element = CollageElement Int Int [Form] |
 data Text = Text {
   textUTF8 :: String,
   textColor :: Color,
-  fontTypeface :: String,
-  fontSize :: Double,
-  fontWeight :: Cairo.FontWeight,
-  fontSlant :: Cairo.FontSlant
+  textTypeface :: String,
+  textHeight :: Double,
+  textWeight :: Cairo.FontWeight,
+  textSlant :: Cairo.FontSlant
 } deriving (Show, Eq)
 
 {-| Create an element from an image with a given width, height and image file path.
@@ -97,11 +97,11 @@ croppedImage pos w h src = ImageElement pos w h src False
     graphic, whether it be an element or shape. See 'FormStyle' for an insight
     into what sort of graphics can be wrapped in a form. -}
 data Form = Form {
-  theta :: Double,
-  scalar :: Double,
-  x :: Double,
-  y :: Double,
-  style :: FormStyle
+  formTheta :: Double,
+  formScale :: Double,
+  formX :: Double,
+  formY :: Double,
+  formStyle :: FormStyle
 } deriving (Show, Eq)
 
 {-| A data structure describing how a shape or path looks when filled. -}
@@ -117,37 +117,37 @@ data LineJoin = Smooth | Sharp Double | Clipped deriving (Show, Eq, Ord, Read)
 
 {-| A data structure describing how a shape or path looks when stroked. -}
 data LineStyle = LineStyle {
-  color :: Color,
-  width :: Double,
-  cap :: LineCap,
-  join :: LineJoin,
-  dashing :: [Double],
-  dashOffset :: Double
+  lineColor :: Color,
+  lineWidth :: Double,
+  lineCap :: LineCap,
+  lineJoin :: LineJoin,
+  lineDashing :: [Double],
+  lineDashOffset :: Double
 } deriving (Show, Eq)
 
 {-| Creates the default line style. By default, the line is black with a width of 1,
     flat caps and regular sharp joints. -}
 defaultLine :: LineStyle
 defaultLine = LineStyle {
-  color = black,
-  width = 1,
-  cap = Flat,
-  join = Sharp 10,
-  dashing = [],
-  dashOffset = 0
+  lineColor = black,
+  lineWidth = 1,
+  lineCap = Flat,
+  lineJoin = Sharp 10,
+  lineDashing = [],
+  lineDashOffset = 0
 }
 
 {-| Create a solid line style with a color. -}
 solid :: Color -> LineStyle
-solid color = defaultLine { color = color }
+solid color = defaultLine { lineColor = color }
 
 {-| Create a dashed line style with a color. -}
 dashed :: Color -> LineStyle
-dashed color = defaultLine { color = color, dashing = [8, 4] }
+dashed color = defaultLine { lineColor = color, lineDashing = [8, 4] }
 
 {-| Create a dotted line style with a color. -}
 dotted :: Color -> LineStyle
-dotted color = defaultLine { color = color, dashing = [3, 3] }
+dotted color = defaultLine { lineColor = color, lineDashing = [3, 3] }
 
 {-| A data structure describing a few ways that graphics that can be wrapped in a form
     and hence transformed. -}
@@ -158,7 +158,7 @@ data FormStyle = PathForm LineStyle Path |
 
 {-| Utility function for creating a form. -}
 form :: FormStyle -> Form
-form style = Form { theta = 0, scalar = 1, x = 0, y = 0, style = style }
+form style = Form { formTheta = 0, formScale = 1, formX = 0, formY = 0, formStyle = style }
 
 {-| Utility function for creating a filled form from a fill style and shape. -}
 fill :: FillStyle -> Shape -> Form
@@ -203,15 +203,15 @@ groupTransform matrix forms = form (GroupForm matrix forms)
 
 {-| Rotates a form by an amount (in radians). -}
 rotate :: Double -> Form -> Form
-rotate t f = f { theta = t + theta f }
+rotate t f = f { formTheta = t + formTheta f }
 
 {-| Scales a form by an amount, e.g. scaling by /2.0/ will double the size. -}
 scale :: Double -> Form -> Form
-scale n f = f { scalar = n + scalar f }
+scale n f = f { formScale = n + formScale f }
 
 {-| Moves a form relative to its current position. -}
 move :: (Double, Double) -> Form -> Form
-move (rx, ry) f = f { x = rx + x f, y = ry + y f }
+move (rx, ry) f = f { formX = rx + formX f, formY = ry + formY f }
 
 {-| Moves a form's x-coordinate relative to its current position. -}
 moveX :: Double -> Form -> Form

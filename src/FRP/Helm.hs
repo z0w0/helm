@@ -180,8 +180,8 @@ renderElement state (ImageElement (sx, sy) sw sh src stretch) = do
 
 renderElement _ (TextElement (Text { textColor = (Color r g b a), .. })) = do
   Cairo.setSourceRGBA r g b a
-  Cairo.selectFontFace fontTypeface fontSlant fontWeight
-  Cairo.setFontSize fontSize
+  Cairo.selectFontFace textTypeface textSlant textWeight
+  Cairo.setFontSize textHeight
   Cairo.showText textUTF8
 
 {-| A utility function that goes into a state of transformation and then pops it when finished. -}
@@ -208,9 +208,9 @@ setLineJoin join =
     to render with a line style and then strokes afterwards. Assumes
     that all drawing paths have already been setup before being called. -}
 setLineStyle :: LineStyle -> Cairo.Render ()
-setLineStyle (LineStyle { color = Color r g b a, .. }) =
-  Cairo.setSourceRGBA r g b a >> setLineCap cap >> setLineJoin join >>
-  Cairo.setLineWidth width >> Cairo.setDash dashing dashOffset >> Cairo.stroke
+setLineStyle (LineStyle { lineColor = Color r g b a, .. }) =
+  Cairo.setSourceRGBA r g b a >> setLineCap lineCap >> setLineJoin lineJoin >>
+  Cairo.setLineWidth lineWidth >> Cairo.setDash lineDashing lineDashOffset >> Cairo.stroke
 
 {-| A utility function that sets up all the necessary settings with Cairo
     to render with a fill style and then fills afterwards. Assumes
@@ -233,15 +233,15 @@ setFillStyle _ (Gradient (Radial (sx, sy) sr (ex, ey) er points)) =
 
 {-| A utility that renders a form. -}
 renderForm :: EngineState -> Form -> Cairo.Render ()
-renderForm _ (Form { style = PathForm style p, .. }) =
-  withTransform scalar theta x y $ 
+renderForm _ (Form { formStyle = PathForm style p, .. }) =
+  withTransform formScale formTheta formX formY $ 
       void $ setLineStyle style >> Cairo.moveTo hx hy >> mapM (uncurry Cairo.lineTo) p
 
     where
       (hx, hy) = head p
 
-renderForm state (Form { style = ShapeForm style (PolygonShape points), .. }) =
-  withTransform scalar theta x y $ do
+renderForm state (Form { formStyle = ShapeForm style (PolygonShape points), .. }) =
+  withTransform formScale formTheta formX formY $ do
       Cairo.newPath >> Cairo.moveTo hx hy >> mapM (uncurry Cairo.lineTo) points >> Cairo.closePath
 
       case style of
@@ -251,16 +251,16 @@ renderForm state (Form { style = ShapeForm style (PolygonShape points), .. }) =
     where
       (hx, hy) = head points
 
-renderForm state (Form { style = ShapeForm style (RectangleShape (w, h)), .. }) =
-  withTransform scalar theta x y $ do
+renderForm state (Form { formStyle = ShapeForm style (RectangleShape (w, h)), .. }) =
+  withTransform formScale formTheta formX formY $ do
     Cairo.rectangle 0 0 w h
 
     case style of
       Left lineStyle -> setLineStyle lineStyle
       Right fillStyle -> setFillStyle state fillStyle
 
-renderForm state (Form { style = ShapeForm style (ArcShape (cx, cy) a1 a2 r (sx, sy)), .. }) =
-  withTransform scalar theta x y $ do
+renderForm state (Form { formStyle = ShapeForm style (ArcShape (cx, cy) a1 a2 r (sx, sy)), .. }) =
+  withTransform formScale formTheta formX formY $ do
     Cairo.scale sx sy
     Cairo.arc cx cy r a1 a2
     Cairo.scale 1 1
@@ -269,5 +269,5 @@ renderForm state (Form { style = ShapeForm style (ArcShape (cx, cy) a1 a2 r (sx,
       Left lineStyle -> setLineStyle lineStyle
       Right fillStyle -> setFillStyle state fillStyle
 
-renderForm state (Form { style = ElementForm element, .. }) = withTransform scalar theta x y $ renderElement state element
-renderForm state (Form { style = GroupForm m forms, .. }) = withTransform scalar theta x y $ void $ Cairo.setMatrix m >> mapM (renderForm state) forms
+renderForm state (Form { formStyle = ElementForm element, .. }) = withTransform formScale formTheta formX formY $ renderElement state element
+renderForm state (Form { formStyle = GroupForm m forms, .. }) = withTransform formScale formTheta formX formY $ void $ Cairo.setMatrix m >> mapM (renderForm state) forms
