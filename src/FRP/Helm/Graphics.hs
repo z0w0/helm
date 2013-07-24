@@ -105,15 +105,15 @@ data Form = Form {
 } deriving (Show, Eq)
 
 {-| A data structure describing how a shape or path looks when filled. -}
-data FillStyle = Solid Color | Texture String | Gradient Gradient deriving (Show, Eq)
+data FillStyle = Solid Color | Texture String | Gradient Gradient deriving (Show, Eq, Ord, Read)
 
 {-| A data structure describing the shape of the ends of a line. -}
-data LineCap = Flat | Round | Padded deriving (Show, Eq, Enum, Ord)
+data LineCap = Flat | Round | Padded deriving (Show, Eq, Enum, Ord, Read)
 
 {-| A data structure describing the shape of the join of a line, i.e.
     where separate line segments join. The 'Sharp' variant takes
     an argument to limit the length of the join. -}
-data LineJoin = Smooth | Sharp Double | Clipped deriving (Show, Eq)
+data LineJoin = Smooth | Sharp Double | Clipped deriving (Show, Eq, Ord, Read)
 
 {-| A data structure describing how a shape or path looks when stroked. -}
 data LineStyle = LineStyle {
@@ -245,7 +245,7 @@ segment p1 p2 = [p1, p2]
     such as a polygon formed from a set of points or a rectangle. -}
 data Shape = PolygonShape Path |
              RectangleShape (Double, Double) |
-             ArcShape (Double, Double) Double Double Double (Double, Double) deriving (Show, Eq)
+             ArcShape (Double, Double) Double Double Double (Double, Double) deriving (Show, Eq, Ord, Read)
 
 {-| Creates a shape from a path (a set of points). -}
 polygon :: Path -> Shape

@@ -34,7 +34,7 @@ module FRP.Helm.Color (
 {-| A data structure describing a color. It is represented interally as an RGBA
     color, but the utility functions 'hsva', 'hsv', etc. can be used to convert
     from other popular formats to this structure. -}
-data Color = Color { r :: !Double, g :: !Double, b :: !Double, a :: !Double } deriving (Show, Eq)
+data Color = Color Double Double Double Double deriving (Show, Eq, Ord, Read)
 
 {-| Creates an RGB color. -}
 rgb :: Double -> Double -> Double -> Color
@@ -153,7 +153,7 @@ hsv h s v = hsva h s v 1
     over certain radii in an arc pattern. Linear gradients are a set of colors
     transitioned in a straight line. -}
 data Gradient = Linear (Double, Double) (Double, Double) [(Double, Color)] |
-                Radial (Double, Double) Double (Double, Double) Double [(Double, Color)] deriving (Show, Eq)
+                Radial (Double, Double) Double (Double, Double) Double [(Double, Color)] deriving (Show, Eq, Ord, Read)
 
 
 {-| Creates a linear gradient. Takes a starting position, ending position and a list
