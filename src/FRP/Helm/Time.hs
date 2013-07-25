@@ -11,6 +11,7 @@ module FRP.Helm.Time (
   inSeconds,
   inMinutes,
   inHours,
+  fps,
   -- * Clock State
   running,
   delta,
@@ -53,6 +54,10 @@ inMinutes n = n / minute
 {-| Converts a time value to a fractional value, in hours. -}
 inHours :: Time -> Double
 inHours n = n / hour
+
+{-| Converts a frames-per-second value into a time value. -}
+fps :: Int -> Time
+fps n = second / realToFrac n
 
 {-| A signal that returns the time that the game has been running for when sampled. -}
 running :: SignalGen (Signal Time)
