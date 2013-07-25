@@ -1,6 +1,8 @@
 {-| Contains miscellaneous utility functions and the main
     functions for interfacing with the engine. -}
 module FRP.Helm (
+  -- * Types
+  Time,
   -- * Engine
   run,
   -- * Utilities
@@ -46,6 +48,10 @@ degrees n = n * pi / 180
     Turns are essentially full revolutions of the unit circle. -}
 turns :: Double -> Double
 turns n = 2 * pi * n
+
+{-| A type describing an amount of time in an arbitary unit. Use the time composing/converting functions to manipulate
+    time values. -}
+type Time = Double
 
 {-| A data structure describing the current engine state.
     This may be in userland in the future, for setting
