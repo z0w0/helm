@@ -196,80 +196,80 @@ withTransform s t x y f = Cairo.save >> Cairo.scale s s >> Cairo.translate x y >
 {-| A utility function that sets the Cairo line cap based off of our version. -}
 setLineCap :: LineCap -> Cairo.Render ()
 setLineCap cap = case cap of
-    Flat   -> Cairo.setLineCap Cairo.LineCapButt
-    Round  -> Cairo.setLineCap Cairo.LineCapRound
-    Padded -> Cairo.setLineCap Cairo.LineCapSquare
+  Flat   -> Cairo.setLineCap Cairo.LineCapButt
+  Round  -> Cairo.setLineCap Cairo.LineCapRound
+  Padded -> Cairo.setLineCap Cairo.LineCapSquare
 
 {-| A utility function that sets the Cairo line style based off of our version. -}
 setLineJoin :: LineJoin -> Cairo.Render ()
 setLineJoin join = case join of
-    Smooth    -> Cairo.setLineJoin Cairo.LineJoinRound
-    Sharp lim -> Cairo.setLineJoin Cairo.LineJoinMiter >> Cairo.setMiterLimit lim
-    Clipped   -> Cairo.setLineJoin Cairo.LineJoinBevel
+  Smooth    -> Cairo.setLineJoin Cairo.LineJoinRound
+  Sharp lim -> Cairo.setLineJoin Cairo.LineJoinMiter >> Cairo.setMiterLimit lim
+  Clipped   -> Cairo.setLineJoin Cairo.LineJoinBevel
 
 {-| A utility function that sets up all the necessary settings with Cairo
     to render with a line style and then strokes afterwards. Assumes
     that all drawing paths have already been setup before being called. -}
 setLineStyle :: LineStyle -> Cairo.Render ()
 setLineStyle (LineStyle { lineColor = Color r g b a, .. }) = do
-    Cairo.setSourceRGBA r g b a
-    setLineCap lineCap
-    setLineJoin lineJoin
-    Cairo.setLineWidth lineWidth
-    Cairo.setDash lineDashing lineDashOffset
-    Cairo.stroke
+  Cairo.setSourceRGBA r g b a
+  setLineCap lineCap
+  setLineJoin lineJoin
+  Cairo.setLineWidth lineWidth
+  Cairo.setDash lineDashing lineDashOffset
+  Cairo.stroke
 
 {-| A utility function that sets up all the necessary settings with Cairo
     to render with a fill style and then fills afterwards. Assumes
     that all drawing paths have already been setup before being called. -}
 setFillStyle :: EngineState -> FillStyle -> Cairo.Render ()
 setFillStyle _ (Solid (Color r g b a)) = do
-    Cairo.setSourceRGBA r g b a
-    Cairo.fill
+  Cairo.setSourceRGBA r g b a
+  Cairo.fill
 
 setFillStyle state (Texture src) = do
-    (surface, _, _) <- Cairo.liftIO $ getSurface state (normalise src)
-    Cairo.setSourceSurface surface 0 0
-    Cairo.getSource >>= flip Cairo.patternSetExtend Cairo.ExtendRepeat
-    Cairo.fill
+  (surface, _, _) <- Cairo.liftIO $ getSurface state (normalise src)
+  Cairo.setSourceSurface surface 0 0
+  Cairo.getSource >>= flip Cairo.patternSetExtend Cairo.ExtendRepeat
+  Cairo.fill
 
 setFillStyle _ (Gradient (Linear (sx, sy) (ex, ey) points)) =
-    Cairo.withLinearPattern sx sy ex ey $ \pattern -> do
-        Cairo.setSource pattern
-        mapM_ (\(o, Color r g b a) -> Cairo.patternAddColorStopRGBA pattern o r g b a) points
-        Cairo.fill
+  Cairo.withLinearPattern sx sy ex ey $ \pattern -> do
+    Cairo.setSource pattern
+    mapM_ (\(o, Color r g b a) -> Cairo.patternAddColorStopRGBA pattern o r g b a) points
+    Cairo.fill
 
 setFillStyle _ (Gradient (Radial (sx, sy) sr (ex, ey) er points)) =
-    Cairo.withRadialPattern sx sy sr ex ey er $ \pattern -> do
-        Cairo.setSource pattern
-        mapM_ (\(o, Color r g b a) -> Cairo.patternAddColorStopRGBA pattern o r g b a) points
-        Cairo.fill
+  Cairo.withRadialPattern sx sy sr ex ey er $ \pattern -> do
+    Cairo.setSource pattern
+    mapM_ (\(o, Color r g b a) -> Cairo.patternAddColorStopRGBA pattern o r g b a) points
+    Cairo.fill
 
 {-| A utility that renders a form. -}
 renderForm :: EngineState -> Form -> Cairo.Render ()
-renderForm state Form{..} = withTransform formScale formTheta formX formY $
-    case formStyle of
-        PathForm style ~ps@((hx,hy):_) -> do
-            setLineStyle style
-            Cairo.moveTo hx hy
-            mapM_ (uncurry Cairo.lineTo) ps
+renderForm state Form { .. } = withTransform formScale formTheta formX formY $
+  case formStyle of
+    PathForm style ~ps@((hx,hy):_) -> do
+      setLineStyle style
+      Cairo.moveTo hx hy
+      mapM_ (uncurry Cairo.lineTo) ps
 
-        ShapeForm style shape -> do
-            case shape of
-                PolygonShape ~ps@((hx,hy):_) -> do
-                     Cairo.newPath
-                     Cairo.moveTo hx hy
-                     mapM_ (uncurry Cairo.lineTo) ps
-                     Cairo.closePath
+    ShapeForm style shape -> do
+      case shape of
+        PolygonShape ~ps@((hx,hy):_) -> do
+          Cairo.newPath
+          Cairo.moveTo hx hy
+          mapM_ (uncurry Cairo.lineTo) ps
+          Cairo.closePath
 
-                RectangleShape (w,h) -> Cairo.rectangle 0 0 w h
+        RectangleShape (w,h) -> Cairo.rectangle 0 0 w h
 
-                ArcShape (cx,cy) a1 a2 r (sx,sy) -> do
-                    Cairo.scale sx sy
-                    Cairo.arc cx cy r a1 a2
-                    Cairo.scale 1 1
+        ArcShape (cx,cy) a1 a2 r (sx,sy) -> do
+          Cairo.scale sx sy
+          Cairo.arc cx cy r a1 a2
+          Cairo.scale 1 1
 
-            either setLineStyle (setFillStyle state) style
+      either setLineStyle (setFillStyle state) style
 
-        ElementForm element -> renderElement state element
-        GroupForm m forms   -> Cairo.setMatrix m >> mapM_ (renderForm state) forms
+    ElementForm element -> renderElement state element
+    GroupForm m forms   -> Cairo.setMatrix m >> mapM_ (renderForm state) forms
