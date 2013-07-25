@@ -31,4 +31,4 @@ trunc :: Color -> Color
 trunc (Color r g b a) = rgba (trunc' r 3) (trunc' g 3) (trunc' b 3) a
 
 trunc' :: Double -> Integer -> Double
-trunc' f n = (fromInteger $ round $ f * (10^n)) / (10.0^^n)
+trunc' f n = fromInteger (round $ f * (10^n)) / (10.0^^n)

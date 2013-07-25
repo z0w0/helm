@@ -73,6 +73,6 @@ delta' t = (fmap . fmap) snd $ transfer (0, 0) (\t2 (t1, _) -> (t2, t2 - t1)) t
     amount of time it blocked for. Please note that delaying by values smaller than 1 millisecond can have
     platform-specific results. -}
 delay :: Time -> SignalGen (Signal Time)
-delay t = effectful $ (SDL.delay $ fixed) >> return (realToFrac fixed)
+delay t = effectful $ SDL.delay fixed >> return (realToFrac fixed)
   where
     fixed = max 0 $ round t
