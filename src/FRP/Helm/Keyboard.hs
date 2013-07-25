@@ -25,6 +25,7 @@ getKeyState :: IO [Int]
 getKeyState = alloca $ \numkeysPtr -> do
   keysPtr <- sdlGetKeyState numkeysPtr
   numkeys <- peek numkeysPtr
+
   (map fromIntegral . elemIndices 1) <$> peekArray (fromIntegral numkeys) keysPtr
 
 {-| A data structure describing a physical key on a keyboard. -}
