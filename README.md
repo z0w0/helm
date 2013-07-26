@@ -58,8 +58,7 @@ which is a resource aiming to give thorough explanations of the way Helm and its
   * `FRP.Helm.Text` contains functions for composing text, formatting it
     and then turning it into an element.
 
-  * `FRP.Helm.Time` contains a type representing an amount of time, functions
-    for composing units of time and signals that sample from the game clock.
+  * `FRP.Helm.Time` contains functions for composing units of time and signals that sample from the game clock.
 
   * `FRP.Helm.Window` contains signals for working with the game window state.
 
