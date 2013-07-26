@@ -37,7 +37,7 @@ minute = 60000
 
 {-| A time value representing one hour. -}
 hour :: Time
-hour = 60000
+hour = 3600000
 
 {-| Converts a time value to a fractional value, in milliseconds. -}
 inMilliseconds :: Time -> Double
