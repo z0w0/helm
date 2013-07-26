@@ -9,11 +9,11 @@ import qualified FRP.Helm.Text as Text
 import qualified FRP.Helm.Automaton as Automaton
 
 animation :: SignalGen (Signal (Double, Double))
-animation = Automaton.run (Automaton.stateful (0, 0) (\dt (x, y) -> (x + dt, y + dt))) (0, 0) $ Time.delta
+animation = Automaton.run (Automaton.stateful (0, 0) (\dt (x, y) -> (x + dt, y + dt))) (0, 0) Time.delta
 
 render :: (Int, Int) -> Time -> (Double, Double) -> Element
 render (w, h) dt (dx, dy) = collage w h [filled red $ rect (realToFrac w) (realToFrac h),
-                                move (dx, dy) $ toForm $ Text.asText $ (round $ 1 / Time.inSeconds dt)]
+                                move (dx, dy) $ toForm $ Text.asText $ round (1 / Time.inSeconds dt)]
 
 main :: IO ()
 main = run $ do 

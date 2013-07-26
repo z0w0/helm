@@ -51,7 +51,7 @@ data Key = BackspaceKey | TabKey | ClearKey | EnterKey | PauseKey | EscapeKey |
            RShiftKey | LShiftKey | RCtrlKey | LCtrlKey | RAltKey | LAltKey |
            RMetaKey | LMetaKey | RSuperKey | LSuperKey | ModeKey | ComposeKey | HelpKey |
            PrintKey | SysReqKey | BreakKey | MenuKey | PowerKey | EuroKey |
-           UndoKey deriving (Show, Eq, Ord)
+           UndoKey deriving (Show, Eq, Ord, Read)
 
 {- All integer values of this enum are equivalent to the SDL key enum. -}
 instance Enum Key where

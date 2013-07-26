@@ -165,7 +165,7 @@ getSurface (EngineState { cache }) src = do
 
 {-| A utility function for rendering a specific element. -}
 renderElement :: EngineState -> Element -> Cairo.Render ()
-renderElement state (CollageElement _ _ forms) = void $ mapM_ (renderForm state) forms
+renderElement state (CollageElement _ _ forms) = mapM_ (renderForm state) forms
 renderElement state (ImageElement (sx, sy) sw sh src stretch) = do
   (surface, w, h) <- Cairo.liftIO $ getSurface state (normalise src)
 
@@ -234,37 +234,38 @@ setFillStyle state (Texture src) = do
   Cairo.fill
 
 setFillStyle _ (Gradient (Linear (sx, sy) (ex, ey) points)) =
-  Cairo.withLinearPattern sx sy ex ey $ \pattern -> do
-    Cairo.setSource pattern
-    mapM_ (\(o, Color r g b a) -> Cairo.patternAddColorStopRGBA pattern o r g b a) points
-    Cairo.fill
+  Cairo.withLinearPattern sx sy ex ey $ \pattern -> setFillStyle' pattern points
 
 setFillStyle _ (Gradient (Radial (sx, sy) sr (ex, ey) er points)) =
-  Cairo.withRadialPattern sx sy sr ex ey er $ \pattern -> do
-    Cairo.setSource pattern
-    mapM_ (\(o, Color r g b a) -> Cairo.patternAddColorStopRGBA pattern o r g b a) points
-    Cairo.fill
+  Cairo.withRadialPattern sx sy sr ex ey er $ \pattern -> setFillStyle' pattern points
+
+{-| A utility function that adds color stops to a pattern and then fills it. -}
+setFillStyle' :: Cairo.Pattern -> [(Double, Color)] -> Cairo.Render ()
+setFillStyle' pattern points = do
+  Cairo.setSource pattern
+  mapM_ (\(o, Color r g b a) -> Cairo.patternAddColorStopRGBA pattern o r g b a) points
+  Cairo.fill
 
 {-| A utility that renders a form. -}
 renderForm :: EngineState -> Form -> Cairo.Render ()
 renderForm state Form { .. } = withTransform formScale formTheta formX formY $
   case formStyle of
-    PathForm style ~ps@((hx,hy):_) -> do
+    PathForm style ~ps @ ((hx, hy) : _) -> do
       setLineStyle style
       Cairo.moveTo hx hy
       mapM_ (uncurry Cairo.lineTo) ps
 
     ShapeForm style shape -> do
       case shape of
-        PolygonShape ~ps@((hx,hy):_) -> do
+        PolygonShape ~ps @ ((hx, hy) : _) -> do
           Cairo.newPath
           Cairo.moveTo hx hy
           mapM_ (uncurry Cairo.lineTo) ps
           Cairo.closePath
 
-        RectangleShape (w,h) -> Cairo.rectangle 0 0 w h
+        RectangleShape (w, h) -> Cairo.rectangle 0 0 w h
 
-        ArcShape (cx,cy) a1 a2 r (sx,sy) -> do
+        ArcShape (cx, cy) a1 a2 r (sx, sy) -> do
           Cairo.scale sx sy
           Cairo.arc cx cy r a1 a2
           Cairo.scale 1 1
