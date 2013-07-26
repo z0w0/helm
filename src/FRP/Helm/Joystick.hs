@@ -30,11 +30,11 @@ type Joystick = SDL.Joystick
 available :: SignalGen (Signal Int)
 available = effectful SDL.countAvailable
 
-{-| The name of a joystick. -}
+{-| The name of a joystick. Can throw an exception when sampled if the joystick index is invalid. -}
 name :: Int -> SignalGen (Signal String)
 name i = effectful $ SDL.name i
 
-{-| The joystick at a certain slot. -}
+{-| The joystick at a certain slot. Can throw an exception when sampled if the joystick index is invalid. -}
 open :: Int -> SignalGen (Signal Joystick)
 open i = effectful $ SDL.open i
 
