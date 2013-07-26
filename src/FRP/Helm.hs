@@ -14,6 +14,7 @@ module FRP.Helm (
   module FRP.Helm.Graphics,
 ) where
 
+import Control.Exception
 import Data.IORef
 import Foreign.Ptr (castPtr)
 import FRP.Elerea.Simple
@@ -88,7 +89,10 @@ newEngineState smp = do
     >   return $ fmap render dims
  -}
 run :: SignalGen (Signal Element) -> IO ()
-run gen = SDL.init [SDL.InitVideo, SDL.InitJoystick] >> requestDimensions 800 600 >> start gen >>= newEngineState >>= run'
+run gen = finally SDL.quit $ do
+  SDL.init [SDL.InitVideo, SDL.InitJoystick]
+  requestDimensions 800 600
+  start gen >>= newEngineState >>= run'
 
 {-| A utility function called by 'run' that samples the element
     or quits the entire engine if SDL events say to do so. -}
@@ -96,7 +100,10 @@ run' :: EngineState -> IO ()
 run' state = do
   continue <- run''
 
-  if continue then smp state >>= render state >> run' state else SDL.quit
+  if continue then
+    smp state >>= render state >> run' state
+  else
+    return ()
 
 {-| A utility function called by 'run\'' that polls all SDL events
     off the stack, returning true if the game should keep running,

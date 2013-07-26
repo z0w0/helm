@@ -42,7 +42,7 @@ library
     SDL >= 0.6 && < 1
   default-language: Haskell2010
   default-extensions: RecordWildCards, NamedFieldPuns
-  ghc-options: -Wall
+  ghc-options: -Wall -fno-warn-unused-do-bind
 
 test-suite helm-tests
   type: exitcode-stdio-1.0
