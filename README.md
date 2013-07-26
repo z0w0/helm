@@ -15,6 +15,10 @@ is hidden behind a signal. For those unfamiliar with FRP, signals are essentiall
 a value that changes over time. This sort of architecture used for a game allows for pretty
 simplistic (and in my opinion, artistic) code.
 
+Documentation of the Helm API is available on [Hackage](http://hackage.haskell.org/package/helm).
+There is currently a heavily work-in-progress guide on [Helm's website](http://helm-engine.org/guide),
+which is a resource aiming to give thorough explanations of the way Helm and its API work through examples.
+
 ## Features
 
 * Allows you to express game logic dependent on input in a straightforward manner,
@@ -53,6 +57,9 @@ simplistic (and in my opinion, artistic) code.
 
   * `FRP.Helm.Text` contains functions for composing text, formatting it
     and then turning it into an element.
+
+  * `FRP.Helm.Time` contains a type representing an amount of time, functions
+    for composing units of time and signals that sample from the game clock.
 
   * `FRP.Helm.Window` contains signals for working with the game window state.
 
@@ -138,13 +145,14 @@ Helm would benefit from either of the following contributions:
    code please submit a pull request and follow the formatting
    styles set out in the current code: 2 space indents, documentation
    on every top-level function, favouring monad operators over
-   do blocks, etc.
+   do blocks when there is a logical flow of data, spaces between operators
+   and after commas, etc. Please also confirm that the code passes under
+   HLint.
 
-The following is a list of areas I want to tackle in the future, 
-and possible targets that others could try for:
+The following is a list of major issues that need to be tackled in the future:
 
 * Improve the API. See [issue #4](https://github.com/z0w0/helm/issues/4).
-* Backend wise, it would be nice to use GLFW/OpenGL instead of SDL/Cairo.
+* Backend wise, it would be nice to use GLFW/OpenGL instead of SDL/Cairo (at the very least SDL/OpenGL).
   See [issue #1](https://github.com/z0w0/helm/issues/1).
 * Optimizations and testing. This is a early release of the engine so
   obviously little testing or optimizations have been done.

@@ -1,4 +1,4 @@
-{-| Contains types for composing units of time and sampling values from the game clock. -}
+{-| Contains a type representing an amount of time, functions for composing units of time and signals that sample from the game clock. -}
 module FRP.Helm.Time (
   -- * Types
   Time,
