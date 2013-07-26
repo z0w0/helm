@@ -270,7 +270,7 @@ renderForm state Form { .. } = withTransform formScale formTheta formX formY $
           mapM_ (uncurry Cairo.lineTo) ps
           Cairo.closePath
 
-        RectangleShape (w, h) -> Cairo.rectangle 0 0 w h
+        RectangleShape (w, h) -> Cairo.rectangle (-w / 2) (-h / 2) w h
 
         ArcShape (cx, cy) a1 a2 r (sx, sy) -> do
           Cairo.scale sx sy
