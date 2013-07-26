@@ -26,7 +26,7 @@ which is a resource aiming to give thorough explanations of the way Helm and its
 
 * Vector graphics based rendering, allow you to either write art
   designed for any resolution or still load generic images and render
-  those as you would with any pixel-based direct blitting game engine.
+  those as you would with any pixel-blitting engine.
 
 * Straightforward API heavily inspired by the Elm programming language. The API
   is broken up into the following areas:
