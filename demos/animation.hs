@@ -13,7 +13,7 @@ animation = Automaton.run (Automaton.stateful (0, 0) (\dt (x, y) -> (x + dt, y +
 
 render :: (Int, Int) -> Time -> (Double, Double) -> Element
 render (w, h) dt (dx, dy) = collage w h [filled red $ rect (realToFrac w) (realToFrac h),
-                                move (dx, dy) $ toForm $ Text.asText $ round (1 / Time.inSeconds dt)]
+                                         move (0, 0) $ toForm $ Text.asText $ round (1 / Time.inSeconds dt)]
 
 main :: IO ()
 main = run $ do 

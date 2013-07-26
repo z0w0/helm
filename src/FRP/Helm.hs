@@ -172,7 +172,11 @@ getSurface (EngineState { cache }) src = do
 
 {-| A utility function for rendering a specific element. -}
 renderElement :: EngineState -> Element -> Cairo.Render ()
-renderElement state (CollageElement _ _ forms) = mapM_ (renderForm state) forms
+renderElement state (CollageElement w h forms) = do
+  Cairo.save
+  Cairo.translate (fromIntegral w / 2) (fromIntegral h / 2)
+  mapM_ (renderForm state) forms
+  Cairo.restore
 renderElement state (ImageElement (sx, sy) sw sh src stretch) = do
   (surface, w, h) <- Cairo.liftIO $ getSurface state (normalise src)
 
