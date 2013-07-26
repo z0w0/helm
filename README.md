@@ -23,43 +23,31 @@ which is a resource aiming to give thorough explanations of the way Helm and its
 
 * Allows you to express game logic dependent on input in a straightforward manner,
   treating events as first class values (the essence of FRP).
-
 * Vector graphics based rendering, allow you to either write art
   designed for any resolution or still load generic images and render
   those as you would with any pixel-blitting engine.
-
 * Straightforward API heavily inspired by the Elm programming language. The API
   is broken up into the following areas:
-
   * `FRP.Helm` contains the main code for interfacing with the game engine but
     also includes some utility functions and the modules `FRP.Helm.Color` and `FRP.Helm.Graphics`
     in the style of a sort of prelude library, allowing it to be included and readily
     make the most basic of games.
-
   * `FRP.Helm.Automaton` contains the `Automaton` data structure and functions
     for composing, creating and calculating them. Automatons are a useful
     abstraction of a dynamic process that is fed input from a signal
     and feeds output through a signal. This is really useful for things
     like animation systems, accumulating network packets and other
     stateful but input dependent things.
-
   * `FRP.Helm.Color` contains the `Color` data structure, functions for composing
     colors and a few pre-defined colors that are usually used in games.
-
   * `FRP.Helm.Graphics` contains all the graphics data structures, functions
     for composing these structures and other general graphical utilities.
-
   * `FRP.Helm.Joystick` contains signals for working with joystick state.
-
   * `FRP.Helm.Keyboard` contains signals for working with keyboard state.
-
   * `FRP.Helm.Mouse` contains signals for working with mouse state.
-
   * `FRP.Helm.Text` contains functions for composing text, formatting it
     and then turning it into an element.
-
   * `FRP.Helm.Time` contains functions for composing units of time and signals that sample from the game clock.
-
   * `FRP.Helm.Window` contains signals for working with the game window state.
 
 ## Example
