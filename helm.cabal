@@ -55,5 +55,7 @@ test-suite helm-tests
     HUnit >= 1.2 && < 2,
     test-framework >= 0.8 && < 1,
     test-framework-hunit >= 0.3 && < 1,
-    test-framework-quickcheck2 >= 0.3 && < 1
+    test-framework-quickcheck2 >= 0.3 && < 1,
+    elerea >= 2.7 && < 3,
+    SDL >= 0.6 && < 1
   main-is: Main.hs

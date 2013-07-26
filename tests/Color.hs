@@ -8,8 +8,8 @@ import Test.Framework.Providers.QuickCheck2 (testProperty)
 
 tests :: [Test]
 tests = [testProperty "rgb[a] is just an alias constructor" (\(r, g, b, a) -> Color r g b a == rgba r g b a),
-		 testCase "gray is grey" (gray @=? grey),
-		 testCase "hsv sane for black" (black @=? hsv 0 0 0),
+         testCase "gray is grey" (gray @=? grey),
+         testCase "hsv sane for black" (black @=? hsv 0 0 0),
          testCase "hsv sane for white" (white @=? hsv 0 0 1),
          testCase "hsv sane for red" (red @=? hsv 0 1 1),
          testCase "hsv sane for lime" (lime @=? hsv 120 1 1),
@@ -31,4 +31,4 @@ trunc :: Color -> Color
 trunc (Color r g b a) = rgba (trunc' r 3) (trunc' g 3) (trunc' b 3) a
 
 trunc' :: Double -> Integer -> Double
-trunc' f n = fromInteger (round $ f * (10^n)) / (10.0^^n)
+trunc' f n = fromInteger (round $ f * (10 ^ n)) / (10.0 ^^ n)
