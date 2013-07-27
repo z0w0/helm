@@ -98,7 +98,7 @@ main = run $ do
   return $ render <$> dimensions <*> stepper
 ```
 
-Checkout the `demo` folder for more examples.
+Checkout the demos folder for more examples.
 
 ## Installing and Building
 
@@ -120,7 +120,7 @@ which unfortunately is out of my hands.
 
 ## License
 
-Helm is licensed under the MIT license. See the `LICENSE` file for more details.
+Helm is licensed under the MIT license. See the LICENSE file for more details.
 
 ## Contributing
 

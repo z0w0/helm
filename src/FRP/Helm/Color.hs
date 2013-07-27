@@ -155,7 +155,6 @@ hsv h s v = hsva h s v 1
 data Gradient = Linear (Double, Double) (Double, Double) [(Double, Color)] |
                 Radial (Double, Double) Double (Double, Double) Double [(Double, Color)] deriving (Show, Eq, Ord, Read)
 
-
 {-| Creates a linear gradient. Takes a starting position, ending position and a list
     of color stops (which are colors combined with a floating value between /0.0/ and /1.0/
     that describes at what step along the line between the starting position

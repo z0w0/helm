@@ -177,6 +177,7 @@ renderElement state (CollageElement w h forms) = do
   Cairo.translate (fromIntegral w / 2) (fromIntegral h / 2)
   mapM_ (renderForm state) forms
   Cairo.restore
+
 renderElement state (ImageElement (sx, sy) sw sh src stretch) = do
   (surface, w, h) <- Cairo.liftIO $ getSurface state (normalise src)
 
