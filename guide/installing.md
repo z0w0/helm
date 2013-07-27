@@ -24,7 +24,7 @@ the installed GHC is definitely version 7.6 by checking that the output of
 {% highlight bash %}
 $ ghc --version
 The Glorious Glasgow Haskell Compilation System, version 7.6.3
-{% highlight end}
+{% endhighlight %}
 
 Once GHC has been installed, use the following to install the Helm haskell package:
 
@@ -32,7 +32,7 @@ Once GHC has been installed, use the following to install the Helm haskell packa
 $ cabal update # if this is your first time using cabal
 $ cabal install gtk2hs-buildtools
 $ cabal install helm
-{% endhighlight %}
+{% endhighlight%}
 
 The gtk2hs dependency needs to be installed manually because it is required to build
 the Cairo bindings. You can now start using Helm to make games!
@@ -47,7 +47,7 @@ is definitely 7.6 by checking that the output of `ghc --version` is something si
 {% highlight bash %}
 $ ghc --version
 The Glorious Glasgow Haskell Compilation System, version 7.6.3
-{% highlight end}
+{% endhighlight %}
 
 In order to install Helm, you will first need to install the same external dependencies discussed
 in the Linux section using an OS X package manager. For this guide we'll only be explaining the process
@@ -59,7 +59,7 @@ commands to install SDL and Caior using Homebrew:
 $ brew doctor # if this is your first time using homebrew
 $ brew install SDL
 $ brew install cairo --without-x
-{% highlight end}
+{% endhighlight %}
 
 We need to add the `--without-x` flag when installing Cairo, because we can't use the X11 backend
 on OS X without an X11 server (not that we want to, anyway). We can now run the Cabal package manager
