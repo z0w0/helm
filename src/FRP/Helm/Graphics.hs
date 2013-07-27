@@ -222,7 +222,8 @@ moveY :: Double -> Form -> Form
 moveY y = move (0, y)
 
 {-| Create an element from a collection of forms, with width and height arguments.
-    Can be used to directly render a collection of forms.
+    All forms are centered and clipped within the supplied dimensions.
+    It is generally used to directly render a collection of forms.
 
     > collage 800 600 [move (100, 100) $ filled red $ square 100,
     >                  move (100, 100) $ outlined (solid white) $ circle 50]

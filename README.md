@@ -59,21 +59,20 @@ import FRP.Helm
 import qualified FRP.Helm.Window as Window
 
 render :: (Int, Int) -> Element
-render (w, h) = collage w h [move (100, 100) $ filled red $ square 64]
+render (w, h) = collage w h [move (-100, -100) $ filled red $ square 64]
 
 main :: IO ()
 main = run $ fmap (fmap render) Window.dimensions
 ```
 
-It renders a red square at the position `(100, 100)` with a side length of 64px.  
+It renders a red square at the position `(-100, -100)` (relative to the center of the collage)
+with a side length of 64px.  
   
 The next example is the barebones of a game that depends on input. It shows how to create
 an accumulated state that depends on the values sampled from signals (e.g. mouse input).
 You should see a white square on the screen and pressing the arrow keys allows you to move it.
 
 ```haskell
-{-# LANGUAGE RecordWildCards #-}
-
 import Control.Applicative
 import FRP.Elerea.Simple
 import FRP.Helm
@@ -87,15 +86,19 @@ step (dx, dy) state = state { mx = (realToFrac dx) + mx state,
                               my = (realToFrac dy) + my state }
 
 render :: (Int, Int) -> State -> Element
-render (w, h) (State { .. }) = collage w h [move (mx, my) $ filled white $ square 100]
+render (w, h) (State { mx = mx, y = my }) =
+  collage w h [move (mx, my) $ filled white $ square 100]
 
 main :: IO ()
 main = run $ do
-  dimensions <- Window.dimensions
-  arrows <- Keyboard.arrows
-  stepper <- transfer (State { mx = 0, my = 100 }) step arrows
+    dimensions <- Window.dimensions
+    arrows <- Keyboard.arrows
+    stepper <- transfer state step arrows
 
-  return $ render <$> dimensions <*> stepper
+    return $ render <$> dimensions <*> stepper
+
+  where
+    state = (State { mx = 0, my = 0 })
 ```
 
 Checkout the demos folder for more examples.

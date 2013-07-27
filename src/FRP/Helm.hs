@@ -175,6 +175,8 @@ renderElement :: EngineState -> Element -> Cairo.Render ()
 renderElement state (CollageElement w h forms) = do
   Cairo.save
   Cairo.translate (fromIntegral w / 2) (fromIntegral h / 2)
+  Cairo.rectangle 0 0 (fromIntegral w) (fromIntegral h)
+  Cairo.clip
   mapM_ (renderForm state) forms
   Cairo.restore
 
