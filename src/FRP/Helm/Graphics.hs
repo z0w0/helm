@@ -17,6 +17,7 @@ module FRP.Helm.Graphics (
   fittedImage,
   croppedImage,
   collage,
+  centeredCollage,
   -- * Styles & Forms
   defaultLine,
   solid,
@@ -61,7 +62,7 @@ import qualified Graphics.Rendering.Cairo as Cairo
     The usual way to render art in a Helm game is to call
     off to the 'collage' function, which essentially
     renders a collection of forms together. -}
-data Element = CollageElement Int Int [Form] |
+data Element = CollageElement Int Int Bool [Form] |
                ImageElement (Int, Int) Int Int FilePath Bool |
                TextElement Text deriving (Show, Eq)
 
@@ -229,7 +230,11 @@ moveY y = move (0, y)
     >                  move (100, 100) $ outlined (solid white) $ circle 50]
  -}
 collage :: Int -> Int -> [Form] -> Element
-collage = CollageElement
+collage w h forms = CollageElement w h False forms
+
+{-| Like 'collage', but it centers the forms within the supplied dimensions. -}
+centeredCollage :: Int -> Int -> [Form] -> Element
+centeredCollage w h forms = CollageElement w h True forms
 
 {-| A data type made up a collection of points that form a path when joined. -}
 type Path = [(Double, Double)]

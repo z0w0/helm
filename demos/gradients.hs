@@ -15,8 +15,8 @@ radialGrad :: Gradient
 radialGrad = radial (0, 0) 0 (0, 0) 64 stopsA
 
 render :: (Int, Int) -> Element
-render (w, h) = collage w h [move (-100, -100) $ gradient linearGrad $ rect 300 100,
-                             move (100, 100) $ gradient radialGrad $ circle 64]
+render (w, h) = collage w h [move (250, 150) $ gradient linearGrad $ rect 300 100,
+                             move (500, 500) $ gradient radialGrad $ circle 64]
 
 main :: IO ()
 main = run $ fmap (fmap render) Window.dimensions

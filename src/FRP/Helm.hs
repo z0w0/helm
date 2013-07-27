@@ -15,6 +15,7 @@ module FRP.Helm (
 ) where
 
 import Control.Exception
+import Control.Monad (when)
 import Data.IORef
 import Foreign.Ptr (castPtr)
 import FRP.Elerea.Simple
@@ -100,10 +101,7 @@ run' :: EngineState -> IO ()
 run' state = do
   continue <- run''
 
-  if continue then
-    smp state >>= render state >> run' state
-  else
-    return ()
+  when continue $ smp state >>= render state >> run' state
 
 {-| A utility function called by 'run\'' that polls all SDL events
     off the stack, returning true if the game should keep running,
@@ -172,11 +170,11 @@ getSurface (EngineState { cache }) src = do
 
 {-| A utility function for rendering a specific element. -}
 renderElement :: EngineState -> Element -> Cairo.Render ()
-renderElement state (CollageElement w h forms) = do
+renderElement state (CollageElement w h centered forms) = do
   Cairo.save
-  Cairo.translate (fromIntegral w / 2) (fromIntegral h / 2)
   Cairo.rectangle 0 0 (fromIntegral w) (fromIntegral h)
   Cairo.clip
+  when centered $ Cairo.translate (fromIntegral w / 2) (fromIntegral h / 2)
   mapM_ (renderForm state) forms
   Cairo.restore
 
