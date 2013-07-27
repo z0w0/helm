@@ -87,6 +87,6 @@ gradient :: Gradient -> Shape -> Form
 The final product renders a *300x100* rectangle at *(100, 100)* filled with the *linearGrad* gradient,
 and a circle with a radius of *64* at *(500, 300)* filled with the *radialGrad* gradient.
 
-[Checkout the code on Github →](https://github.com/z0w0/helm/blob/master/demo/gradients.hs)
+[Checkout the code on Github →](https://github.com/z0w0/helm/blob/master/demos/gradients.hs)
 
 ![final](/img/guide/gradients.png)
