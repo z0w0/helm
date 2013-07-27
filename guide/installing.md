@@ -32,7 +32,7 @@ Once GHC has been installed, use the following to install the Helm haskell packa
 $ cabal update # if this is your first time using cabal
 $ cabal install gtk2hs-buildtools
 $ cabal install helm
-{% endhighlight%}
+{% endhighlight %}
 
 The gtk2hs dependency needs to be installed manually because it is required to build
 the Cairo bindings. You can now start using Helm to make games!

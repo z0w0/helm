@@ -31,7 +31,7 @@ stopsB = [(0, black), (0.5, red), (1, yellow)]
 
 ### Creating Gradients
 
-According to the [FRP.Helm.Color documentation](http://hackage.haskell.org/packages/archive/helm/latest/doc/html/FRP-Helm-Color.html),
+According to the [*FRP.Helm.Color* documentation](http://hackage.haskell.org/packages/archive/helm/latest/doc/html/FRP-Helm-Color.html),
 the two functions for creating gradients have the following type signatures:
 
 {% highlight haskell %}
@@ -74,7 +74,7 @@ growing to a circle of *64* radius.
 
 ### Creating Forms from Gradients and Shapes
 
-[FRP.Helm.Graphics](http://hackage.haskell.org/packages/archive/helm/latest/doc/html/FRP-Helm-Graphics.html)
+[*FRP.Helm.Graphics*](http://hackage.haskell.org/packages/archive/helm/latest/doc/html/FRP-Helm-Graphics.html)
 provides a function to create a form from a gradient and shape, in a similar manner to the previously
 discussed *filled* function.
 
