@@ -9,6 +9,7 @@ module FRP.Helm (
   radians,
   degrees,
   turns,
+  lift,
   -- * Prelude
   module FRP.Helm.Color,
   module FRP.Helm.Graphics,
@@ -50,6 +51,10 @@ degrees n = n * pi / 180
     Turns are essentially full revolutions of the unit circle. -}
 turns :: Double -> Double
 turns n = 2 * pi * n
+
+{-| Applying a function to a signal producing a new one. -}
+lift :: (a -> b) -> SignalGen (Signal a) -> SignalGen (Signal b)
+lift f s = fmap (fmap f) s
 
 {-| A type describing an amount of time in an arbitary unit. Use the time composing/converting functions to manipulate
     time values. -}
