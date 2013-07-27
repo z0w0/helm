@@ -53,7 +53,7 @@ In order to install Helm, you will first need to install the same external depen
 in the Linux section using an OS X package manager. For this guide we'll only be explaining the process
 using the Homebrew package manager, but it should be similar tactics for others. Firstly, install
 the [latest version of Homebrew from its website](http://brew.sh). You can then run the following
-commands to install SDL and Caior using Homebrew:
+commands to install SDL and Cairo using Homebrew:
 
 {% highlight bash %}
 $ brew doctor # if this is your first time using homebrew
