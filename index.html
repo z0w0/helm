@@ -15,7 +15,7 @@ title: Helm, a functionally reactive game engine
   <p>
     Helm's API provides a simplistic and elegant way to make games.
     Besides a straight forward vector-graphics based drawing API,
-    there's the obvious things like keyboard, mouse and joystick handling,
+    there's the obvious things like keyboard, mouse, joystick and framerate handling,
     but also higher-level concepts like automatons.
   </p>
   <p><a href="http://hackage.haskell.org/package/helm">Take a gander at the API documentation &rarr;</a></p>
@@ -38,10 +38,10 @@ title: Helm, a functionally reactive game engine
   <h3>Powerful</h3>
   <p>
     Built on the <a href="http://hackage.haskell.org/package/elerea">Elerea FRP framework</a> in
-    <a href="http://haskell.org">Haskell</a>, Helm is designed to be simple at the frontend but
-    powerful at the backend. Helm also provides an implementation of piped-based signals called
-    <em>automatons</em> that allow you to use and compose the concept of signals to do factory-like logic,
-    i.e. operations that take an input and output something valuable.
+    <a href="http://haskell.org">Haskell</a>, Helm aims to be simplistic by default but
+    support complex behaviour when needed. To do this, Helm provides things like an implementation of
+    piped-based signals called <em>automatons</em> that allow you to compose the concept of signals
+    to do factory-like logic, i.e. operations that take an input and output something valuable.
   </p>
 </div>
 

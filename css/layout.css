@@ -44,6 +44,7 @@ h1, h2, h3, h4, h5, h6 { font-family: "Roboto Slab", sans-serif; }
 
 a:hover { color: #ef483d; }
 
+li { line-height: 12px; }
 ul.nav { margin-left: auto; }
 ul.nav > li { display: inline-block; margin-right: 20px; }
 ul.nav > li > a { text-decoration: none; font-size: 1.5em; }
