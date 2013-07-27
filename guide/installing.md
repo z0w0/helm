@@ -64,7 +64,7 @@ $ brew install cairo --without-x
 We need to add the `--without-x` flag when installing Cairo, because we can't use the X11 backend
 on OS X without an X11 server (not that we want to, anyway). We can now run the Cabal package manager
 included in the previously installed Haskell platform to install the Helm libraries (in a similar
-manner to linux):
+manner to Linux):
 
 {% highlight bash %}
 $ cabal update # if this is your first time using cabal
