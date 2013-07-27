@@ -248,12 +248,12 @@ segment :: (Double, Double) -> (Double, Double) -> Path
 segment p1 p2 = [p1, p2]
 
 {-| A data structure describing a some sort of graphically representable object,
-    such as a polygon formed from a set of points or a rectangle. -}
+    such as a polygon formed from a list of points or a rectangle. -}
 data Shape = PolygonShape Path |
              RectangleShape (Double, Double) |
              ArcShape (Double, Double) Double Double Double (Double, Double) deriving (Show, Eq, Ord, Read)
 
-{-| Creates a shape from a path (a set of points). -}
+{-| Creates a shape from a path (a list of points). -}
 polygon :: Path -> Shape
 polygon = PolygonShape
 
