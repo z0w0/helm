@@ -17,6 +17,7 @@ module FRP.Helm (
 import Control.Exception
 import Control.Monad (when)
 import Data.IORef
+import Data.Maybe
 import Foreign.Ptr (castPtr)
 import FRP.Elerea.Simple
 import FRP.Helm.Color
@@ -285,4 +286,8 @@ renderForm state Form { .. } = withTransform formScale formTheta formX formY $
       either setLineStyle (setFillStyle state) style
 
     ElementForm element -> renderElement state element
-    GroupForm m forms   -> Cairo.setMatrix m >> mapM_ (renderForm state) forms
+    GroupForm mayhaps forms -> do
+      Cairo.save
+      when (isJust mayhaps) $ Cairo.setMatrix $ fromJust mayhaps
+      mapM_ (renderForm state) forms
+      Cairo.restore

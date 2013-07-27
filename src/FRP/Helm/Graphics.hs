@@ -52,7 +52,7 @@ module FRP.Helm.Graphics (
 ) where
 
 import FRP.Helm.Color (Color, black, Gradient)
-import Graphics.Rendering.Cairo.Matrix (Matrix, identity)
+import Graphics.Rendering.Cairo.Matrix (Matrix)
 import qualified Graphics.Rendering.Cairo as Cairo
 
 {-| A data structure describing something that can be rendered
@@ -155,7 +155,7 @@ dotted color = defaultLine { lineColor = color, lineDashing = [3, 3] }
 data FormStyle = PathForm LineStyle Path |
                  ShapeForm (Either LineStyle FillStyle) Shape |
                  ElementForm Element |
-                 GroupForm Matrix [Form] deriving (Show, Eq)
+                 GroupForm (Maybe Matrix) [Form] deriving (Show, Eq)
 
 {-| Utility function for creating a form. -}
 form :: FormStyle -> Form
@@ -196,11 +196,11 @@ toForm element = form (ElementForm element)
 
 {-| Groups a collection of forms into a single one. -}
 group :: [Form] -> Form
-group forms = form (GroupForm identity forms)
+group forms = form (GroupForm Nothing forms)
 
 {-| Groups a collection of forms into a single one, also applying a matrix transformation. -}
 groupTransform :: Matrix -> [Form] -> Form
-groupTransform matrix forms = form (GroupForm matrix forms)
+groupTransform matrix forms = form (GroupForm (Just matrix) forms)
 
 {-| Rotates a form by an amount (in radians). -}
 rotate :: Double -> Form -> Form
