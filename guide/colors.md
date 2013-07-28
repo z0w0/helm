@@ -161,6 +161,6 @@ slice n = filled color $ polygon points
 
 The final product renders a (flat-edged) color wheel with 11 predefined colors on it.
 
-[Checkout the code on Github →](https://github.com/z0w0/helm/blob/master/demos/colors.hs)
+[Checkout the code on Github →](https://github.com/z0w0/helm/blob/master/demos/colors/Main.hs)
 
 ![final](/img/guide/colors.png)
