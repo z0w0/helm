@@ -32,13 +32,14 @@ newtype Animation = Animation [Frame] deriving (Show, Eq)
 {-| Creates an animation from a list of frames. The time value in each frame
     is absolute to the entire animation, i.e. each time value is the time
     at which the frame takes place relative to the starting time of the animation.
+    The list of frames should never be empty.
  -}
 absolute :: [Frame] -> Animation
 absolute = Animation
 
 {-| Creates an animation from a list of frames. The time value in each frame
     is relative to other frames, i.e. each time value is the difference
-    in time from the last frame.
+    in time from the last frame. The list of frames should never be empty.
 
     > relative [(100, picture1), (100, picture2), (300, picture3)] == absolute [(100, picture1), (200, picture2), (500, picture3)]
  -}
