@@ -44,39 +44,39 @@ lift2 f a b = f <~ a ~~ b
 
 {-| Applies a function to three signals. -}
 lift3 :: (a -> b -> c -> d) -> SignalGen (Signal a) -> SignalGen (Signal b) -> SignalGen (Signal c) -> SignalGen (Signal d)
-lift3 f a b c = (f <~ a ~~ b) ~~ c
+lift3 f a b c = f <~ a ~~ b ~~ c
 
 {-| Applies a function to four signals. -}
 lift4 :: (a -> b -> c -> d -> e) -> SignalGen (Signal a) -> SignalGen (Signal b) -> SignalGen (Signal c) -> SignalGen (Signal d)
                                  -> SignalGen (Signal e)
-lift4 f a b c d = ((f <~ a ~~ b) ~~ c) ~~ d
+lift4 f a b c d = f <~ a ~~ b ~~ c ~~ d
 
 {-| Applies a function to five signals. -}
 lift5 :: (a -> b -> c -> d -> e -> f) -> SignalGen (Signal a) -> SignalGen (Signal b) -> SignalGen (Signal c) -> SignalGen (Signal d)
                                       -> SignalGen (Signal e) -> SignalGen (Signal f)
-lift5 f a b c d e = (((f <~ a ~~ b) ~~ c) ~~ d) ~~ e
+lift5 f a b c d e = f <~ a ~~ b ~~ c ~~ d ~~ e
 
 {-| Applies a function to six signals. -}
 lift6 :: (a -> b -> c -> d -> e -> f -> g) -> SignalGen (Signal a) -> SignalGen (Signal b) -> SignalGen (Signal c) -> SignalGen (Signal d)
                                            -> SignalGen (Signal e) -> SignalGen (Signal f) -> SignalGen (Signal g)
-lift6 f a b c d e f1 = ((((f <~ a ~~ b) ~~ c) ~~ d) ~~ e) ~~ f1
+lift6 f a b c d e f1 = f <~ a ~~ b ~~ c ~~ d ~~ e ~~ f1
 
 {-| Applies a function to seven signals. -}
 lift7 :: (a -> b -> c -> d -> e -> f -> g -> h) -> SignalGen (Signal a) -> SignalGen (Signal b) -> SignalGen (Signal c) -> SignalGen (Signal d)
                                                 -> SignalGen (Signal e) -> SignalGen (Signal f) -> SignalGen (Signal g) -> SignalGen (Signal h)
-lift7 f a b c d e f1 g = (((((f <~ a ~~ b) ~~ c) ~~ d) ~~ e) ~~ f1) ~~ g
+lift7 f a b c d e f1 g = f <~ a ~~ b ~~ c ~~ d ~~ e ~~ f1 ~~ g
 
 {-| Applies a function to eight signals. -}
 lift8 :: (a -> b -> c -> d -> e -> f -> g -> h -> i) -> SignalGen (Signal a) -> SignalGen (Signal b) -> SignalGen (Signal c) -> SignalGen (Signal d)
                                                      -> SignalGen (Signal e) -> SignalGen (Signal f) -> SignalGen (Signal g) -> SignalGen (Signal h)
                                                      -> SignalGen (Signal i)
-lift8 f a b c d e f1 g h = ((((((f <~ a ~~ b) ~~ c) ~~ d) ~~ e) ~~ f1) ~~ g) ~~ h
+lift8 f a b c d e f1 g h = f <~ a ~~ b ~~ c ~~ d ~~ e ~~ f1 ~~ g ~~ h
 
 {-| An alias for 'lift'. -}
 (<~) :: (a -> b) -> SignalGen (Signal a) -> SignalGen (Signal b)
 (<~) = lift
 
-infix 4 <~
+infixl 4 <~
 
 {-| Applies a function within a signal to a signal. This is a wrapper around the builtin '<*>' operator
     that automatically binds the input signal out of the signal generator.
@@ -90,7 +90,7 @@ infix 4 <~
 
 	return $ f1 <*> input1
 
-infix 3 ~~
+infixl 4 ~~
 
 {-| Creates a past-dependent signal that depends on another signal. This is a
     wrapper around the 'transfer' function that automatically binds the input
