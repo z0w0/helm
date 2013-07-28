@@ -37,7 +37,7 @@ $ cabal install helm
 The gtk2hs dependency needs to be installed manually because it is required to build
 the Cairo bindings. You can now start using Helm to make games!
 
-### Mac OSX
+### Mac OS X
 
 You will first need to install the [Haskell Platform 2013.2.0.0 for Mac](http://www.haskell.org/platform/mac.html)
 and the Xcode command line tools. The complete instructions for this process are on the linked download page. Once

@@ -14,10 +14,10 @@ are stored as RGBA values, with each component (R, G, B and A) being
 a 64-bit floating point value. This has an advantage over the regular way
 of representing RGBA colors (with each component being represented as a single byte)
 because it allows a higher range of colors to be composed. Unfortunately this higher range
-of colours is still clamped to a 32-bit color when being rendered to the screen, but it is still
+of colors is still clamped to a 32-bit color when being rendered to the screen, but it is still
 incredibly useful for accurately calculating things such as complementary colors, averaging colors, etc.
 
-To create colours you can use the following functions as explained in the
+To create colors you can use the following functions as explained in the
 [*FRP.Helm.Color* documentation](http://hackage.haskell.org/packages/archive/helm/latest/doc/html/FRP-Helm-Color.html):
 
 {% highlight haskell %}
@@ -73,7 +73,7 @@ Check out the [Forms and Shapes section of the guide](/guide/forms-and-shapes) o
 the [*FRP.Helm.Graphics* documentation](http://hackage.haskell.org/packages/archive/helm/latest/doc/html/FRP-Helm-Graphics.html#v:filled)
 for some examples of these functions.
 
-### Creating a Color Wheel
+### Creating a color Wheel
 
 Let's try making something familiar with our new-found knowledge of colors in Helm &mdash; a color wheel. We want to end up with something
 that looks like a pizza made up of differently-colored slices. First let's define a list of colors we actually want to appear in the color wheel:
@@ -104,15 +104,15 @@ slice n = filled color $ polygon points
 {% endhighlight %}
 
 The *color* variable has been defined as the color in *colors* at index *n* (i.e. the color we want to paint the slice)
-and *r* is a constant representing the radius of the colour-wheel. This won't actually render anything yet, because the
+and *r* is a constant representing the radius of the color wheel. This won't actually render anything yet, because the
 *points* variable is just a blank list. Let's think about how we actually calculate the points for the slice polygon.
 
 Firstly, let's only use 3 points for the slice. This means that the outer edge of the slice will unfortunately be straight, but making it
-smooth is over-complicating it for such a simple example. The first point will be at the center of the colour-wheel (all
-slices will have this point in common), the second point will be at some arbitrary point on the circumference of the colour-wheel
+smooth is over-complicating it for such a simple example. The first point will be at the center of the color wheel (all
+slices will have this point in common), the second point will be at some arbitrary point on the circumference of the color-wheel
 and the third will be along the circumference at some fixed increment from the second point.
 
-Essentially, in order to construct the slice we need to think of the whole colour-wheel as containing exactly
+Essentially, in order to construct the slice we need to think of the whole color wheel as containing exactly
 *2 \* pi* radians (i.e. a circle). Then we can calculate this fixed increment by dividing all of these radians up
 into a certain amount of radians allocated to each slice, based on the number of slices (or number of colors).
 Let's model this thought process in actual code:
@@ -142,7 +142,7 @@ pointOnCircum :: Double -> Double -> (Double, Double)
 pointOnCircum r theta = (r * (cos theta - sin theta), r * (cos theta + sin theta))
 {% endhighlight %}
 
-Using this newly defined function will finally result in what we want: a coloured slice on our colour-wheel.
+Using this newly defined function will finally result in what we want: a colored slice on our color wheel.
 
 {% highlight haskell %}
 slice :: Int -> Form
@@ -159,7 +159,7 @@ slice n = filled color $ polygon points
 
 ### Final Product
 
-The final product renders a (flat-edged) colour-wheel with 11 predefined colours on it.
+The final product renders a (flat-edged) color wheel with 11 predefined colors on it.
 
 [Checkout the code on Github →](https://github.com/z0w0/helm/blob/master/demos/colors.hs)
 
