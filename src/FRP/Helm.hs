@@ -9,20 +9,21 @@ module FRP.Helm (
   radians,
   degrees,
   turns,
-  lift,
   -- * Prelude
-  module FRP.Helm.Color,
-  module FRP.Helm.Graphics,
+  module Color,
+  module Graphics,
+  module Signal,
 ) where
 
 import Control.Exception
 import Control.Monad (when)
+import Data.Foldable (forM_)
 import Data.IORef
-import Data.Maybe
 import Foreign.Ptr (castPtr)
 import FRP.Elerea.Simple
-import FRP.Helm.Color
-import FRP.Helm.Graphics
+import FRP.Helm.Color as Color
+import FRP.Helm.Graphics as Graphics
+import FRP.Helm.Signal as Signal
 import FRP.Helm.Time (Time)
 import System.FilePath
 import qualified Data.Map as Map
@@ -52,10 +53,6 @@ degrees n = n * pi / 180
     Turns are essentially full revolutions of the unit circle. -}
 turns :: Double -> Double
 turns n = 2 * pi * n
-
-{-| Applying a function to a signal producing a new one. -}
-lift :: (a -> b) -> SignalGen (Signal a) -> SignalGen (Signal b)
-lift f s = fmap (fmap f) s
 
 {-| A data structure describing the current engine state.
     This may be in userland in the future, for setting
@@ -287,6 +284,6 @@ renderForm state Form { .. } = withTransform formScale formTheta formX formY $
     ElementForm element -> renderElement state element
     GroupForm mayhaps forms -> do
       Cairo.save
-      when (isJust mayhaps) $ Cairo.setMatrix $ fromJust mayhaps
+      forM_ mayhaps Cairo.setMatrix
       mapM_ (renderForm state) forms
       Cairo.restore

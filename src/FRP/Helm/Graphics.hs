@@ -230,11 +230,11 @@ moveY y = move (0, y)
     >                  move (100, 100) $ outlined (solid white) $ circle 50]
  -}
 collage :: Int -> Int -> [Form] -> Element
-collage w h forms = CollageElement w h False forms
+collage w h = CollageElement w h False
 
 {-| Like 'collage', but it centers the forms within the supplied dimensions. -}
 centeredCollage :: Int -> Int -> [Form] -> Element
-centeredCollage w h forms = CollageElement w h True forms
+centeredCollage w h = CollageElement w h True
 
 {-| A data type made up a collection of points that form a path when joined. -}
 type Path = [(Double, Double)]

@@ -30,6 +30,7 @@ library
     FRP.Helm.Joystick
     FRP.Helm.Keyboard
     FRP.Helm.Mouse
+    FRP.Helm.Signal
     FRP.Helm.Text
     FRP.Helm.Time
     FRP.Helm.Window
