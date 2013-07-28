@@ -29,4 +29,4 @@ render (w, h) = collage w h [move (250, 150) $ gradient linearGrad $ rect 300 10
 
 {-| Bootstrap the game. -}
 main :: IO ()
-main = run $ fmap (fmap render) Window.dimensions
+main = run $ render <~ Window.dimensions

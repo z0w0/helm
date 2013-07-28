@@ -30,4 +30,4 @@ render (w, h) = centeredCollage w h $ map slice [0 .. length colors - 1]
 
 {-| Bootstrap the game. -}
 main :: IO ()
-main = run $ fmap (fmap render) Window.dimensions
+main = run $ render <~ Window.dimensions
