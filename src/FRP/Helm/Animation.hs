@@ -57,13 +57,13 @@ animate anim dt cont = do
   cont1 <- cont
   progress <- transfer2 0 (\t r animT -> if r then t else resetThisAnim (animT + t)) dt1 cont1
 
-  return $ (formAt anim) <$> progress
+  return $ formAt anim <$> progress
     where
       resetThisAnim = resetOnEnd anim
 
 {-| The form that will be rendered for a specific time in an animation. -}
 formAt :: Animation -> Time -> Form
-formAt (Animation anim) t = snd $ fromJust $ find (\frame -> t < (fst frame)) anim
+formAt (Animation anim) t = snd $ fromJust $ find (\frame -> t < fst frame) anim
 
 {-| The amount of time one cycle of the animation takes. -}
 length :: Animation -> Time
@@ -75,7 +75,7 @@ times (Animation anim) = map fst anim
 
 {-| Given an animation, a function is created which resets the time of the animation
     if the animation was finished. -}
-resetOnEnd :: Animation -> (Time -> Time)
+resetOnEnd :: Animation -> Time -> Time
 resetOnEnd anim = resetOnEnd' (length anim)
 
 {-| Helper function which resets a timer if the timer got bigger than a given number. -}
