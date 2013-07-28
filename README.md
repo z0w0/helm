@@ -118,7 +118,8 @@ cabal install
 ```
 
 You may need to jump a few hoops to install the Cairo bindings (which are a dependency),
-which unfortunately is out of my hands.
+which unfortunately is out of my hands. Read the [installing guide](http://helm-engine.org/guide/installing/)
+on the website for a few platform-specific instructions.
 
 ## License
 

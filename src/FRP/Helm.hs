@@ -23,6 +23,7 @@ import Foreign.Ptr (castPtr)
 import FRP.Elerea.Simple
 import FRP.Helm.Color
 import FRP.Helm.Graphics
+import FRP.Helm.Time (Time)
 import System.FilePath
 import qualified Data.Map as Map
 import qualified Graphics.UI.SDL as SDL
@@ -55,10 +56,6 @@ turns n = 2 * pi * n
 {-| Applying a function to a signal producing a new one. -}
 lift :: (a -> b) -> SignalGen (Signal a) -> SignalGen (Signal b)
 lift f s = fmap (fmap f) s
-
-{-| A type describing an amount of time in an arbitary unit. Use the time composing/converting functions to manipulate
-    time values. -}
-type Time = Double
 
 {-| A data structure describing the current engine state.
     This may be in userland in the future, for setting

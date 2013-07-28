@@ -20,8 +20,11 @@ module FRP.Helm.Time (
 
 import Control.Applicative
 import FRP.Elerea.Simple hiding (delay)
-import FRP.Helm (Time)
 import qualified Graphics.UI.SDL as SDL
+
+{-| A type describing an amount of time in an arbitary unit. Use the time composing/converting functions to manipulate
+    time values. -}
+type Time = Double
 
 {-| A time value representing one millisecond. -}
 millisecond :: Time
