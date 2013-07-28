@@ -208,7 +208,7 @@ rotate t f = f { formTheta = t + formTheta f }
 
 {-| Scales a form by an amount, e.g. scaling by /2.0/ will double the size. -}
 scale :: Double -> Form -> Form
-scale n f = f { formScale = n + formScale f }
+scale n f = f { formScale = n * formScale f }
 
 {-| Moves a form relative to its current position. -}
 move :: (Double, Double) -> Form -> Form
