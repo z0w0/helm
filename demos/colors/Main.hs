@@ -1,6 +1,6 @@
-{-| Renders a colour-wheelish looking thing, with each slice being a unique pre-defined color.
+{-| Renders a pizza-like colour-wheel, with each slice being a unique pre-defined color.
     See http://helm-engine.org/guide/colors/ -}
-module Colors where
+module Main where
 
 import FRP.Helm
 import qualified FRP.Helm.Window as Window

@@ -1,0 +1,21 @@
+name: helm-demo-gradients
+version: 0.1
+synopsis: Renders a few shapes filled with gradients.
+homepage: http://helm-engine.org/guide/gradients/
+tested-with: GHC == 7.6.3
+license: MIT
+license-file: ../../LICENSE
+author: Zack Corr
+maintainer: Zack Corr <zack@z0w0.me>
+copyright: (c) 2013, Zack Corr
+category: Game
+build-type: Simple
+cabal-version: >=1.10
+
+executable helm-demo-gradients
+  main-is: Main.hs
+  build-depends:
+    base >= 4 && < 5,
+    helm >= 0.4 && < 1
+  default-language: Haskell2010
+  ghc-options: -Wall

@@ -1,6 +1,6 @@
 {-| Renders a few shapes filled with gradients.
     See http://helm-engine.org/guide/gradients/ -}
-module Gradients where
+module Main where
 
 import FRP.Helm
 import qualified FRP.Helm.Window as Window
