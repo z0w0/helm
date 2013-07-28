@@ -27,6 +27,7 @@ library
     FRP.Helm.Automaton
     FRP.Helm.Color
     FRP.Helm.Graphics
+    FRP.Helm.Animation
     FRP.Helm.Joystick
     FRP.Helm.Keyboard
     FRP.Helm.Mouse
