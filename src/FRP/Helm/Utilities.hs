@@ -36,7 +36,7 @@ combine :: [SignalGen (Signal a)] -> SignalGen (Signal [a])
     > render <~ Window.dimensions
  -}
 lift :: (a -> b) -> SignalGen (Signal a) -> SignalGen (Signal b)
-lift f = fmap (fmap f)
+lift = fmap . fmap
 
 {-| Applies a function to two signals. -}
 lift2 :: (a -> b -> c) -> SignalGen (Signal a) -> SignalGen (Signal b) -> SignalGen (Signal c)
@@ -84,11 +84,7 @@ infixl 4 <~
     > render <~ Window.dimensions ~~ Window.position
  -}
 (~~) :: SignalGen (Signal (a -> b)) -> SignalGen (Signal a) -> SignalGen (Signal b)
-(~~) f input = do
-	f1 <- f
-	input1 <- input
-
-	return $ f1 <*> input1
+(~~) = (<*>) . fmap (<*>)
 
 infixl 4 ~~
 
@@ -97,10 +93,7 @@ infixl 4 ~~
     signal out of the signal generator. This function is useful for making a render
     function that depends on some accumulated state. -}
 foldp :: (a -> b -> b) -> b -> SignalGen (Signal a) -> SignalGen (Signal b)
-foldp f ini input = do
-	input1 <- input
-
-	transfer ini f input1
+foldp f ini = (>>= transfer ini f)
 
 {-| Creates a signal that counts the amount of times it has been sampled. -}
 count :: SignalGen (Signal Int)
