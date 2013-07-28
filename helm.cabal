@@ -31,9 +31,9 @@ library
     FRP.Helm.Joystick
     FRP.Helm.Keyboard
     FRP.Helm.Mouse
-    FRP.Helm.Signal
     FRP.Helm.Text
     FRP.Helm.Time
+    FRP.Helm.Utilities
     FRP.Helm.Window
   build-depends:
     base >= 4 && < 5,

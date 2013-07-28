@@ -12,7 +12,7 @@ module FRP.Helm (
   -- * Prelude
   module Color,
   module Graphics,
-  module Signal,
+  module Utilities,
 ) where
 
 import Control.Exception
@@ -23,7 +23,7 @@ import Foreign.Ptr (castPtr)
 import FRP.Elerea.Simple
 import FRP.Helm.Color as Color
 import FRP.Helm.Graphics as Graphics
-import FRP.Helm.Signal as Signal
+import FRP.Helm.Utilities as Utilities
 import FRP.Helm.Time (Time)
 import System.FilePath
 import qualified Data.Map as Map

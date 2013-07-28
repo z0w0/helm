@@ -1,5 +1,5 @@
-{-| Contains utility functions for working with signals and signal generators. -}
-module FRP.Helm.Signal (
+{-| Contains utility functions including functions for working with signals and signal generators. -}
+module FRP.Helm.Utilities (
   -- * Composing
   constant,
   lift,

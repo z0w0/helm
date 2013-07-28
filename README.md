@@ -29,9 +29,9 @@ which is a resource aiming to give thorough explanations of the way Helm and its
 * Straightforward API heavily inspired by the Elm programming language. The API
   is broken up into the following areas:
   * `FRP.Helm` contains the main code for interfacing with the game engine but
-    also includes some utility functions and the modules `FRP.Helm.Color` and `FRP.Helm.Graphics`
-    in the style of a sort of prelude library, allowing it to be included and readily
-    make the most basic of games.
+    also includes some utility functions and the modules `FRP.Helm.Color`, `FRP.Helm.Utilities`
+    and `FRP.Helm.Graphics` in the style of a sort of prelude library, allowing it to be included
+    and readily make the most basic of games.
   * `FRP.Helm.Animation` contains a simple implementation of animations. Each
     animation is made up of a list of frames which render a form at a specific time.
   * `FRP.Helm.Automaton` contains the `Automaton` data structure and functions
@@ -49,6 +49,8 @@ which is a resource aiming to give thorough explanations of the way Helm and its
   * `FRP.Helm.Mouse` contains signals for working with mouse state.
   * `FRP.Helm.Text` contains functions for composing text, formatting it
     and then turning it into an element.
+  * `FRP.Helm.Utilities` contains a few useful functions, like lifting/folding signal generators
+    containing signals.
   * `FRP.Helm.Time` contains functions for composing units of time and signals that sample from the game clock.
   * `FRP.Helm.Window` contains signals for working with the game window state.
 
