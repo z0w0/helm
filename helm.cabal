@@ -1,5 +1,5 @@
 name: helm
-version: 0.4
+version: 0.4.1
 synopsis: A functionally reactive game engine.
 description: A functionally reactive game engine, with headgear to protect you
              from the headache of game development provided.
