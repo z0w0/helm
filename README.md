@@ -32,6 +32,8 @@ which is a resource aiming to give thorough explanations of the way Helm and its
     also includes some utility functions and the modules `FRP.Helm.Color` and `FRP.Helm.Graphics`
     in the style of a sort of prelude library, allowing it to be included and readily
     make the most basic of games.
+  * `FRP.Helm.Animation` contains a simple implementation of animations. Each
+    animation is made up of a list of frames which render a form at a specific time.
   * `FRP.Helm.Automaton` contains the `Automaton` data structure and functions
     for composing, creating and calculating them. Automatons are a useful
     abstraction of a dynamic process that is fed input from a signal
