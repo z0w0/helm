@@ -73,7 +73,7 @@ Check out the [Forms and Shapes section of the guide](/guide/forms-and-shapes) o
 the [*FRP.Helm.Graphics* documentation](http://hackage.haskell.org/packages/archive/helm/latest/doc/html/FRP-Helm-Graphics.html#v:filled)
 for some examples of these functions.
 
-### Creating a color Wheel
+### Creating a Color Wheel
 
 Let's try making something familiar with our new-found knowledge of colors in Helm &mdash; a color wheel. We want to end up with something
 that looks like a pizza made up of differently-colored slices. First let's define a list of colors we actually want to appear in the color wheel:
