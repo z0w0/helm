@@ -55,11 +55,11 @@ animate :: Animation -> SignalGen (Signal Time) -> SignalGen (Signal Bool) -> Si
 animate anim dt cont = do
   dt1 <- dt
   cont1 <- cont
-  progress <- transfer2 0 (\t r animT -> if r then t else resetThisAnim (animT + t)) dt1 cont1
+  progress <- transfer2 0 (\t r animT -> if r then 0 else cycleThisAnim (animT + t)) dt1 cont1
 
   return $ (formAt anim) <$> progress
     where
-      resetThisAnim = resetOnEnd anim
+      cycleThisAnim = resetOnEnd anim
 
 {-| The form that will be rendered for a specific time in an animation. -}
 formAt :: Animation -> Time -> Form
