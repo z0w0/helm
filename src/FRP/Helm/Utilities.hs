@@ -8,7 +8,6 @@ module FRP.Helm.Utilities (
   (<~),
   (~~),
   -- * Accumulating
-  foldp,
   count,
   countIf,
   -- * DYEL?
@@ -87,13 +86,6 @@ infixl 4 <~
 (~~) = (<*>) . fmap (<*>)
 
 infixl 4 ~~
-
-{-| Creates a past-dependent signal that depends on another signal. This is a
-    wrapper around the 'transfer' function that automatically binds the input
-    signal out of the signal generator. This function is useful for making a render
-    function that depends on some accumulated state. -}
-foldp :: (a -> b -> b) -> b -> SignalGen (Signal a) -> SignalGen (Signal b)
-foldp f ini = (>>= transfer ini f)
 
 {-| Creates a signal that counts the amount of times it has been sampled. -}
 count :: SignalGen (Signal Int)
