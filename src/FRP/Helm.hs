@@ -81,7 +81,7 @@ newEngineState smp = do
   return EngineState { smp = smp, cache = cache }
 
 {-| Initializes and runs the game engine. The supplied signal generator is
-    constantly sampled  for an element to render until the user quits.
+    constantly sampled for an element to render until the user quits.
 
     > import FRP.Helm
     > import qualified FRP.Helm.Window as Window
@@ -90,10 +90,7 @@ newEngineState smp = do
     > render (w, h) = collage w h [filled red $ rect (fromIntegral w) (fromIntegral h)]
     >
     > main :: IO ()
-    > main = run $ do
-    >   dims <- Window.dimensions
-    >
-    >   return $ fmap render dims
+    > main = run $ fmap (fmap render) Window.dimensions
  -}
 run :: SignalGen (Signal Element) -> IO ()
 run gen = finally SDL.quit $ do
