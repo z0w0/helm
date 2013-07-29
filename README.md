@@ -76,7 +76,6 @@ an accumulated state that depends on the values sampled from signals (e.g. mouse
 You should see a white square on the screen and pressing the arrow keys allows you to move it.
 
 ```haskell
-import Control.Applicative
 import FRP.Helm
 import qualified FRP.Helm.Keyboard as Keyboard
 import qualified FRP.Helm.Window as Window
