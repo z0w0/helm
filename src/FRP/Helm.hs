@@ -5,6 +5,7 @@ module FRP.Helm (
   Time,
   -- * Engine
   run,
+  runA,
   -- * Utilities
   radians,
   degrees,
@@ -87,9 +88,14 @@ newEngineState smp = do
     > main = run $ fmap (fmap render) Window.dimensions
  -}
 run :: SignalGen (Signal Element) -> IO ()
-run gen = finally SDL.quit $ do
+run = runA 800 600 "Helm"
+
+{-| Same as run, but takes arguments for width, height and window title -}
+runA :: Int -> Int -> String -> SignalGen (Signal Element) -> IO ()
+runA w h t gen = finally SDL.quit $ do
   SDL.init [SDL.InitVideo, SDL.InitJoystick]
-  requestDimensions 800 600
+  requestDimensions w h
+  SDL.rawSetCaption (Just t) Nothing
   start gen >>= newEngineState >>= run'
 
 {-| A utility function called by 'run' that samples the element
