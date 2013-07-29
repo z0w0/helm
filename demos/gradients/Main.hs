@@ -29,4 +29,6 @@ render (w, h) = collage w h [move (250, 150) $ gradient linearGrad $ rect 300 10
 
 {-| Bootstrap the game. -}
 main :: IO ()
-main = run $ render <~ Window.dimensions
+main = run config $ render <~ Window.dimensions
+  where
+    config = defaultConfig { windowTitle = "Helm - Gradients" }

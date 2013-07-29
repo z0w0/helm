@@ -9,4 +9,6 @@ render :: (Int, Int) -> Element
 render (w, h) = centeredCollage w h [rotate 0.5 $ filled red $ square 64]
 
 main :: IO ()
-main = run $ render <~ Window.dimensions
+main = run config $ render <~ Window.dimensions
+  where
+    config = defaultConfig { windowTitle = "Helm - Forms and Shapes" }

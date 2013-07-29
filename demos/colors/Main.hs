@@ -30,4 +30,6 @@ render (w, h) = centeredCollage w h $ map slice [0 .. length colors - 1]
 
 {-| Bootstrap the game. -}
 main :: IO ()
-main = run $ render <~ Window.dimensions
+main = run config $ render <~ Window.dimensions
+  where
+    config = defaultConfig { windowTitle = "Helm - Colors" }

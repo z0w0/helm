@@ -3,8 +3,10 @@
 module FRP.Helm (
   -- * Types
   Time,
+  EngineConfig(..),
   -- * Engine
   run,
+  defaultConfig,
   -- * Utilities
   radians,
   degrees,
@@ -33,13 +35,16 @@ import qualified Graphics.Rendering.Cairo as Cairo
 {-| Attempt to change the window dimensions (and initialize the video mode if not already).
     Will try to get a hardware accelerated window and then fallback to a software one.
     Throws an exception if the software mode can't be used as a fallback. -}
-requestDimensions :: Int -> Int -> IO SDL.Surface
-requestDimensions w h =	do
-  mayhaps <- SDL.trySetVideoMode w h 32 [SDL.HWSurface, SDL.DoubleBuf, SDL.Resizable]
+requestDimensions :: Int -> Int -> Bool -> IO SDL.Surface
+requestDimensions w h resizable =	do
+    mayhaps <- SDL.trySetVideoMode w h 32 $ [SDL.HWSurface, SDL.DoubleBuf] ++ flags
 
-  case mayhaps of
-    Just screen -> return screen
-    Nothing -> SDL.setVideoMode w h 32 [SDL.SWSurface, SDL.Resizable]
+    case mayhaps of
+      Just screen -> return screen
+      Nothing -> SDL.setVideoMode w h 32 $ SDL.SWSurface : flags
+
+  where
+    flags = [SDL.Resizable | resizable]
 
 {-| Converts radians into the standard angle measurement (radians). -}
 radians :: Double -> Double
@@ -53,6 +58,23 @@ degrees n = n * pi / 180
     Turns are essentially full revolutions of the unit circle. -}
 turns :: Double -> Double
 turns n = 2 * pi * n
+
+{-| A data structure describing miscellaneous initial configurations of the game window and engine. -}
+data EngineConfig = EngineConfig {
+  windowDimensions :: (Int, Int),
+  windowIsFullscreen :: Bool,
+  windowIsResizable :: Bool,
+  windowTitle :: String
+}
+
+{-| Creates the default configuration for the engine. You should change the fields where necessary before passing it to 'run'. -}
+defaultConfig :: EngineConfig
+defaultConfig = EngineConfig {
+  windowDimensions = (800, 600),
+  windowIsFullscreen = False,
+  windowIsResizable = True,
+  windowTitle = ""
+}
 
 {-| A data structure describing the current engine state.
     This may be in userland in the future, for setting
@@ -84,12 +106,14 @@ newEngineState smp = do
     > render (w, h) = collage w h [filled red $ rect (fromIntegral w) (fromIntegral h)]
     >
     > main :: IO ()
-    > main = run $ fmap (fmap render) Window.dimensions
+    > main = run defaultConfig $ fmap (fmap render) Window.dimensions
  -}
-run :: SignalGen (Signal Element) -> IO ()
-run gen = finally SDL.quit $ do
+run :: EngineConfig -> SignalGen (Signal Element) -> IO ()
+run (EngineConfig { .. }) gen = finally SDL.quit $ do
   SDL.init [SDL.InitVideo, SDL.InitJoystick]
-  requestDimensions 800 600
+  SDL.rawSetCaption (Just windowTitle) Nothing
+  when windowIsFullscreen $ SDL.getVideoSurface >>= SDL.toggleFullscreen
+  uncurry requestDimensions windowDimensions windowIsResizable
   start gen >>= newEngineState >>= run'
 
 {-| A utility function called by 'run' that samples the element
@@ -110,7 +134,7 @@ run'' = do
   case event of
     SDL.NoEvent -> return True
     SDL.Quit -> return False
-    SDL.VideoResize w h -> requestDimensions w h >> run''
+    SDL.VideoResize w h -> requestDimensions w h True >> run''
     _ -> run''
 
 {-| A utility function that renders a previously sampled element
