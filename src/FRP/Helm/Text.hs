@@ -9,8 +9,10 @@ module FRP.Helm.Text (
   defaultText,
   toText,
   -- * Formatting
+  light,
   bold,
   italic,
+  oblique,
   color,
   monospace,
   typeface,
@@ -63,9 +65,17 @@ overline
 bold :: Text -> Text
 bold txt = txt { textWeight = BoldWeight }
 
+{-| Sets the weight of a piece of text to light. -}
+light :: Text -> Text
+light txt = txt { textWeight = LightWeight }
+
 {-| Sets the slant of a piece of text to italic. -}
 italic :: Text -> Text
 italic txt = txt { textStyle = ItalicStyle }
+
+{-| Sets the slant of a piece of text to oblique. -}
+oblique :: Text -> Text
+oblique txt = txt { textStyle = ObliqueStyle }
 
 {-| Sets the color of a piece of text. -}
 color :: Color -> Text -> Text
