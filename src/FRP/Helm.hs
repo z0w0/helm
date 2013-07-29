@@ -192,11 +192,11 @@ getSurface (EngineState { cache }) src = do
 
 {-| A utility function for rendering a specific element. -}
 renderElement :: EngineState -> Element -> Cairo.Render ()
-renderElement state (CollageElement w h centered forms) = do
+renderElement state (CollageElement w h center forms) = do
   Cairo.save
   Cairo.rectangle 0 0 (fromIntegral w) (fromIntegral h)
   Cairo.clip
-  when centered $ Cairo.translate (fromIntegral w / 2) (fromIntegral h / 2)
+  forM_ center $ uncurry Cairo.translate
   mapM_ (renderForm state) forms
   Cairo.restore
 
