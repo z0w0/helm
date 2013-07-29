@@ -14,8 +14,9 @@ platform to develop with. To install Helm on Linux, you will first need to
 install all the dependencies through your package manager. Helm depends
 on the the following development libraries being present:
 
-* Cairo 1.12
-* SDL 1.2
+* Cairo 1.x.x
+* SDL 1.2.x
+* Pango 1.x.x
 
 You will also need to install GHC 7.6 and it's accompanying Cabal. Confirm that
 the installed GHC is definitely version 7.6 by checking that the output of
@@ -59,9 +60,10 @@ commands to install SDL and Cairo using Homebrew:
 $ brew doctor # if this is your first time using homebrew
 $ brew install SDL
 $ brew install cairo --without-x
+$ brew install pango --without-x
 {% endhighlight %}
 
-We need to add the `--without-x` flag when installing Cairo because we can't use the X11 backend
+We need to add the `--without-x` flag when installing Cairo and Pango because we can't use the X11 backend
 on OS X without an X11 server (not that we want to, anyway). We can now run the Cabal package manager
 included in the previously installed Haskell platform to install the Helm libraries (in a similar
 manner to Linux):
