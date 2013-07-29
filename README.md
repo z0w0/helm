@@ -69,7 +69,7 @@ main :: IO ()
 main = run defaultConfig $ render <~ Window.dimensions
 ```
 
-It renders a red square at the position `(100, 100)` with a side length of 64px.  
+It renders a red square at the position `(100, 100)` with a side length of `64`.  
   
 The next example is the barebones of a game that depends on input. It shows how to create
 an accumulated state that depends on the values sampled from signals (e.g. mouse input).

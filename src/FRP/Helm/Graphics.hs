@@ -3,6 +3,8 @@
 module FRP.Helm.Graphics (
   -- * Types
   Element(..),
+  FontWeight(..),
+  FontStyle(..),
   Text(..),
   Form(..),
   FormStyle(..),
@@ -53,7 +55,26 @@ module FRP.Helm.Graphics (
 
 import FRP.Helm.Color (Color, black, Gradient)
 import Graphics.Rendering.Cairo.Matrix (Matrix)
-import qualified Graphics.Rendering.Cairo as Cairo
+
+{-| A data structure describing the weight of a piece of font. -}
+data FontWeight = LightWeight |
+                  NormalWeight |
+                  BoldWeight deriving (Show, Eq, Ord, Enum, Read)
+
+{-| A data structure describing the style of of a piece of font. -}
+data FontStyle = NormalStyle |
+                 ObliqueStyle |
+                 ItalicStyle deriving (Show, Eq, Ord, Enum, Read)
+
+{-| A data structure describing a piece of formatted text. -}
+data Text = Text {
+  textUTF8 :: String,
+  textColor :: Color,
+  textTypeface :: String,
+  textHeight :: Double,
+  textWeight :: FontWeight,
+  textStyle :: FontStyle
+} deriving (Show, Eq)
 
 {-| A data structure describing something that can be rendered
     to the screen. Elements are the most important structure
@@ -65,16 +86,6 @@ import qualified Graphics.Rendering.Cairo as Cairo
 data Element = CollageElement Int Int Bool [Form] |
                ImageElement (Int, Int) Int Int FilePath Bool |
                TextElement Text deriving (Show, Eq)
-
-{-| A data structure describing a piece of formatted text. -}
-data Text = Text {
-  textUTF8 :: String,
-  textColor :: Color,
-  textTypeface :: String,
-  textHeight :: Double,
-  textWeight :: Cairo.FontWeight,
-  textSlant :: Cairo.FontSlant
-} deriving (Show, Eq)
 
 {-| Create an element from an image with a given width, height and image file path.
     If the image dimensions are not the same as given, then it will stretch/shrink to fit.
@@ -109,12 +120,12 @@ data Form = Form {
 data FillStyle = Solid Color | Texture String | Gradient Gradient deriving (Show, Eq, Ord, Read)
 
 {-| A data structure describing the shape of the ends of a line. -}
-data LineCap = Flat | Round | Padded deriving (Show, Eq, Enum, Ord, Read)
+data LineCap = FlatCap | RoundCap | PaddedCap deriving (Show, Eq, Enum, Ord, Read)
 
 {-| A data structure describing the shape of the join of a line, i.e.
     where separate line segments join. The 'Sharp' variant takes
     an argument to limit the length of the join. -}
-data LineJoin = Smooth | Sharp Double | Clipped deriving (Show, Eq, Ord, Read)
+data LineJoin = SmoothJoin | SharpJoin Double | ClippedJoin deriving (Show, Eq, Ord, Read)
 
 {-| A data structure describing how a shape or path looks when stroked. -}
 data LineStyle = LineStyle {
@@ -132,8 +143,8 @@ defaultLine :: LineStyle
 defaultLine = LineStyle {
   lineColor = black,
   lineWidth = 1,
-  lineCap = Flat,
-  lineJoin = Sharp 10,
+  lineCap = FlatCap,
+  lineJoin = SharpJoin 10,
   lineDashing = [],
   lineDashOffset = 0
 }

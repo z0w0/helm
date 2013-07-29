@@ -1,7 +1,7 @@
-name: helm-demo-colors
+name: helm-demo-text
 version: 0.5.0
-synopsis: Renders a pizza-like colour-wheel, with each slice being a unique pre-defined color.
-homepage: http://helm-engine.org/guide/colors/
+synopsis: WIP
+homepage: http://helm-engine.org/guide/text/
 tested-with: GHC == 7.6.3
 license: MIT
 license-file: ../../LICENSE
@@ -12,7 +12,7 @@ category: Game
 build-type: Simple
 cabal-version: >=1.10
 
-executable helm-demo-colors
+executable helm-demo-text
   main-is: Main.hs
   build-depends:
     base >= 4 && < 5,

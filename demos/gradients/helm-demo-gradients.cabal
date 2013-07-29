@@ -1,5 +1,5 @@
 name: helm-demo-gradients
-version: 0.1
+version: 0.5.0
 synopsis: Renders a few shapes filled with gradients.
 homepage: http://helm-engine.org/guide/gradients/
 tested-with: GHC == 7.6.3

@@ -19,19 +19,18 @@ module FRP.Helm.Text (
 ) where
 
 import FRP.Helm.Color (Color, black)
-import FRP.Helm.Graphics (Element(TextElement), Text(..))
-import qualified Graphics.Rendering.Cairo as Cairo
+import FRP.Helm.Graphics (Element(TextElement), Text(..), FontWeight(..), FontStyle(..))
 
 {-| Creates the default text. By default the text is black sans-serif
-    with a height of 14px. -}
+    with a height of 14pt. -}
 defaultText :: Text
 defaultText = Text {
   textUTF8 = "",
   textColor = black,
   textTypeface = "sans-serif",
   textHeight = 14,
-  textWeight = Cairo.FontWeightNormal,
-  textSlant = Cairo.FontSlantNormal
+  textWeight = NormalWeight,
+  textStyle = NormalStyle
 }
 
 {-| Creates a text from a string. -}
@@ -62,11 +61,11 @@ overline
 
 {-| Sets the weight of a piece of text to bold. -}
 bold :: Text -> Text
-bold txt = txt { textWeight = Cairo.FontWeightBold }
+bold txt = txt { textWeight = BoldWeight }
 
 {-| Sets the slant of a piece of text to italic. -}
 italic :: Text -> Text
-italic txt = txt { textSlant = Cairo.FontSlantItalic }
+italic txt = txt { textStyle = ItalicStyle }
 
 {-| Sets the color of a piece of text. -}
 color :: Color -> Text -> Text
@@ -76,9 +75,7 @@ color col txt = txt { textColor = col }
 monospace :: Text -> Text
 monospace txt = txt { textTypeface = "monospace" }
 
-{-| Sets the typeface of the text. Only fonts
-    supported by Cairo's toy font API are currently
-    supported. -}
+{-| Sets the typeface of the text. -}
 typeface :: String -> Text -> Text
 typeface face txt = txt { textTypeface = face }
 

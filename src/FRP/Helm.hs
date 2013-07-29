@@ -31,6 +31,7 @@ import System.FilePath
 import qualified Data.Map as Map
 import qualified Graphics.UI.SDL as SDL
 import qualified Graphics.Rendering.Cairo as Cairo
+import qualified Graphics.Rendering.Pango as Pango
 
 {-| Attempt to change the window dimensions (and initialize the video mode if not already).
     Will try to get a hardware accelerated window and then fallback to a software one.
@@ -217,10 +218,39 @@ renderElement state (ImageElement (sx, sy) sw sh src stretch) = do
   Cairo.restore
 
 renderElement _ (TextElement (Text { textColor = (Color r g b a), .. })) = do
-  Cairo.setSourceRGBA r g b a
-  Cairo.selectFontFace textTypeface textSlant textWeight
-  Cairo.setFontSize textHeight
-  Cairo.showText textUTF8
+    Cairo.save
+
+    layout <- Pango.createLayout textUTF8
+
+    Cairo.liftIO $ Pango.layoutSetAttributes layout [Pango.AttrFamily { paStart = i, paEnd = j, paFamily = textTypeface },
+                                                     Pango.AttrWeight { paStart = i, paEnd = j, paWeight = mapFontWeight textWeight },
+                                                     Pango.AttrStyle { paStart = i, paEnd = j, paStyle = mapFontStyle textStyle },
+                                                     Pango.AttrSize { paStart = i, paEnd = j, paSize = textHeight }]
+
+    Pango.PangoRectangle x y w h <- fmap snd $ Cairo.liftIO $ Pango.layoutGetExtents layout
+
+    Cairo.translate ((-w / 2) -x) ((-h / 2) - y)
+    Cairo.setSourceRGBA r g b a
+    Pango.showLayout layout
+    Cairo.restore
+
+  where
+    i = 0
+    j = length textUTF8
+
+{-| A utility function that maps to a Pango font weight based off our variant. -}
+mapFontWeight :: FontWeight -> Pango.Weight
+mapFontWeight weight = case weight of
+  LightWeight  -> Pango.WeightLight
+  NormalWeight -> Pango.WeightNormal
+  BoldWeight   -> Pango.WeightBold
+
+{-| A utility function that maps to a Pango font style based off our variant. -}
+mapFontStyle :: FontStyle -> Pango.FontStyle
+mapFontStyle style = case style of
+  NormalStyle  -> Pango.StyleNormal
+  ObliqueStyle -> Pango.StyleOblique
+  ItalicStyle  -> Pango.StyleItalic
 
 {-| A utility function that goes into a state of transformation and then pops it when finished. -}
 withTransform :: Double -> Double -> Double -> Double -> Cairo.Render () -> Cairo.Render ()
@@ -229,16 +259,16 @@ withTransform s t x y f = Cairo.save >> Cairo.scale s s >> Cairo.translate x y >
 {-| A utility function that sets the Cairo line cap based off of our version. -}
 setLineCap :: LineCap -> Cairo.Render ()
 setLineCap cap = case cap of
-  Flat   -> Cairo.setLineCap Cairo.LineCapButt
-  Round  -> Cairo.setLineCap Cairo.LineCapRound
-  Padded -> Cairo.setLineCap Cairo.LineCapSquare
+  FlatCap   -> Cairo.setLineCap Cairo.LineCapButt
+  RoundCap  -> Cairo.setLineCap Cairo.LineCapRound
+  PaddedCap -> Cairo.setLineCap Cairo.LineCapSquare
 
 {-| A utility function that sets the Cairo line style based off of our version. -}
 setLineJoin :: LineJoin -> Cairo.Render ()
 setLineJoin join = case join of
-  Smooth    -> Cairo.setLineJoin Cairo.LineJoinRound
-  Sharp lim -> Cairo.setLineJoin Cairo.LineJoinMiter >> Cairo.setMiterLimit lim
-  Clipped   -> Cairo.setLineJoin Cairo.LineJoinBevel
+  SmoothJoin    -> Cairo.setLineJoin Cairo.LineJoinRound
+  SharpJoin lim -> Cairo.setLineJoin Cairo.LineJoinMiter >> Cairo.setMiterLimit lim
+  ClippedJoin   -> Cairo.setLineJoin Cairo.LineJoinBevel
 
 {-| A utility function that sets up all the necessary settings with Cairo
     to render with a line style and then strokes afterwards. Assumes

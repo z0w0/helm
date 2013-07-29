@@ -41,7 +41,7 @@ infixr 5 !:
 
 {-| Creates a list of frames out of two frames. -}
 (!!:) :: Frame -> Frame -> Frames
-(!!:) f1 f2 = Frames ([f1,f2])
+(!!:) f1 f2 = Frames [f1, f2]
 
 infixr 5 !!:
 
