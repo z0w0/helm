@@ -11,6 +11,8 @@ module FRP.Helm (
   radians,
   degrees,
   turns,
+  (|>),
+  (<|),
   -- * Prelude
   module Color,
   module Graphics,
@@ -60,6 +62,15 @@ degrees n = n * pi / 180
 turns :: Double -> Double
 turns n = 2 * pi * n
 
+{-| Forward function application, think it as a inverted ($). -}
+(|>) :: a -> (a -> b) -> b
+x |> f = f x
+
+{-| Exactly the same as ($), only there to make code using (|>)
+    more consistent. -}
+(<|) :: (a -> b) -> a -> b
+f <| x = f x
+
 {-| A data structure describing miscellaneous initial configurations of the game window and engine. -}
 data EngineConfig = EngineConfig {
   windowDimensions :: (Int, Int),
@@ -104,10 +115,10 @@ newEngineState smp = do
     > import qualified FRP.Helm.Window as Window
     >
     > render :: (Int, Int) -> Element
-    > render (w, h) = collage w h [filled red $ rect (fromIntegral w) (fromIntegral h)]
+    > render (w, h) = collage w h [rect (fromIntegral w) (fromIntegral h) |> filled red]
     >
     > main :: IO ()
-    > main = run defaultConfig $ fmap (fmap render) Window.dimensions
+    > main = run defaultConfig $ lift render Window.dimensions
  -}
 run :: EngineConfig -> SignalGen (Signal Element) -> IO ()
 run (EngineConfig { .. }) gen = finally SDL.quit $ do
