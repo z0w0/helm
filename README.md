@@ -77,7 +77,6 @@ You should see a white square on the screen and pressing the arrow keys allows y
 
 ```haskell
 import Control.Applicative
-import FRP.Elerea.Simple
 import FRP.Helm
 import qualified FRP.Helm.Keyboard as Keyboard
 import qualified FRP.Helm.Window as Window
