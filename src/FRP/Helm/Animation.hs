@@ -2,17 +2,18 @@
 module FRP.Helm.Animation (
   -- * Types
   Frame,
-  Animation(..),
+  Frames(),
+  Animation(),
   -- * Creating
   absolute,
   relative,
+  (!:),
+  (!!:),
+  frames,
   -- * Animating
   animate,
   formAt,
-  length,
-  (!:),
-  (!!:),
-  frames
+  length
 ) where
 
 import Prelude hiding (length)
