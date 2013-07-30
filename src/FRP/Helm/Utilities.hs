@@ -2,6 +2,7 @@
 module FRP.Helm.Utilities (
   -- * Composing
   constant,
+  combine,
   lift,
   lift2,
   lift3,
@@ -20,15 +21,16 @@ module FRP.Helm.Utilities (
 ) where
 
 import Control.Applicative ((<*>))
+import Control.Monad ((>=>))
 import FRP.Elerea.Simple
 
 {-| Creates a signal that never changes. -}
 constant :: a -> SignalGen (Signal a)
-constant value = return $ return value
+constant = return . return
 
-{- TODO:
+{-| Combines a list of signals into a signal of lists. -}
 combine :: [SignalGen (Signal a)] -> SignalGen (Signal [a])
--}
+combine = sequence >=> return . sequence
 
 {-| Applies a function to a signal producing a new signal. This is a wrapper around the builtin
     'fmap' function that automatically binds the input signal out of the signal generator.
