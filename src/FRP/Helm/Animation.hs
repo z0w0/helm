@@ -12,7 +12,8 @@ module FRP.Helm.Animation (
   frames,
   -- * Animating
   animate,
-  formAt
+  formAt,
+  length
 ) where
 
 import Prelude hiding (length)
@@ -106,4 +107,3 @@ resetOnEnd' :: Time -> Time -> Time
 resetOnEnd' l t
   | t >= l = 0
   | otherwise = t
-  
