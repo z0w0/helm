@@ -106,3 +106,4 @@ resetOnEnd' :: Time -> Time -> Time
 resetOnEnd' l t
   | t >= l = 0
   | otherwise = t
+  
