@@ -12,8 +12,7 @@ module FRP.Helm.Animation (
   frames,
   -- * Animating
   animate,
-  formAt,
-  length
+  formAt
 ) where
 
 import Prelude hiding (length)
@@ -102,7 +101,7 @@ times (Animation anim) = map fst anim
 resetOnEnd :: Animation -> Time -> Time
 resetOnEnd anim = resetOnEnd' (length anim)
 
-{-| Helper function which resets a timer if the timer got bigger than a given number. -}
+{-| Helper function which resets a timer if it reached a given number. -}
 resetOnEnd' :: Time -> Time -> Time
 resetOnEnd' l t
   | t >= l = 0
