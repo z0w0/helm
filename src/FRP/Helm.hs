@@ -62,14 +62,14 @@ degrees n = n * pi / 180
 turns :: Double -> Double
 turns n = 2 * pi * n
 
-{-| Forward function application, think it as a inverted ($). -}
+{-| Forward function application, think of it as a inverted '($)'. Provided for easy porting from Elm. -}
 (|>) :: a -> (a -> b) -> b
-x |> f = f x
+(|>) = flip ($)
 
-{-| Exactly the same as ($), only there to make code using (|>)
+{-| Exactly the same as '($)', only there to make code using '(|>)'
     more consistent. -}
 (<|) :: (a -> b) -> a -> b
-f <| x = f x
+(<|) = ($)
 
 {-| A data structure describing miscellaneous initial configurations of the game window and engine. -}
 data EngineConfig = EngineConfig {
