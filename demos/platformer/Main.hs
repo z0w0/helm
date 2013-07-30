@@ -1,5 +1,3 @@
--- This is an translation of http://elm-lang.org/edit/examples/Intermediate/Mario.elm
--- to Haskell using Helm game engine. Credit: klrr, ljos License: Public Domain
 import Prelude hiding (Either(..))
 import FRP.Elerea.Simple
 import FRP.Helm
