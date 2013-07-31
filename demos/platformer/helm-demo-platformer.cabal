@@ -1,0 +1,22 @@
+name: helm-demo-platformer
+version: 0.5.0
+synopsis: A very basic platformer.
+homepage: http://helm-engine.org
+tested-with: GHC == 7.6.3
+license: MIT
+license-file: ../../LICENSE
+author: klrr, ljos
+maintainer: Zack Corr <zack@z0w0.me>
+copyright: (c) 2013, Zack Corr
+category: Game
+build-type: Simple
+cabal-version: >=1.10
+
+executable helm-demo-platformer
+  main-is: Main.hs
+  build-depends:
+    base >= 4 && < 5,
+    helm >= 0.5 && < 1,
+    elerea
+  default-language: Haskell2010
+  ghc-options: -Wall
