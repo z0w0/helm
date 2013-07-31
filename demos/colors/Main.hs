@@ -3,6 +3,7 @@
 module Main where
 
 import FRP.Helm
+import qualified FRP.Helm.Time as Time
 import qualified FRP.Helm.Window as Window
 
 {-| A list of colors to show on the colour-wheel. Each colour has its own slice. -}
@@ -24,12 +25,15 @@ slice n = filled color $ polygon points
     r = 150
     points = [(0, 0), pointOnCircum r t1, pointOnCircum r t2]
 
+step :: Time -> Double -> Double
+step dt n = n + Time.inSeconds dt
+
 {-| Renders all the slices together to form a colour-wheel, centering it on the screen. -}
-render :: (Int, Int) -> Element
-render (w, h) = centeredCollage w h $ map slice [0 .. length colors - 1]
+render :: Double -> (Int, Int) -> Element
+render angle (w, h) = centeredCollage w h $ map (rotate angle . slice) [0 .. length colors - 1]
 
 {-| Bootstrap the game. -}
 main :: IO ()
-main = run config $ render <~ Window.dimensions
+main = run config $ render <~ foldp step 0 (Time.delay $ Time.fps 60) ~~ Window.dimensions
   where
     config = defaultConfig { windowTitle = "Helm - Colors" }

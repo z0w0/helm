@@ -3,6 +3,7 @@
 module Main where
 
 import FRP.Helm
+import qualified FRP.Helm.Time as Time
 import qualified FRP.Helm.Window as Window
 
 {-| A list of color stops. Results in a black color at the start and white at the end. -}
@@ -23,12 +24,12 @@ radialGrad :: Gradient
 radialGrad = radial (0, 0) 0 (0, 0) 64 stopsA
 
 {-| The function that renders the game. It takes the window dimensions and returns an element. -}
-render :: (Int, Int) -> Element
-render (w, h) = collage w h [move (250, 150) $ gradient linearGrad $ rect 300 100,
-                             move (500, 500) $ gradient radialGrad $ circle 64]
+render :: Time -> (Int, Int) -> Element
+render _ (w, h) = collage w h [move (250, 150) $ gradient linearGrad $ rect 300 100,
+                               move (500, 500) $ gradient radialGrad $ circle 64]
 
 {-| Bootstrap the game. -}
 main :: IO ()
-main = run config $ render <~ Window.dimensions
+main = run config $ render <~ (Time.delay $ Time.fps 60) ~~ Window.dimensions
   where
     config = defaultConfig { windowTitle = "Helm - Gradients" }

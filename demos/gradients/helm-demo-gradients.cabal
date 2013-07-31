@@ -18,4 +18,4 @@ executable helm-demo-gradients
     base >= 4 && < 5,
     helm >= 0.5 && < 1
   default-language: Haskell2010
-  ghc-options: -Wall
+  ghc-options: -threaded -Wall

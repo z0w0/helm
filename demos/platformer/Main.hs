@@ -1,5 +1,5 @@
 import Prelude hiding (Either(..))
-import FRP.Elerea.Simple
+import FRP.Elerea.Simple hiding (delay)
 import FRP.Helm
 import FRP.Helm.Time
 import qualified FRP.Helm.Window as Window
@@ -46,9 +46,9 @@ render (w, h) (Mario mX1 mY1 _ _ _) =
 input :: SignalGen (Signal (Time, (Int, Int)))
 input = lift2 (,) delta' Keyboard.arrows
   where
-    delta' = lift (/15) delta
+    delta' = lift (/15) $ delay $ fps 60
 
 main :: IO ()
-main = run defaultConfig $ lift2 render Window.dimensions $ foldp step mario input
+main = run defaultConfig $ render <~ Window.dimensions ~~ foldp step mario input
   where
     mario = Mario 400 0 0 0 Right
