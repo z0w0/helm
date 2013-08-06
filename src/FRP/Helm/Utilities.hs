@@ -4,6 +4,8 @@ module FRP.Helm.Utilities (
   radians,
   degrees,
   turns,
+  -- * Math
+  clamp,
   -- * Applying
   (<|),
   (|>),
@@ -43,6 +45,13 @@ degrees n = n * pi / 180
     Turns are essentially full revolutions of the unit circle. -}
 turns :: Double -> Double
 turns n = 2 * pi * n
+
+{-| "Clamps" the third argument within given range. -}
+clamp :: Ord a => a -> a -> a -> a
+clamp x y z
+  | z < x = x
+  | x <= z && z < y = z
+  | otherwise = y
 
 {-| Forward function application, think of it as a inverted '($)'. Provided for easy porting from Elm. -}
 (|>) :: a -> (a -> b) -> b
