@@ -65,8 +65,8 @@ defaultConfig = EngineConfig {
     window dimensions, title, etc. -}
 data EngineState = EngineState {
   smp :: IO Element,
-  {- FIXME: we need this mutable state (unfortunately) 
-     because Cairo forces us to liftIO and can't return anything 
+  {- FIXME: we need this mutable state (unfortunately)
+     because Cairo forces us to liftIO and can't return anything
      in the render function, where the lazy image loading takes place.
      There may be a way to do this nicely, I'm just not experienced
      enough with Haskell to know how. -}
@@ -124,22 +124,29 @@ run'' = do
 {-| A utility function that renders a previously sampled element
     using an engine state. -}
 render :: EngineState -> Element -> IO ()
-render state element = SDL.getVideoSurface >>= render' state element
+render state element = do
+    videoSurface <- SDL.getVideoSurface
+    let
+      w = SDL.surfaceGetWidth videoSurface
+      h = SDL.surfaceGetHeight videoSurface
+    cairoSurface <- SDL.createRGBSurface [SDL.HWSurface] w h 32 0x00ff0000 0x0000ff00 0x000000ff 0xff000000
+    render' state element videoSurface cairoSurface
 
 {-| A utility function called by 'render\'' that does
     the actual heavy lifting. -}
-render' :: EngineState -> Element -> SDL.Surface -> IO ()
-render' state element screen = do
-    pixels <- SDL.surfaceGetPixels screen
+render' :: EngineState -> Element -> SDL.Surface -> SDL.Surface -> IO ()
+render' state element videoSurface cairoSurface = do
+    pixels <- SDL.surfaceGetPixels cairoSurface
 
-    Cairo.withImageSurfaceForData (castPtr pixels) Cairo.FormatRGB24 w h (w * 4) $ \surface ->
+    Cairo.withImageSurfaceForData (castPtr pixels) Cairo.FormatARGB32 w h (w * 4) $ \surface ->
       Cairo.renderWith surface (render'' w h state element)
 
-    SDL.flip screen
+    SDL.blitSurface cairoSurface Nothing videoSurface Nothing
+    SDL.flip videoSurface
 
   where
-    w = SDL.surfaceGetWidth screen
-    h = SDL.surfaceGetHeight screen
+    w = SDL.surfaceGetWidth videoSurface
+    h = SDL.surfaceGetHeight videoSurface
 
 {-| A utility function called by 'render\'\'' that is called by Cairo
     when it's ready to do rendering. -}
