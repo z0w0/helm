@@ -13,7 +13,8 @@ module FRP.Helm.Animation (
   -- * Animating
   animate,
   formAt,
-  length
+  length,
+  transition
 ) where
 
 import Prelude hiding (length)
@@ -107,3 +108,14 @@ resetOnEnd' :: Time -> Time -> Time
 resetOnEnd' l t
   | t >= l = 0
   | otherwise = t
+
+{-| Smoothly changes from one number to another in a given timeframe.
+    The first argument is the number to start with.
+    The second argument is the number to change into.
+    The third argument gives a signal, which tells how much time went by since the last time it was sampled.  -}
+transition :: (Ord p, Fractional p) => p -> p -> Time -> SignalGen(Signal Time) -> SignalGen (Signal p)
+transition start end time dtGen = do
+  dt <- dtGen
+  transfer start (\dt s -> let newS = s + (realToFrac dt*speed) in if newS >= end then end else newS) dt
+  where
+    speed = (end-start)/realToFrac time
