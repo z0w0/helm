@@ -7,6 +7,9 @@ module FRP.Helm.Utilities (
   -- * Applying
   (<|),
   (|>),
+  -- * Random numbers
+  random,
+  randomR,
   -- * Composing
   constant,
   combine,
@@ -30,6 +33,7 @@ module FRP.Helm.Utilities (
 import Control.Applicative ((<*>))
 import Control.Monad ((>=>))
 import FRP.Elerea.Simple
+import System.Random (Random, randomIO, randomRIO)
 
 {-| Converts radians into the standard angle measurement (radians). -}
 radians :: Double -> Double
@@ -134,3 +138,11 @@ count = stateful 0 (+ 1)
     a predicate when sampled. -}
 countIf :: (a -> Bool) -> SignalGen (Signal a) -> SignalGen (Signal Int)
 countIf f = foldp (\v c -> c + fromEnum (f v)) 0
+
+{-| Creates a signal of a random number. -}
+random :: Random a => SignalGen (Signal a)
+random = effectful randomIO
+
+{-| Creates a signal of a random number based on the given range. -}
+randomR :: Random a => (a, a) -> SignalGen (Signal a)
+randomR = effectful . randomRIO

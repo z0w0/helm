@@ -42,7 +42,8 @@ library
     containers >= 0.5 && < 1,
     elerea >= 2.7 && < 3,
     filepath >= 1.3 && < 2,
-    SDL >= 0.6 && < 1
+    SDL >= 0.6 && < 1,
+    random >= 1.0.1.1 && < 1.2
   default-language: Haskell2010
   default-extensions: RecordWildCards, NamedFieldPuns
   ghc-options: -threaded -Wall -fno-warn-unused-do-bind -O2

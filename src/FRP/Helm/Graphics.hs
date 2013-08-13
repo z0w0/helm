@@ -33,6 +33,7 @@ module FRP.Helm.Graphics (
   traced,
   sprite,
   toForm,
+  blank,
   -- * Grouping
   group,
   groupTransform,
@@ -205,6 +206,10 @@ sprite w h pos src = form (ElementForm (ImageElement pos w h src False))
 {-| Creates a form from an element. -}
 toForm :: Element -> Form
 toForm element = form (ElementForm element)
+
+{-| Creates a empty form, useful for having forms rendered only at some state. -}
+blank :: Form
+blank = group []
 
 {-| Groups a collection of forms into a single one. -}
 group :: [Form] -> Form
