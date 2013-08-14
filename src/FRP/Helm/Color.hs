@@ -8,6 +8,7 @@ module FRP.Helm.Color (
   rgb,
   hsva,
   hsv,
+  blend,
   complement,
   linear,
   radial,
@@ -111,6 +112,17 @@ violet = rgb 0.923 0.508 0.923
 {-| A dark green color. -}
 forestGreen :: Color
 forestGreen = rgb 0.133 0.543 0.133
+
+{-| Takes a list of colors and turns it into a single color by
+    averaging the color components. -}
+blend :: [Color] -> Color
+blend colors = (\(Color r g b a) -> Color (r / denom) (g / denom) (b / denom) (a / denom)) $ foldl blend' black colors
+  where
+    denom = fromIntegral $ length colors
+
+{-| A utility function that adds colors together. -}
+blend' :: Color -> Color -> Color
+blend' (Color r1 g1 b1 a1) (Color r2 g2 b2 a2) = Color (r1 + r2) (g1 + g2) (b1 + b2) (a1 + a2)
 
 {-| Calculate a complementary color for a provided color. Useful for outlining
     a filled shape in a color clearly distinguishable from the fill color. -}
