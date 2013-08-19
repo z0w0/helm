@@ -304,17 +304,19 @@ renderForm :: EngineState -> Form -> Cairo.Render ()
 renderForm state Form { .. } = withTransform formScale formTheta formX formY $
   case formStyle of
     PathForm style ~ps @ ((hx, hy) : _) -> do
-      setLineStyle style
+      Cairo.newPath
       Cairo.moveTo hx hy
       mapM_ (uncurry Cairo.lineTo) ps
+      setLineStyle style
+      Cairo.closePath
 
     ShapeForm style shape -> do
+      Cairo.newPath
+
       case shape of
         PolygonShape ~ps @ ((hx, hy) : _) -> do
-          Cairo.newPath
           Cairo.moveTo hx hy
           mapM_ (uncurry Cairo.lineTo) ps
-          Cairo.closePath
 
         RectangleShape (w, h) -> Cairo.rectangle (-w / 2) (-h / 2) w h
 
@@ -324,6 +326,7 @@ renderForm state Form { .. } = withTransform formScale formTheta formX formY $
           Cairo.scale 1 1
 
       either setLineStyle (setFillStyle state) style
+      Cairo.closePath
 
     ElementForm element -> renderElement state element
     GroupForm mayhaps forms -> do
