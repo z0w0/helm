@@ -308,7 +308,6 @@ renderForm state Form { .. } = withTransform formScale formTheta formX formY $
       Cairo.moveTo hx hy
       mapM_ (uncurry Cairo.lineTo) ps
       setLineStyle style
-      Cairo.closePath
 
     ShapeForm style shape -> do
       Cairo.newPath
@@ -326,7 +325,6 @@ renderForm state Form { .. } = withTransform formScale formTheta formX formY $
           Cairo.scale 1 1
 
       either setLineStyle (setFillStyle state) style
-      Cairo.closePath
 
     ElementForm element -> renderElement state element
     GroupForm mayhaps forms -> do
