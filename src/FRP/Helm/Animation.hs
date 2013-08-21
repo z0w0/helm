@@ -3,6 +3,7 @@ module FRP.Helm.Animation (
   -- * Types
   Frame,
   Animation,
+  Status(..),
   -- * Creating
   absolute,
   relative,
@@ -20,6 +21,7 @@ import FRP.Helm.Graphics (Form,blank)
 import FRP.Helm.Time (Time)
 import Data.Maybe (fromJust)
 import Data.List (find)
+import qualified Data.List as List (length)
 
 {-| A type describing a single frame in an animation. A frame consists of a time at
     which the frame takes place in an animation and the form which is how the frame
@@ -29,6 +31,15 @@ type Frame = (Time, Form)
 
 {-| A type describing an animation consisting of a list of frames. -}
 type Animation = [Frame]
+
+{-| This type tells of the state an animation is in.
+    Continue: A continued animation plays through its frames as specified in the Animation.
+    Pause: A paused animation does not change its current frame and time.
+    Stop: A stopped animation is set to its first frame and time 0.
+    Frame: The Frame constructor can be used to choose a specific frame of the animation
+           where time is set to the first millisecond of that chosen frame. (Indexing starts at 1. 'first frame', not 'zero frame')
+    Time: The Time constructor sets the current time (in milliseconds) in the animation to the specified value.   -}
+data Status = Continue | Pause | Stop | Frame Int | Time Time
 
 {-| Creates an animation from a list of frames. The time value in each frame
     is absolute to the entire animation, i.e. each time value is the time
@@ -51,20 +62,32 @@ relative = scanl1 (\acc x -> (fst acc + fst x, snd x))
     returns the time to setup the animation forward when sampled. The third argument is a
     signal generator containing a signal that returns true to continue animating
     or false to stop animating when sampled. -}
-animate :: Animation -> SignalGen (Signal Time) -> SignalGen (Signal Bool) -> SignalGen (Signal Form)
+animate :: Animation -> SignalGen (Signal Time) -> SignalGen (Signal Status) -> SignalGen (Signal Form)
 animate [] _ _ = return $ return blank
-animate anim dt cont = do
+animate anim dt status = do
   dt1 <- dt
-  cont1 <- cont
-  progress <- transfer2 0 (\t r animT -> if r then 0 else cycleThisAnim (animT + t)) dt1 cont1
+  status1 <- status
+  progress <- transfer2 0 (timestep anim) status1 dt1
 
   return $ fromJust <$> formAt anim <$> progress
-    where
-      cycleThisAnim = resetOnEnd anim
+
+{-| Makes a step in the Animation of size dt, but also takes care to:
+    start over if the end was reached.
+    behave in accordance to the possible statuses,
+    handle erroneous input gently (this may do more bad than good since it may be unexpected, please dispute!) -}
+timestep :: Animation -> Status -> Time -> Time -> Time
+timestep anim Continue  dt t = cycleTime anim (dt + t)
+timestep _    Pause     _  t = t
+timestep _    Stop      _  _ = 0
+timestep anim (Time sT) _  _ = cycleTime anim sT
+timestep anim (Frame f) _  _ = gentleIndex anim f
+  where
+    gentleIndex [] _ = 0
+    gentleIndex xs n = fst $ xs !! (cycleFrames anim n -1)
 
 {-| The form that will be rendered for a specific time in an animation. -}
 formAt :: Animation -> Time -> Maybe Form
-formAt anim t = snd <$> find (\frame -> t < fst frame) anim
+formAt anim t = snd <$> find (\frame -> t <= fst frame) anim
 
 {-| The amount of time one cycle of the animation takes. -}
 length :: Animation -> Time
@@ -75,13 +98,26 @@ length anim = maximum $ times anim
 times :: Animation -> [Time]
 times = map fst
 
-{-| Given an animation, a function is created which resets the time of the animation
-    if the animation was finished. -}
-resetOnEnd :: Animation -> Time -> Time
-resetOnEnd anim = resetOnEnd' (length anim)
+{-| Given an animation, a function is created which loops the time of the animation
+    to always be in the animations length boundary. -}
+cycleTime :: Animation -> Time -> Time
+cycleTime anim = cycleTime' (length anim)
 
-{-| Helper function which resets a timer if it reached a given number. -}
-resetOnEnd' :: Time -> Time -> Time
-resetOnEnd' l t
-  | t >= l = 0
+{-| Helper function which makes a timer loop through an time interval. -}
+cycleTime' :: Time -> Time -> Time
+cycleTime' l t
+  | t > l = cycleTime' l (t-l)
+  | t < 0 = cycleTime' l (l+t)
   | otherwise = t
+
+{-| Given an animation, a function is created which loops the frame indices of the animation
+    to always be in the animations frame length boundary. -}
+cycleFrames :: Animation -> Int -> Int
+cycleFrames anim = cycleFrames' (List.length anim)
+
+{-| Helper function which makes a frame index loop through an interval starting at 1. -}
+cycleFrames' :: Int -> Int -> Int
+cycleFrames' l f
+  | f > l = cycleFrames' l (f-l)
+  | f < 1 = cycleFrames' l (l+f)
+  | otherwise = f
