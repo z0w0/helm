@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveGeneric #-}
 {-| Contains all data structures and functions for composing colors. -}
 module FRP.Helm.Color (
   -- * Types
@@ -32,10 +33,12 @@ module FRP.Helm.Color (
   forestGreen
 ) where
 
+import GHC.Generics
+
 {-| A data structure describing a color. It is represented interally as an RGBA
     color, but the utility functions 'hsva', 'hsv', etc. can be used to convert
     from other popular formats to this structure. -}
-data Color = Color Double Double Double Double deriving (Show, Eq, Ord, Read)
+data Color = Color Double Double Double Double deriving (Show, Eq, Ord, Read, Generic)
 
 {-| Creates an RGB color. -}
 rgb :: Double -> Double -> Double -> Color
