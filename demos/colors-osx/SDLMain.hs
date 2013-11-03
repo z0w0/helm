@@ -38,6 +38,6 @@ foreign export ccall sdl_main :: IO ()
 
 {-| Bootstrap the game. -}
 sdl_main :: IO ()
-sdl_main = run config $ render <~ foldp step 0 (Time.delay $ Time.fps 60) ~~ Window.dimensions
+sdl_main = run config $ render <~ foldp step 0 (Time.delay (Time.fps 60)) ~~ Window.dimensions
   where
     config = defaultConfig { windowTitle = "Helm - Colors" }

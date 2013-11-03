@@ -1,37 +1,26 @@
 {-# LANGUAGE DefaultSignatures, TypeOperators, FlexibleContexts, FlexibleInstances #-}
-{- With this module you can interpolate any value and create transitions which are interpolations over time.
-   >> changingColor = startWith white $ do
-   >>   waypoint green 2
-   >>   waypoint red 5
-   >>   waypoint black 1
-   >>   waypoint yellow 2
-   or
-   >> changingColor = fromList [(white,0),(green,2),(red,5),(black,1),(yellow,2)]
-   This plays the transition once at the start of the game.
-   >> colorSignal <- transition changingColor delta (return $ return Once)
-  -}
+{-| Contains all data structures for describing transitions, composing and animating them. -}
 module FRP.Helm.Transition (
   -- * Types
   Transition,
-  Status(..),
-  Interpolate,
+  TransitionStatus(..),
+  Interpolate(..),
   -- * Creating
   waypoint,
   startWith,
   fromList,
   -- * Transitions
   transition,
-  interpolate,
   length
-  )where
+) where
 
 import Control.Applicative
 import FRP.Elerea.Simple
-import FRP.Helm.Color(Color)
-import FRP.Helm.Time(Time)
-import Data.List(find)
+import FRP.Helm.Color (Color)
+import FRP.Helm.Time (Time)
+import Data.List (find)
 import Prelude hiding (length)
-import Data.Maybe(fromJust)
+import Data.Maybe (fromJust)
 import GHC.Float
 import Data.Word
 import Data.Int
@@ -39,53 +28,51 @@ import GHC.Generics
 import Control.Monad.Writer.Lazy
 import Control.Monad.State.Lazy
 
-{- This is used for creation and composition of Transitions. 
-   The Writer is supposed to keep record of all the Frames.
-   The time is in seconds.
-   The state is supossed to hold the current value of the transition.
-   The state is there only so you can use do notation without passing the arguments explicitly.
-  -}
-type Transition a = StateT a (Writer [(a,Time)])
+{-| A type describing a combosable transition. The writer keeps record of all the frames in the transition.
+    The state holds the current value of the transition. This allows you to easily compose transitions using do notation. -}
+type Transition a = StateT a (Writer [(a, Time)])
 
-{- This is used only for easier search of frames when transitioning is in progress. 
-   s: start value
-   e: end value
-   t: time the transition is to take
-   tstart: transition relative time of the beginning of this frame
-   tend: transition relative time of the end of this frame
-  -}
-data InternalFrame a = InternalFrame {s :: a,
-                                      e :: a,
-                                      t :: Double,
-                                      tend :: Double,
-                                      tstart :: Double
-                                      } deriving Show
+{-| This is used only for easier search of frames when transitioning is in progress. -}
+data InternalFrame a =
+  InternalFrame { -- | The initial value in the transition.
+                  s :: a,
+                  -- | The final value in the transition.
+                  e :: a,
+                  -- | The time that the transition will take.
+                  t :: Double,
+                  -- | The transition-relative time of the beginning of this frame.
+                  tend :: Double,
+                  -- | The transition-relative time of the end of this frame.
+                  tstart :: Double
+  } deriving Show
 
 type InternalTransition a = [InternalFrame a]
 
-{- This can be used to control a transition.
-   Cycle: The transition repeats forever.
-   Pause: A paused transition doesn't change.
-   Once: The transition is done once and stops at the last value.
-   Set: The transition is set to the specified time in seconds. -}
-data Status = Cycle | Pause | Once | Set Time
+{-| A variety of statuses that can be used to control a transition. -}
+data TransitionStatus
+  -- | The transition will repeat forever.
+  = Cycle
+  -- | The transition will be paused and won't changed until resumed.
+  | Pause
+  -- | The transition is cycled once and then stops.
+  | Once
+  -- | The transition will reset to a certain point in time.
+  | Set Time
 
-{- Adds a value to the Transition a Monad, which will be part of the transition. -}
+{-| Adds a value to the transition monad that will be the next point in the transition. -}
 waypoint :: Interpolate a => a -> Time -> Transition a a
 waypoint a t = do
-  tell [(a,t)]
+  tell [(a, t)]
   put a
   return a
 
-{- Interpolates between the beginning and the end of the given frame.
-  -}
+{-| Interpolates between the beginning and the end of the given frame. -}
 transFrame :: Interpolate a => InternalFrame a -> Time -> a
 transFrame InternalFrame{..} time = interpolate progress s e
   where
     progress = time / (tend - tstart)
 
-{- Searches the frame active at the given time and gives back the value of the frame at that time.
-  -}
+{-| Searches the frame active at the given time and gives back the value of the frame at that time. -}
 transitionAt :: Interpolate a => InternalTransition a -> Time -> a
 transitionAt pks timeUnsafe = transFrame currentTransition currentTime
   where
@@ -93,41 +80,48 @@ transitionAt pks timeUnsafe = transFrame currentTransition currentTime
     currentTransition = fromJust $ find (\InternalFrame{..}-> tend >= time) pks
     time = cycleTime pks timeUnsafe
 
-{- Turns the internal representation of a Transition into a Signal representing the transition.
-   The time SignalGen acts as the inner clock of the transition. The given time signal is assumed to be in milliseconds.
-   The Status SignalGen decides wether the transition shall cylce, pause, stop or run once.
-  -}
-transition :: Interpolate a => InternalTransition a -> SignalGen(Signal Time) -> SignalGen (Signal Status) -> SignalGen(Signal a)
-transition []    _     _         = error "empty transitions don't have any default value"
-transition trans dtGen statusGen = do
+{-| Turns the internal representation of a transition into a signal.
+    The provided time signal acts as the inner clock of the transition.
+    The status signal can be used to control the transition, deciding whether
+    the transition should cycle, go to a specific time, pause, stop or run once. -}
+transition :: Interpolate a => SignalGen (Signal Time) -> SignalGen (Signal TransitionStatus) -> InternalTransition a -> SignalGen (Signal a)
+transition _ _ [] = error "empty transitions don't have any default value"
+transition dtGen statusGen trans = do
   dt <- dtGen
   status <- statusGen
   time <- transfer2 0 step' status dt
   return $ transitionAt trans <$> time
   where
-      step' Cycle   dt t = cycleTime trans (dt/1000+t)
-      step' Pause   _  t = t
-      step' Once    dt t = let newT = dt/1000+t in if newT < length trans then newT else length trans
+      step' Cycle  dt t = cycleTime trans (dt/1000+t)
+      step' Pause _  t = t
+      step' Once dt t = if newT < length trans then newT
+                        else length trans
+                        where newT = dt / 1000 + t
       step' (Set t) _ _  = t
 
-{- The [(a,Time)] are convertet to InternalTransition a, so they are easier to interpolate through.
-   The (a,Time) pairs represent the values to which should be interpolatet and how long this interpolation should take.
-   The transition begins with the first (a,_) of the list, where the transition waits (_,time) long. 
-  -}
+{-| Converts a list of tuples describing a waypoint value and time into a transition.
+    The first element in the list is the starting value and time of the transition.
+
+    > color = transition (constant $ Time.fps 60) (constant Cycle) $ fromList [(white, 0), (green, 2), (red, 5), (black, 1), (yellow, 2)] -}
 fromList :: Interpolate a => [(a,Time)] -> InternalTransition a
 fromList [] = error "empty transitions don't have any default value"
-fromList ((v1,d1):xs) = scanl (\InternalFrame{..} (v, d) -> InternalFrame e v d (tend+d) tend ) first xs
+fromList ((v1, d1) : xs) = scanl (\InternalFrame { .. } (v, d) -> InternalFrame e v d (tend + d) tend) first xs
   where
     first = InternalFrame v1 v1 d1 d1 0
 
-{- The given transition is started from a given start value.
-  -}
+{-| Starts a transition with an initial value. 
+
+    > color = transition (constant $ Time.fps 60) (constant Cycle) $ startWith white $ do
+    >   waypoint green 2
+    >   waypoint red 5
+    >   waypoint black 1
+    >   waypoint yellow 2
+-}
 startWith :: Interpolate a => a -> Transition a b -> InternalTransition a
-startWith beginning transitionMonad = fromList $ snd $ runWriter $ evalStateT (tell [(beginning,0)] >> transitionMonad) beginning
+startWith beginning transitionMonad = fromList $ snd $ runWriter $ evalStateT (tell [(beginning, 0)] >> transitionMonad) beginning
 
 {-| Given an animation, a function is created which loops the time of the animation
-    to always be in the animations length boundary.
-  -}
+    to always be in the animations length boundary. -}
 cycleTime :: InternalTransition a -> Time -> Time
 cycleTime [] = const 0
 cycleTime anim = cycleTime' (length anim)
@@ -139,17 +133,17 @@ cycleTime' l t
   | t < 0 = cycleTime' l (l+t)
   | otherwise = t
 
-{- How long it takes a transition to end. 
-  -}
+{-| How long it takes for the provided transition to end.  -}
 length :: InternalTransition a -> Double
 length = tend . last
 
-{- Members of this class can be interpolated.
-   Default instances for Datatypes comprised of interpolatable values can be generated like this:
+{-| Defines a value that can be interpolated. An example instance of this class follows:
+
    > data YourDataType = YourDataConstructor SomeInterpolableType SomeOtherInterpolableType deriving Generic
+   >
    > instance Interpolate YourDataType
-   > interpolate 0.5 (YourDataConstructor 3 5) (YourDataConstructor 5 7) == YourDataConstructor 4 6
-  -}
+   >   interpolate 0.5 (YourDataConstructor 3 5) (YourDataConstructor 5 7) == YourDataConstructor 4 6
+ -}
 class Interpolate a where
   interpolate :: Double -> a -> a -> a
   default interpolate :: (Generic a, GInterpolate (Rep a)) => Double -> a -> a -> a
@@ -164,7 +158,7 @@ instance GInterpolate V1 where
 instance GInterpolate U1 where
   ginterpolate _ _ b = b
 
-instance (GInterpolate a,GInterpolate b) => GInterpolate (a :*: b) where
+instance (GInterpolate a, GInterpolate b) => GInterpolate (a :*: b) where
   ginterpolate d (a1 :*: b1) (a2 :*: b2) = ginterpolate d a1 a2 :*: ginterpolate d b1 b2
 
 instance (GInterpolate a, GInterpolate b) => GInterpolate (a :+: b) where
@@ -183,7 +177,7 @@ instance Interpolate Double where
   interpolate p a b = b * p + a * (1-p)
 
 instance Interpolate Float where
-  interpolate p a b = b * double2Float p + a * double2Float (1-p)
+  interpolate p a b = b * double2Float p + a * double2Float (1 - p)
 
 instance Interpolate Char where
   interpolate _ _ b = b
@@ -225,5 +219,5 @@ instance Interpolate Integer where
   interpolate = integralInterpolate
 
 instance Interpolate Bool
-instance Interpolate (Double,Double)
+instance Interpolate (Double, Double)
 instance Interpolate Color

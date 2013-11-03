@@ -34,6 +34,6 @@ render angle (w, h) = centeredCollage w h $ map (rotate angle . slice) [0 .. len
 
 {-| Bootstrap the game. -}
 main :: IO ()
-main = run config $ render <~ foldp step 0 (Time.delay $ Time.fps 60) ~~ Window.dimensions
+main = run config $ render <~ foldp step 0 (Time.delay (Time.fps 60)) ~~ Window.dimensions
   where
     config = defaultConfig { windowTitle = "Helm - Colors" }
