@@ -55,6 +55,7 @@ Helm.
   * `FRP.Helm.Utilities` contains a few useful functions, such as lifting/folding signal generators
     containing signals.
   * `FRP.Helm.Time` contains functions for composing units of time and signals that sample from the game clock.
+  * `FRP.Helm.Transition` contains functions for composing transitions allowing you to animate between interpolable types, e.g. colors.
   * `FRP.Helm.Window` contains signals for working with the game window state.
 
 ## Example
