@@ -18,6 +18,9 @@ simplistic (and in my opinion, artistic) code.
 Documentation of the Helm API is available on [Hackage](http://hackage.haskell.org/package/helm).
 There is currently a heavily work-in-progress guide on [Helm's website](http://helm-engine.org/guide),
 which is a resource aiming to give thorough explanations of the way Helm and its API work through examples.
+You can [ask on the mailing list](https://groups.google.com/d/forum/helm-dev) if you're having any trouble
+with using the engine for games or working on the engine itself, or if you just want to chit-chat about
+Helm.
 
 ## Features
 
