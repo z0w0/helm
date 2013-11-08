@@ -3,8 +3,8 @@ version: 0.6.0
 synopsis: A functionally reactive game engine.
 description: A functionally reactive game engine, with headgear to protect you
              from the headache of game development provided.
-homepage: http://github.com/z0w0/helm
-bug-reports: http://github.com/z0w0/helm/issues
+homepage: http://github.com/switchface/helm
+bug-reports: http://github.com/switchface/helm/issues
 license: MIT
 license-file: LICENSE
 tested-with: GHC == 7.6.3
@@ -18,7 +18,7 @@ cabal-version: >=1.10
 
 source-repository head
   type: git
-  location: git://github.com/z0w0/helm.git
+  location: git://github.com/switchface/helm.git
 
 library
   hs-source-dirs: src
