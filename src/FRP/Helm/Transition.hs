@@ -104,7 +104,7 @@ transition dtGen statusGen trans = do
 {-| Converts a list of tuples describing a waypoint value and time into a transition.
     The first element in the list is the starting value and time of the transition.
 
-    > color = transition (constant $ Time.fps 60) (constant Cycle) $ fromList [(white, 0), (green, 2 * seconds), (red, 5 * seconds), (black, 1 * seconds), (yellow, 2 * seconds)] -}
+    > color = transition (constant $ Time.fps 60) (constant Cycle) $ fromList [(white, 0), (green, 2 * second), (red, 5 * second), (black, 1 * second), (yellow, 2 * second)] -}
 fromList :: Interpolate a => [(a,Time)] -> InternalTransition a
 fromList [] = error "empty transitions don't have any default value"
 fromList ((v1, d1) : xs) = scanl (\InternalFrame { .. } (v, d) -> InternalFrame e v d (tend + d) tend) first xs
@@ -114,10 +114,10 @@ fromList ((v1, d1) : xs) = scanl (\InternalFrame { .. } (v, d) -> InternalFrame 
 {-| Starts a transition with an initial value. 
 
     > color = transition (constant $ Time.fps 60) (constant Cycle) $ startWith white $ do
-    >   waypoint green (2 * seconds)
-    >   waypoint red (5 * seconds)
-    >   waypoint black (1 * seconds)
-    >   waypoint yellow (2 * seconds)
+    >   waypoint green (2 * second)
+    >   waypoint red (5 * second)
+    >   waypoint black (1 * second)
+    >   waypoint yellow (2 * second)
 -}
 startWith :: Interpolate a => a -> Transition a b -> InternalTransition a
 startWith beginning transitionMonad = fromList $ snd $ runWriter $ evalStateT (tell [(beginning, 0)] >> transitionMonad) beginning

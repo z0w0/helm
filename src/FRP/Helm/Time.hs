@@ -64,7 +64,7 @@ fps n = second / realToFrac n
 
 {-| A signal that returns the time that the game has been running for when sampled. -}
 running :: SignalGen (Signal Time)
-running = effectful $ realToFrac <$> SDL.getTicks
+running = effectful $ (*) millisecond <$> realToFrac <$> SDL.getTicks
 
 {-| A signal that returns the time since it was last sampled when sampled. -}
 delta :: SignalGen (Signal Time)
@@ -72,7 +72,7 @@ delta = running >>= delta'
 
 {-| A utility function that does the real magic for 'delta'. -}
 delta' :: Signal Time -> SignalGen (Signal Time)
-delta' t = (fmap . fmap) snd $ transfer (0, 0) (\t2 (t1, _) -> (t2, t2 - t1)) t
+delta' t = (fmap . fmap) ((*) millisecond . snd) $ transfer (0, 0) (\t2 (t1, _) -> (t2, t2 - t1)) t
 
 {-| A signal that blocks the game thread for a certain amount of time when sampled and then returns the
     amount of time it blocked for. Please note that delaying by values smaller than 1 millisecond can have
@@ -82,7 +82,7 @@ delay t = effectful $ do
     before <- SDL.getTicks
 
     SDL.delay fixed
-    realToFrac <$> flip (-) before <$> SDL.getTicks
+    (*) millisecond <$> realToFrac <$> flip (-) before <$> SDL.getTicks
 
   where
-    fixed = max 0 $ round t
+    fixed = max 0 $ round $ inMilliseconds t

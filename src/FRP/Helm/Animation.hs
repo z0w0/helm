@@ -54,7 +54,7 @@ absolute = id
     is relative to other frames, i.e. each time value is the difference
     in time from the last frame.
 
-    > relative [(100 * milliseconds, picture1), (100 * milliseconds, picture2)] == absolute [(100 * milliseconds, picture1), (200 * milliseconds, picture2)]
+    > relative [(100 * millisecond, picture1), (100 * millisecond, picture2)] == absolute [(100 * millisecond, picture1), (200 * millisecond, picture2)]
  -}
 relative :: [Frame] -> Animation
 relative = scanl1 (\acc x -> (fst acc + fst x, snd x))
