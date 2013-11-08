@@ -17,7 +17,7 @@ module FRP.Helm.Transition (
 import Control.Applicative
 import FRP.Elerea.Simple
 import FRP.Helm.Color (Color)
-import FRP.Helm.Time (Time)
+import FRP.Helm.Time (Time, inSeconds)
 import Data.List (find)
 import Prelude hiding (length)
 import Data.Maybe (fromJust)
@@ -77,7 +77,7 @@ transitionAt :: Interpolate a => InternalTransition a -> Time -> a
 transitionAt pks timeUnsafe = transFrame currentTransition currentTime
   where
     currentTime = time - tstart currentTransition
-    currentTransition = fromJust $ find (\InternalFrame{..}-> tend >= time) pks
+    currentTransition = fromJust $ find (\InternalFrame { .. } -> tend >= time) pks
     time = cycleTime pks timeUnsafe
 
 {-| Turns the internal representation of a transition into a signal.
@@ -89,20 +89,22 @@ transition _ _ [] = error "empty transitions don't have any default value"
 transition dtGen statusGen trans = do
   dt <- dtGen
   status <- statusGen
-  time <- transfer2 0 step' status dt
+  time <- transfer2 0 step' status $ inSeconds <$> dt
+  
   return $ transitionAt trans <$> time
+  
   where
-      step' Cycle  dt t = cycleTime trans (dt/1000+t)
-      step' Pause _  t = t
+      step' Cycle dt t = cycleTime trans (dt + t)
+      step' Pause _ t = t
       step' Once dt t = if newT < length trans then newT
                         else length trans
-                        where newT = dt / 1000 + t
-      step' (Set t) _ _  = t
+                        where newT = dt + t
+      step' (Set t) _ _  = inSeconds t
 
 {-| Converts a list of tuples describing a waypoint value and time into a transition.
     The first element in the list is the starting value and time of the transition.
 
-    > color = transition (constant $ Time.fps 60) (constant Cycle) $ fromList [(white, 0), (green, 2), (red, 5), (black, 1), (yellow, 2)] -}
+    > color = transition (constant $ Time.fps 60) (constant Cycle) $ fromList [(white, 0), (green, 2 * seconds), (red, 5 * seconds), (black, 1 * seconds), (yellow, 2 * seconds)] -}
 fromList :: Interpolate a => [(a,Time)] -> InternalTransition a
 fromList [] = error "empty transitions don't have any default value"
 fromList ((v1, d1) : xs) = scanl (\InternalFrame { .. } (v, d) -> InternalFrame e v d (tend + d) tend) first xs
@@ -112,10 +114,10 @@ fromList ((v1, d1) : xs) = scanl (\InternalFrame { .. } (v, d) -> InternalFrame 
 {-| Starts a transition with an initial value. 
 
     > color = transition (constant $ Time.fps 60) (constant Cycle) $ startWith white $ do
-    >   waypoint green 2
-    >   waypoint red 5
-    >   waypoint black 1
-    >   waypoint yellow 2
+    >   waypoint green (2 * seconds)
+    >   waypoint red (5 * seconds)
+    >   waypoint black (1 * seconds)
+    >   waypoint yellow (2 * seconds)
 -}
 startWith :: Interpolate a => a -> Transition a b -> InternalTransition a
 startWith beginning transitionMonad = fromList $ snd $ runWriter $ evalStateT (tell [(beginning, 0)] >> transitionMonad) beginning

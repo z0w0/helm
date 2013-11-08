@@ -3,7 +3,7 @@ module FRP.Helm.Animation (
   -- * Types
   Frame,
   Animation,
-  Status(..),
+  AnimationStatus(..),
   -- * Creating
   absolute,
   relative,
@@ -18,7 +18,7 @@ import Prelude hiding (length)
 import FRP.Elerea.Simple
 import Control.Applicative
 import FRP.Helm.Graphics (Form,blank)
-import FRP.Helm.Time (Time)
+import FRP.Helm.Time (Time, inMilliseconds)
 import Data.Maybe (fromJust)
 import Data.List (find)
 import qualified Data.List as List (length)
@@ -28,23 +28,25 @@ import qualified Data.List as List (length)
     actually looks when rendered. -}
 type Frame = (Time, Form)
 
-
 {-| A type describing an animation consisting of a list of frames. -}
 type Animation = [Frame]
 
-{-| This type tells of the state an animation is in.
-    Continue: A continued animation plays through its frames as specified in the Animation.
-    Pause: A paused animation does not change its current frame and time.
-    Stop: A stopped animation is set to its first frame and time 0.
-    Frame: The Frame constructor can be used to choose a specific frame of the animation
-           where time is set to the first millisecond of that chosen frame. (Indexing starts at 1. 'first frame', not 'zero frame')
-    Time: The Time constructor sets the current time (in milliseconds) in the animation to the specified value.   -}
-data Status = Continue | Pause | Stop | Frame Int | Time Time
+{-| A data structure that can be used to manage the status of the animation. -}
+data AnimationStatus
+  -- | The animation continues to play through its frames.
+  = Cycle
+  -- | The animation is paused.
+  | Pause
+  -- | The animation is stopped, jumping back to the first frame and initial time.
+  | Stop
+  -- | The animation is set to a specific one-indexed frame.
+  | SetFrame Int
+  -- | The animation is set to a specific time and its related frame.
+  | SetTime Time
 
 {-| Creates an animation from a list of frames. The time value in each frame
     is absolute to the entire animation, i.e. each time value is the time
-    at which the frame takes place relative to the starting time of the animation.
- -}
+    at which the frame takes place relative to the starting time of the animation. -}
 absolute :: [Frame] -> Animation
 absolute = id
 
@@ -52,35 +54,32 @@ absolute = id
     is relative to other frames, i.e. each time value is the difference
     in time from the last frame.
 
-    > relative [(100, picture1), (100, picture2), (300, picture3)] == absolute [(100, picture1), (200, picture2), (500, picture3)]
+    > relative [(100 * milliseconds, picture1), (100 * milliseconds, picture2)] == absolute [(100 * milliseconds, picture1), (200 * milliseconds, picture2)]
  -}
 relative :: [Frame] -> Animation
 relative = scanl1 (\acc x -> (fst acc + fst x, snd x))
 
-{-| Creates a signal contained in a generator that returns the current form in the animation when sampled from
-    a specific animation. The second argument is a signal generator containing a signal that
-    returns the time to setup the animation forward when sampled. The third argument is a
-    signal generator containing a signal that returns true to continue animating
-    or false to stop animating when sampled. -}
-animate :: Animation -> SignalGen (Signal Time) -> SignalGen (Signal Status) -> SignalGen (Signal Form)
+{-| Creates a signal that returns the current form in the animation when sampled from
+    a specific animation. The second argument is a signal signal that returns the time to
+    setup the animation forward when sampled. The third argument is a signal that returns
+    the status of the animation, allowing you to control it. -}
+animate :: Animation -> SignalGen (Signal Time) -> SignalGen (Signal AnimationStatus) -> SignalGen (Signal Form)
 animate [] _ _ = return $ return blank
 animate anim dt status = do
   dt1 <- dt
   status1 <- status
-  progress <- transfer2 0 (timestep anim) status1 dt1
+  progress <- transfer2 0 (timestep anim) status1 $ inMilliseconds <$> dt1
 
   return $ fromJust <$> formAt anim <$> progress
 
-{-| Makes a step in the Animation of size dt, but also takes care to:
-    start over if the end was reached.
-    behave in accordance to the possible statuses,
-    handle erroneous input gently (this may do more bad than good since it may be unexpected, please dispute!) -}
-timestep :: Animation -> Status -> Time -> Time -> Time
-timestep anim Continue  dt t = cycleTime anim (dt + t)
-timestep _    Pause     _  t = t
-timestep _    Stop      _  _ = 0
-timestep anim (Time sT) _  _ = cycleTime anim sT
-timestep anim (Frame f) _  _ = gentleIndex anim f
+{-| Steps the animation but also cycles if the end is reached, handles any statuses and
+    tries to pickup any issues and handle them silently. -}
+timestep :: Animation -> AnimationStatus -> Time -> Time -> Time
+timestep anim Cycle dt t = cycleTime anim (dt + t)
+timestep _ Pause _ t = t
+timestep _ Stop _ _ = 0
+timestep anim (SetTime sT) _ _ = cycleTime anim $ inMilliseconds sT
+timestep anim (SetFrame f) _ _ = gentleIndex anim f
   where
     gentleIndex [] _ = 0
     gentleIndex xs n = fst $ xs !! (cycleFrames anim n -1)
