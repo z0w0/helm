@@ -28,7 +28,6 @@ library
 
   exposed-modules:
     FRP.Helm
-    FRP.Helm.Automaton
     FRP.Helm.Color
     FRP.Helm.Graphics
     FRP.Helm.Animation
