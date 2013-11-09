@@ -30,6 +30,11 @@ render _ (w, h) = collage w h [move (250, 150) $ gradient linearGrad $ rect 300 
 
 {-| Bootstrap the game. -}
 main :: IO ()
-main = run config $ render <~ Time.delay (Time.fps 60) ~~ Window.dimensions
+main = do
+    engine <- startup config
+    
+    run engine $ render <~ delta ~~ Window.dimensions engine
+
   where
     config = defaultConfig { windowTitle = "Helm - Gradients" }
+    delta = Time.delay (Time.fps 60)

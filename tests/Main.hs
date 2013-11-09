@@ -8,6 +8,4 @@ import qualified Time
 
 main :: IO ()
 main = defaultMain [testGroup "Color" Color.tests,
-                    testGroup "Keyboard" Keyboard.tests,
-                    testGroup "Mouse" Mouse.tests,
                     testGroup "Time" Time.tests]

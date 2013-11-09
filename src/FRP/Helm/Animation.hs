@@ -60,7 +60,7 @@ relative :: [Frame] -> Animation
 relative = scanl1 (\acc x -> (fst acc + fst x, snd x))
 
 {-| Creates a signal that returns the current form in the animation when sampled from
-    a specific animation. The second argument is a signal signal that returns the time to
+    a specific animation. The second argument is a signal that returns the time to
     setup the animation forward when sampled. The third argument is a signal that returns
     the status of the animation, allowing you to control it. -}
 animate :: Animation -> SignalGen (Signal Time) -> SignalGen (Signal AnimationStatus) -> SignalGen (Signal Form)

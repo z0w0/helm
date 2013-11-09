@@ -11,7 +11,11 @@ render :: Color -> (Int, Int) -> Element
 render bg (w, h) = centeredCollage w h [filled bg $ rect (fromIntegral w) (fromIntegral h)]
 
 main :: IO ()
-main = run config $ render <~ Transition.transition delta status transition ~~ Window.dimensions
+main = do
+    engine <- startup config
+
+    run engine $ render <~ Transition.transition delta status transition ~~ Window.dimensions engine
+  
   where
     config = defaultConfig { windowTitle = "Helm - Text" }
     transition = Transition.fromList [(white, 0), (green, 2), (red, 5), (black, 1), (yellow, 2)]

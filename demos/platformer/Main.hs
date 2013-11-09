@@ -6,7 +6,6 @@ import qualified FRP.Helm.Window as Window
 import qualified FRP.Helm.Keyboard as Keyboard
 
 data Direction = Left | Right deriving Show
-
 data Mario = Mario Double Double Double Double Direction deriving Show
 
 jump :: (Int, Int) -> Mario -> Mario
@@ -35,8 +34,8 @@ walk (x, _) (Mario mX mY _ vY dir) =
 step :: (Time, (Int, Int)) -> Mario -> Mario
 step (t, arrows) = physics t . walk arrows . gravity t . jump arrows
 
-render :: (Int, Int) -> Mario -> Element
-render (w, h) (Mario mX1 mY1 _ _ _) =
+render :: Mario -> (Int, Int) -> Element
+render (Mario mX1 mY1 _ _ _) (w, h) =
   collage w h [move (half w, half h) $ filled blue $ rect (fromIntegral w) (fromIntegral h), 
                move (half w, fromIntegral h - half 50) $ filled green $ rect (fromIntegral w) 50, 
                move (mX1, mY1 + fromIntegral h - 62) $ filled red $ rect 24 28] 
@@ -49,6 +48,12 @@ input = lift2 (,) delta' Keyboard.arrows
     delta' = lift (/15) $ delay $ fps 60
 
 main :: IO ()
-main = run defaultConfig $ render <~ Window.dimensions ~~ foldp step mario input
+main = do
+    engine <- startup config
+
+    run engine $ render <~ stepper ~~ Window.dimensions engine
+
   where
     mario = Mario 400 0 0 0 Right
+    config = defaultConfig { windowTitle = "Helm - Platformer", windowIsFullscreen = True }
+    stepper = foldp step mario input

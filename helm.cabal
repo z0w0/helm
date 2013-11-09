@@ -32,7 +32,6 @@ library
     FRP.Helm.Color
     FRP.Helm.Graphics
     FRP.Helm.Animation
-    FRP.Helm.Joystick
     FRP.Helm.Keyboard
     FRP.Helm.Mouse
     FRP.Helm.Text
@@ -48,7 +47,7 @@ library
     containers >= 0.5 && < 1,
     elerea >= 2.7 && < 3,
     filepath >= 1.3 && < 2,
-    SDL >= 0.6 && < 1,
+    SDL2 >= 0.1 && < 1,
     random >= 1.0.1.1 && < 1.2,
     mtl >= 2.1 && < 2.2
 
@@ -67,4 +66,4 @@ test-suite helm-tests
     test-framework-hunit >= 0.3 && < 1,
     test-framework-quickcheck2 >= 0.3 && < 1,
     elerea >= 2.7 && < 3,
-    SDL >= 0.6 && < 1
+    SDL2 >= 0.1 && < 1

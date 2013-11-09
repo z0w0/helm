@@ -5,18 +5,18 @@ module FRP.Helm.Window (
 ) where
 
 import Control.Applicative
-import Control.Arrow
 import FRP.Elerea.Simple
+import FRP.Helm (Engine(..))
 import qualified Graphics.UI.SDL as SDL
 
 {-| The current dimensions of the window. -}
-dimensions :: SignalGen (Signal (Int, Int))
-dimensions = effectful $ (SDL.surfaceGetWidth &&& SDL.surfaceGetHeight) <$> SDL.getVideoSurface
+dimensions :: Engine -> SignalGen (Signal (Int, Int))
+dimensions (Engine { window }) = effectful $ (\(SDL.Size w h) -> (w, h))<$> SDL.getWindowSize window
 
 {-| The current width of the window. -}
-width :: SignalGen (Signal Int)
-width = effectful $ SDL.surfaceGetWidth <$> SDL.getVideoSurface
+width :: Engine -> SignalGen (Signal Int)
+width (Engine { window }) = effectful $ (\(SDL.Size w _) -> w) <$> SDL.getWindowSize window
 
 {-| The current height of the window. -}
-height :: SignalGen (Signal Int)
-height = effectful $ SDL.surfaceGetHeight <$> SDL.getVideoSurface
+height :: Engine -> SignalGen (Signal Int)
+height (Engine { window }) = effectful $ (\(SDL.Size _ h) -> h) <$> SDL.getWindowSize window
