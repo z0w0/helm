@@ -64,7 +64,10 @@ render :: (Int, Int) -> Element
 render (w, h) = collage w h [move (100, 100) $ filled red $ square 64]
 
 main :: IO ()
-main = run defaultConfig $ render <~ Window.dimensions
+main = do
+  engine <- startup defaultConfig
+
+  run engine $ render <~ Window.dimensions engine
 ```
 
 It renders a red square at the position `(100, 100)` with a side length of `64`.  
@@ -89,7 +92,11 @@ render (w, h) (State { mx = mx, my = my }) =
   centeredCollage w h [move (mx, my) $ filled white $ square 100]
 
 main :: IO ()
-main = run defaultConfig $ render <~ Window.dimensions ~~ stepper
+main = do
+    engine <- startup defaultConfig
+
+    run engine $ render <~ Window.dimensions engine ~~ stepper
+  
   where
     state = State { mx = 0, my = 0 }
     stepper = foldp step state Keyboard.arrows
@@ -138,7 +145,7 @@ Helm would benefit from either of the following contributions:
 The following is a list of major issues that need to be tackled in the future:
 
 * Improve the API. See [issue #4](https://github.com/z0w0/helm/issues/4).
-* Backend wise, it would be nice to use GLFW/OpenGL instead of SDL/Cairo (at the very least SDL/OpenGL).
+* Backend wise, it would be nice to use SDL2/OpenGL instead of SDL2/Cairo.
   See [issue #1](https://github.com/z0w0/helm/issues/1).
 * Optimizations and testing. This is a early release of the engine so
   obviously little testing or optimizations have been done.
