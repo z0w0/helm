@@ -75,7 +75,7 @@ $ cabal install helm
 {% endhighlight %}
 
 Helm is now installed, but there is currently a mischevious issue with SDL preventing you from
-using Helm to make games without a C wrapper. Checkout [issue 7](https://github.com/z0w0/helm/issues/7).
+using Helm to make games without a C wrapper. Checkout [issue 7](https://github.com/switchface/helm/issues/7).
 
 ### Windows
 
