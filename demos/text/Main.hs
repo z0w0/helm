@@ -11,6 +11,10 @@ render :: Time -> (Int, Int) -> Element
 render _ (w, h) = centeredCollage w h [toForm $ Text.text $ Text.color red $ Text.header $ Text.italic $ Text.toText "wat m8"]
 
 main :: IO ()
-main = run config $ render <~ Time.delay (Time.fps 60) ~~ Window.dimensions
+main = do
+    engine <- startup config
+    
+    run engine $ render <~ Time.delay (Time.fps 60) ~~ Window.dimensions engine
+    
   where
     config = defaultConfig { windowTitle = "Helm - Text" }
