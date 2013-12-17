@@ -1,8 +1,8 @@
 <p align="center">
   <a href="http://helm-engine.org" title="Homepage"><img src="http://helm-engine.org/img/logo-alt.png"/></a>
+  <br/><br/>
+  <a href="http://tip4commit.com/projects/233"><img src="http://tip4commit.com/projects/233.svg"/></a>
 </p>
-
-[![tip4commit](http://tip4commit.com/projects/233.svg)](http://tip4commit.com/projects/233)
 
 ## Introduction
 
