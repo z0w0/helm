@@ -2,6 +2,8 @@
   <a href="http://helm-engine.org" title="Homepage"><img src="http://helm-engine.org/img/logo-alt.png"/></a>
 </p>
 
+[![tip4commit](http://tip4commit.com/projects/233.svg)](http://tip4commit.com/projects/233)
+
 ## Introduction
 
 Helm is a functionally reactive game engine written in Haskell and built around
