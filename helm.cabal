@@ -50,6 +50,9 @@ library
     random >= 1.0.1.1 && < 1.2,
     mtl >= 2.1 && < 2.2
 
+  if impl(ghc < 7.6)
+    build-depends: ghc-prim
+
 test-suite helm-tests
   type: exitcode-stdio-1.0
   x-uses-tf: true
