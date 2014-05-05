@@ -1,7 +1,5 @@
 <p align="center">
   <a href="http://helm-engine.org" title="Homepage"><img src="http://helm-engine.org/img/logo-alt.png"/></a>
-  <br/><br/>
-  <a href="http://tip4commit.com/projects/233"><img src="http://tip4commit.com/projects/233.svg"/></a>
 </p>
 
 ## Introduction
@@ -144,15 +142,5 @@ Helm would benefit from either of the following contributions:
    and after commas, etc. Please also confirm that the code passes under
    HLint.
 
-The following is a list of major issues that need to be tackled in the future:
-
-* Improve the API. See [issue #4](https://github.com/z0w0/helm/issues/4).
-* Backend wise, it would be nice to use SDL2/OpenGL instead of SDL2/Cairo.
-  See [issue #1](https://github.com/z0w0/helm/issues/1).
-* Optimizations and testing. This is a early release of the engine so
-  obviously little testing or optimizations have been done.
-  See [issue #2](https://github.com/z0w0/helm/issues/2). Preferably, upgrade to SDL2.
-* Port and support multiple platforms. I've only been testing it on
-  Linux, but there's really no reason that it wouldn't work out of the box
-  on Windows or OSX after setting up the dependencies.
-  See [issue #3](https://github.com/z0w0/helm/issues/3).
+There are a number of issues [tagged with the bounty tag](https://github.com/switchface/helm/issues?labels=bounty&state=open),
+meaning they have associated bounties on [Bountysource](https://www.bountysource.com/trackers/290443-helm).
