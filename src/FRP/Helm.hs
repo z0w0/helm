@@ -134,9 +134,9 @@ render engine@(Engine { .. }) element = do
     when it's ready to do rendering. -}
 render' :: Int -> Int -> Element -> Helm ()
 render' w h element = do
-  lift $ Cairo.setSourceRGB 0 0 0
-  lift $ Cairo.rectangle 0 0 (fromIntegral w) (fromIntegral h)
-  lift $ Cairo.fill
+  lift $ do Cairo.setSourceRGB 0 0 0
+            Cairo.rectangle 0 0 (fromIntegral w) (fromIntegral h)
+            Cairo.fill
 
   renderElement element
 
@@ -167,29 +167,29 @@ getSurface src = do
 {-| A utility function for rendering a specific element. -}
 renderElement :: Element -> Helm ()
 renderElement (CollageElement w h center forms) = do
-  lift $ Cairo.save
-  lift $ Cairo.rectangle 0 0 (fromIntegral w) (fromIntegral h)
-  lift $ Cairo.clip
-  lift $ forM_ center $ uncurry Cairo.translate
+  lift $ do Cairo.save
+            Cairo.rectangle 0 0 (fromIntegral w) (fromIntegral h)
+            Cairo.clip
+            forM_ center $ uncurry Cairo.translate
   mapM_ renderForm forms
   lift $ Cairo.restore
 
 renderElement (ImageElement (sx, sy) sw sh src stretch) = do
   (surface, w, h) <- getSurface (normalise src)
 
-  lift $ Cairo.save
-  lift $ Cairo.translate (-fromIntegral sx) (-fromIntegral sy)
+  lift $ do Cairo.save
+            Cairo.translate (-fromIntegral sx) (-fromIntegral sy)
 
-  if stretch then
-    lift $ Cairo.scale (fromIntegral sw / fromIntegral w) (fromIntegral sh / fromIntegral h)
-  else
-    lift $ Cairo.scale 1 1
+            if stretch then
+              Cairo.scale (fromIntegral sw / fromIntegral w) (fromIntegral sh / fromIntegral h)
+            else
+              Cairo.scale 1 1
 
-  lift $ Cairo.setSourceSurface surface 0 0
-  lift $ Cairo.translate (fromIntegral sx) (fromIntegral sy)
-  lift $ Cairo.rectangle 0 0 (fromIntegral sw) (fromIntegral sh)
-  lift $ Cairo.fill
-  lift $ Cairo.restore
+            Cairo.setSourceSurface surface 0 0
+            Cairo.translate (fromIntegral sx) (fromIntegral sy)
+            Cairo.rectangle 0 0 (fromIntegral sw) (fromIntegral sh)
+            Cairo.fill
+            Cairo.restore
 
 renderElement (TextElement (Text { textColor = (Color r g b a), .. })) = do
     lift $ Cairo.save
@@ -203,10 +203,10 @@ renderElement (TextElement (Text { textColor = (Color r g b a), .. })) = do
 
     Pango.PangoRectangle x y w h <- fmap snd $ Cairo.liftIO $ Pango.layoutGetExtents layout
 
-    lift $ Cairo.translate ((-w / 2) -x) ((-h / 2) - y)
-    lift $ Cairo.setSourceRGBA r g b a
-    lift $ Pango.showLayout layout
-    lift $ Cairo.restore
+    lift $ do Cairo.translate ((-w / 2) -x) ((-h / 2) - y)
+              Cairo.setSourceRGBA r g b a
+              Pango.showLayout layout
+              Cairo.restore
 
   where
     i = 0
@@ -264,14 +264,14 @@ setLineStyle (LineStyle { lineColor = Color r g b a, .. }) = do
     that all drawing paths have already been setup before being called. -}
 setFillStyle :: FillStyle -> Helm ()
 setFillStyle (Solid (Color r g b a)) = do
-  lift $ Cairo.setSourceRGBA r g b a
-  lift $ Cairo.fill
+  lift $ do Cairo.setSourceRGBA r g b a
+            Cairo.fill
 
 setFillStyle (Texture src) = do
   (surface, _, _) <- getSurface (normalise src)
-  lift $ Cairo.setSourceSurface surface 0 0
-  lift $ Cairo.getSource >>= flip Cairo.patternSetExtend Cairo.ExtendRepeat
-  lift $ Cairo.fill
+  lift $ do Cairo.setSourceSurface surface 0 0
+            Cairo.getSource >>= flip Cairo.patternSetExtend Cairo.ExtendRepeat
+            Cairo.fill
 
 setFillStyle (Gradient (Linear (sx, sy) (ex, ey) points)) =
   lift $ Cairo.withLinearPattern sx sy ex ey $ \pattern -> setFillStyle' pattern points
@@ -291,31 +291,31 @@ renderForm :: Form -> Helm ()
 renderForm Form { .. } = withTransform formScale formTheta formX formY $
   case formStyle of
     PathForm style ~ps @ ((hx, hy) : _) -> do
-      lift $ Cairo.newPath
-      lift $ Cairo.moveTo hx hy
-      lift $ mapM_ (uncurry Cairo.lineTo) ps
-      lift $ setLineStyle style
+      lift $ do Cairo.newPath
+                Cairo.moveTo hx hy
+                mapM_ (uncurry Cairo.lineTo) ps
+                setLineStyle style
 
     ShapeForm style shape -> do
       lift $ Cairo.newPath
 
       case shape of
         PolygonShape ~ps @ ((hx, hy) : _) -> do
-          lift $ Cairo.moveTo hx hy
-          lift $ mapM_ (uncurry Cairo.lineTo) ps
+          lift $ do Cairo.moveTo hx hy
+                    mapM_ (uncurry Cairo.lineTo) ps
 
         RectangleShape (w, h) -> lift $ Cairo.rectangle (-w / 2) (-h / 2) w h
 
         ArcShape (cx, cy) a1 a2 r (sx, sy) -> do
-          lift $ Cairo.scale sx sy
-          lift $ Cairo.arc cx cy r a1 a2
-          lift $ Cairo.scale 1 1
+          lift $ do Cairo.scale sx sy
+                    Cairo.arc cx cy r a1 a2
+                    Cairo.scale 1 1
 
       either (lift . setLineStyle) setFillStyle style
 
     ElementForm element -> renderElement element
     GroupForm mayhaps forms -> do
-      lift $ Cairo.save
-      lift $ forM_ mayhaps Cairo.setMatrix
+      lift $ do Cairo.save
+                forM_ mayhaps Cairo.setMatrix
       mapM_ renderForm forms
       lift $ Cairo.restore
