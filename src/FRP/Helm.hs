@@ -67,7 +67,7 @@ startup :: EngineConfig -> IO Engine
 startup (EngineConfig { .. }) = do
     window <- SDL.createWindow windowTitle (SDL.Position 0 0) (SDL.Size w h) flags
     renderer <- SDL.createRenderer window (SDL.Device (-1)) [SDL.Accelerated, SDL.PresentVSync]
-    cache <- return Map.empty
+    let cache = Map.empty
 
     return Engine { window = window, renderer = renderer, cache = cache }
 
