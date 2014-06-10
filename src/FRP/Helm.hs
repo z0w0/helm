@@ -13,23 +13,30 @@ module FRP.Helm (
   module Color,
   module Graphics,
   module Utilities,
+  FRP.Helm.Utilities.lift
 ) where
 
 import Control.Exception
-import Control.Monad (when)
+import Control.Monad (when, liftM)
+import Control.Monad.IO.Class
+import Control.Monad.Trans.Class (lift)
+import Control.Monad.Trans.State
 import Data.Foldable (forM_)
 import Data.IORef
 import Foreign.Ptr (castPtr)
 import FRP.Elerea.Simple
 import FRP.Helm.Color as Color
 import FRP.Helm.Graphics as Graphics
-import FRP.Helm.Utilities as Utilities
+import FRP.Helm.Utilities as Utilities hiding (lift)
+import qualified FRP.Helm.Utilities (lift)
 import FRP.Helm.Time (Time)
 import System.FilePath
 import qualified Data.Map as Map
 import qualified Graphics.UI.SDL as SDL
 import qualified Graphics.Rendering.Cairo as Cairo
 import qualified Graphics.Rendering.Pango as Pango
+
+type Helm a = StateT Engine Cairo.Render a
 
 {-| A data structure describing miscellaneous initial configurations of the game window and engine. -}
 data EngineConfig = EngineConfig {
@@ -52,7 +59,7 @@ defaultConfig = EngineConfig {
 data Engine = Engine {
   window :: SDL.Window,
   renderer :: SDL.Renderer,
-  cache :: IORef (Map.Map FilePath Cairo.Surface)
+  cache :: Map.Map FilePath Cairo.Surface
 }
 
 {-| Creates a new engine that can be run later using 'run'. -}
@@ -60,7 +67,7 @@ startup :: EngineConfig -> IO Engine
 startup (EngineConfig { .. }) = do
     window <- SDL.createWindow windowTitle (SDL.Position 0 0) (SDL.Size w h) flags
     renderer <- SDL.createRenderer window (SDL.Device (-1)) [SDL.Accelerated, SDL.PresentVSync]
-    cache <- newIORef Map.empty
+    let cache = Map.empty
 
     return Engine { window = window, renderer = renderer, cache = cache }
 
@@ -116,29 +123,30 @@ render engine@(Engine { .. }) element = do
 
   SDL.lockTexture texture Nothing $ \(pixels, pitch) ->
     Cairo.withImageSurfaceForData pixels Cairo.FormatARGB32 w h pitch $ \surface ->
-      Cairo.renderWith surface (render' w h engine element)
+      Cairo.renderWith surface (evalStateT (render' w h element) engine)
 
   SDL.renderClear renderer
   SDL.renderCopy renderer texture Nothing Nothing
   SDL.renderPresent renderer
 
+
 {-| A utility function called by 'render' that is called by Cairo
     when it's ready to do rendering. -}
-render' :: Int -> Int -> Engine -> Element -> Cairo.Render ()
-render' w h engine element = do
-  Cairo.setSourceRGB 0 0 0
-  Cairo.rectangle 0 0 (fromIntegral w) (fromIntegral h)
-  Cairo.fill
+render' :: Int -> Int -> Element -> Helm ()
+render' w h element = do
+  lift $ do Cairo.setSourceRGB 0 0 0
+            Cairo.rectangle 0 0 (fromIntegral w) (fromIntegral h)
+            Cairo.fill
 
-  renderElement engine element
+  renderElement element
 
 {-| A utility function that lazily grabs an image surface from the cache,
     i.e. creating it if it's not already stored in it. -}
-getSurface :: Engine -> FilePath -> IO (Cairo.Surface, Int, Int)
-getSurface (Engine { cache }) src = do
-  cached <- Cairo.liftIO (readIORef cache)
+getSurface :: FilePath -> Helm (Cairo.Surface, Int, Int)
+getSurface src = do
+  Engine _ _ cache <- get
 
-  case Map.lookup src cached of
+  case Map.lookup src cache of
     Just surface -> do
       w <- Cairo.imageSurfaceGetWidth surface
       h <- Cairo.imageSurfaceGetHeight surface
@@ -149,44 +157,44 @@ getSurface (Engine { cache }) src = do
       -- TODO: Use SDL_image to support more formats. I gave up after it was painful
       -- to convert between the two surface types safely.
       -- FIXME: Does this throw an error?
-      surface <- Cairo.imageSurfaceCreateFromPNG src
-      w <- Cairo.imageSurfaceGetWidth surface
-      h <- Cairo.imageSurfaceGetHeight surface
+      surface <- liftIO $ Cairo.imageSurfaceCreateFromPNG src
+      w <- liftIO $ Cairo.imageSurfaceGetWidth surface
+      h <- liftIO $ Cairo.imageSurfaceGetHeight surface
 
-      writeIORef cache (Map.insert src surface cached)
+      modify (\engine -> engine{cache=Map.insert src surface cache})
       return (surface, w, h)
 
 {-| A utility function for rendering a specific element. -}
-renderElement :: Engine -> Element -> Cairo.Render ()
-renderElement engine (CollageElement w h center forms) = do
-  Cairo.save
-  Cairo.rectangle 0 0 (fromIntegral w) (fromIntegral h)
-  Cairo.clip
-  forM_ center $ uncurry Cairo.translate
-  mapM_ (renderForm engine) forms
-  Cairo.restore
+renderElement :: Element -> Helm ()
+renderElement (CollageElement w h center forms) = do
+  lift $ do Cairo.save
+            Cairo.rectangle 0 0 (fromIntegral w) (fromIntegral h)
+            Cairo.clip
+            forM_ center $ uncurry Cairo.translate
+  mapM_ renderForm forms
+  lift $ Cairo.restore
 
-renderElement engine (ImageElement (sx, sy) sw sh src stretch) = do
-  (surface, w, h) <- Cairo.liftIO $ getSurface engine (normalise src)
+renderElement (ImageElement (sx, sy) sw sh src stretch) = do
+  (surface, w, h) <- getSurface (normalise src)
 
-  Cairo.save
-  Cairo.translate (-fromIntegral sx) (-fromIntegral sy)
+  lift $ do Cairo.save
+            Cairo.translate (-fromIntegral sx) (-fromIntegral sy)
 
-  if stretch then
-    Cairo.scale (fromIntegral sw / fromIntegral w) (fromIntegral sh / fromIntegral h)
-  else
-    Cairo.scale 1 1
+            if stretch then
+              Cairo.scale (fromIntegral sw / fromIntegral w) (fromIntegral sh / fromIntegral h)
+            else
+              Cairo.scale 1 1
 
-  Cairo.setSourceSurface surface 0 0
-  Cairo.translate (fromIntegral sx) (fromIntegral sy)
-  Cairo.rectangle 0 0 (fromIntegral sw) (fromIntegral sh)
-  Cairo.fill
-  Cairo.restore
+            Cairo.setSourceSurface surface 0 0
+            Cairo.translate (fromIntegral sx) (fromIntegral sy)
+            Cairo.rectangle 0 0 (fromIntegral sw) (fromIntegral sh)
+            Cairo.fill
+            Cairo.restore
 
-renderElement _ (TextElement (Text { textColor = (Color r g b a), .. })) = do
-    Cairo.save
+renderElement (TextElement (Text { textColor = (Color r g b a), .. })) = do
+    lift $ Cairo.save
 
-    layout <- Pango.createLayout textUTF8
+    layout <- lift $ Pango.createLayout textUTF8
 
     Cairo.liftIO $ Pango.layoutSetAttributes layout [Pango.AttrFamily { paStart = i, paEnd = j, paFamily = textTypeface },
                                                      Pango.AttrWeight { paStart = i, paEnd = j, paWeight = mapFontWeight textWeight },
@@ -195,10 +203,10 @@ renderElement _ (TextElement (Text { textColor = (Color r g b a), .. })) = do
 
     Pango.PangoRectangle x y w h <- fmap snd $ Cairo.liftIO $ Pango.layoutGetExtents layout
 
-    Cairo.translate ((-w / 2) -x) ((-h / 2) - y)
-    Cairo.setSourceRGBA r g b a
-    Pango.showLayout layout
-    Cairo.restore
+    lift $ do Cairo.translate ((-w / 2) -x) ((-h / 2) - y)
+              Cairo.setSourceRGBA r g b a
+              Pango.showLayout layout
+              Cairo.restore
 
   where
     i = 0
@@ -219,8 +227,11 @@ mapFontStyle style = case style of
   ItalicStyle  -> Pango.StyleItalic
 
 {-| A utility function that goes into a state of transformation and then pops it when finished. -}
-withTransform :: Double -> Double -> Double -> Double -> Cairo.Render () -> Cairo.Render ()
-withTransform s t x y f = Cairo.save >> Cairo.scale s s >> Cairo.translate x y >> Cairo.rotate t >> f >> Cairo.restore
+withTransform :: Double -> Double -> Double -> Double -> Helm () -> Helm ()
+withTransform s t x y f = do
+  lift $ Cairo.save >> Cairo.scale s s >> Cairo.translate x y >> Cairo.rotate t
+  f
+  lift $ Cairo.restore
 
 {-| A utility function that sets the Cairo line cap based off of our version. -}
 setLineCap :: LineCap -> Cairo.Render ()
@@ -251,22 +262,22 @@ setLineStyle (LineStyle { lineColor = Color r g b a, .. }) = do
 {-| A utility function that sets up all the necessary settings with Cairo
     to render with a fill style and then fills afterwards. Assumes
     that all drawing paths have already been setup before being called. -}
-setFillStyle :: Engine -> FillStyle -> Cairo.Render ()
-setFillStyle _ (Solid (Color r g b a)) = do
-  Cairo.setSourceRGBA r g b a
-  Cairo.fill
+setFillStyle :: FillStyle -> Helm ()
+setFillStyle (Solid (Color r g b a)) = do
+  lift $ do Cairo.setSourceRGBA r g b a
+            Cairo.fill
 
-setFillStyle state (Texture src) = do
-  (surface, _, _) <- Cairo.liftIO $ getSurface state (normalise src)
-  Cairo.setSourceSurface surface 0 0
-  Cairo.getSource >>= flip Cairo.patternSetExtend Cairo.ExtendRepeat
-  Cairo.fill
+setFillStyle (Texture src) = do
+  (surface, _, _) <- getSurface (normalise src)
+  lift $ do Cairo.setSourceSurface surface 0 0
+            Cairo.getSource >>= flip Cairo.patternSetExtend Cairo.ExtendRepeat
+            Cairo.fill
 
-setFillStyle _ (Gradient (Linear (sx, sy) (ex, ey) points)) =
-  Cairo.withLinearPattern sx sy ex ey $ \pattern -> setFillStyle' pattern points
+setFillStyle (Gradient (Linear (sx, sy) (ex, ey) points)) =
+  lift $ Cairo.withLinearPattern sx sy ex ey $ \pattern -> setFillStyle' pattern points
 
-setFillStyle _ (Gradient (Radial (sx, sy) sr (ex, ey) er points)) =
-  Cairo.withRadialPattern sx sy sr ex ey er $ \pattern -> setFillStyle' pattern points
+setFillStyle (Gradient (Radial (sx, sy) sr (ex, ey) er points)) =
+  lift $ Cairo.withRadialPattern sx sy sr ex ey er $ \pattern -> setFillStyle' pattern points
 
 {-| A utility function that adds color stops to a pattern and then fills it. -}
 setFillStyle' :: Cairo.Pattern -> [(Double, Color)] -> Cairo.Render ()
@@ -276,35 +287,35 @@ setFillStyle' pattern points = do
   Cairo.fill
 
 {-| A utility that renders a form. -}
-renderForm :: Engine -> Form -> Cairo.Render ()
-renderForm engine Form { .. } = withTransform formScale formTheta formX formY $
+renderForm :: Form -> Helm ()
+renderForm Form { .. } = withTransform formScale formTheta formX formY $
   case formStyle of
     PathForm style ~ps @ ((hx, hy) : _) -> do
-      Cairo.newPath
-      Cairo.moveTo hx hy
-      mapM_ (uncurry Cairo.lineTo) ps
-      setLineStyle style
+      lift $ do Cairo.newPath
+                Cairo.moveTo hx hy
+                mapM_ (uncurry Cairo.lineTo) ps
+                setLineStyle style
 
     ShapeForm style shape -> do
-      Cairo.newPath
+      lift $ Cairo.newPath
 
       case shape of
         PolygonShape ~ps @ ((hx, hy) : _) -> do
-          Cairo.moveTo hx hy
-          mapM_ (uncurry Cairo.lineTo) ps
+          lift $ do Cairo.moveTo hx hy
+                    mapM_ (uncurry Cairo.lineTo) ps
 
-        RectangleShape (w, h) -> Cairo.rectangle (-w / 2) (-h / 2) w h
+        RectangleShape (w, h) -> lift $ Cairo.rectangle (-w / 2) (-h / 2) w h
 
         ArcShape (cx, cy) a1 a2 r (sx, sy) -> do
-          Cairo.scale sx sy
-          Cairo.arc cx cy r a1 a2
-          Cairo.scale 1 1
+          lift $ do Cairo.scale sx sy
+                    Cairo.arc cx cy r a1 a2
+                    Cairo.scale 1 1
 
-      either setLineStyle (setFillStyle engine) style
+      either (lift . setLineStyle) setFillStyle style
 
-    ElementForm element -> renderElement engine element
+    ElementForm element -> renderElement element
     GroupForm mayhaps forms -> do
-      Cairo.save
-      forM_ mayhaps Cairo.setMatrix
-      mapM_ (renderForm engine) forms
-      Cairo.restore
+      lift $ do Cairo.save
+                forM_ mayhaps Cairo.setMatrix
+      mapM_ renderForm forms
+      lift $ Cairo.restore
