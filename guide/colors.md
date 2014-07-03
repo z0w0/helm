@@ -161,6 +161,6 @@ slice n = filled color $ polygon points
 
 The final product renders a (flat-edged) color wheel with 11 predefined colors on it.
 
-[Checkout the code on Github →](https://github.com/switchface/helm/blob/master/demos/colors/Main.hs)
+[Checkout the code on Github →](https://github.com/switchface/helm-demo-colors)
 
 ![final](/img/guide/colors.png)

@@ -87,6 +87,6 @@ gradient :: Gradient -> Shape -> Form
 The final product renders a *300x100* rectangle at *(100, 100)* filled with the *linearGrad* gradient,
 and a circle with a radius of *64* at *(500, 300)* filled with the *radialGrad* gradient.
 
-[Checkout the code on Github →](https://github.com/switchface/helm/blob/master/demos/gradients/Main.hs)
+[Checkout the code on Github →](https://github.com/switchface/helm-demo-gradients)
 
 ![final](/img/guide/gradients.png)
