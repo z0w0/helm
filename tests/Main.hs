@@ -2,8 +2,6 @@ module Main where
 
 import Test.Framework (defaultMain, testGroup)
 import qualified Color
-import qualified Mouse
-import qualified Keyboard
 import qualified Time
 
 main :: IO ()
