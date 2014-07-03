@@ -1,0 +1,7 @@
+language: haskell
+ghc:
+  - 7.6
+before_install:
+  - echo 'yes' | sudo add-apt-repository ppa:zoogie/sdl2-snapshots
+  - sudo apt-get update
+  - sudo apt-get install libsdl2 libcairo2-dev
