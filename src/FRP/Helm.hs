@@ -16,14 +16,18 @@ module FRP.Helm (
   FRP.Helm.Utilities.lift
 ) where
 
+import Control.Applicative
 import Control.Exception
-import Control.Monad (when, liftM)
+import Control.Monad (when)
 import Control.Monad.IO.Class
 import Control.Monad.Trans.Class (lift)
 import Control.Monad.Trans.State
+import Data.Bits
 import Data.Foldable (forM_)
-import Data.IORef
-import Foreign.Ptr (castPtr)
+import Foreign.C.String
+import Foreign.Marshal.Alloc
+import Foreign.Ptr
+import Foreign.Storable
 import FRP.Elerea.Simple
 import FRP.Helm.Color as Color
 import FRP.Helm.Graphics as Graphics
@@ -64,16 +68,18 @@ data Engine = Engine {
 
 {-| Creates a new engine that can be run later using 'run'. -}
 startup :: EngineConfig -> IO Engine
-startup (EngineConfig { .. }) = do
-    window <- SDL.createWindow windowTitle (SDL.Position 0 0) (SDL.Size w h) flags
-    renderer <- SDL.createRenderer window (SDL.Device (-1)) [SDL.Accelerated, SDL.PresentVSync]
-    let cache = Map.empty
+startup (EngineConfig { .. }) = withCAString windowTitle $ \title -> do
+    window <- SDL.createWindow title 0 0 (fromIntegral w) (fromIntegral h) wflags
+    renderer <- SDL.createRenderer window (-1) rflags
 
-    return Engine { window = window, renderer = renderer, cache = cache }
+    return Engine { window = window, renderer = renderer, cache = Map.empty }
 
   where
     (w, h) = windowDimensions
-    flags = [SDL.WindowShown] ++ [SDL.WindowResizable | windowIsResizable] ++ [SDL.WindowFullscreen | windowIsFullscreen]
+    wflags = foldl (.|.) 0 $ [SDL.windowFlagShown] ++
+                             [SDL.windowFlagResizable | windowIsResizable] ++
+                             [SDL.windowFlagFullscreen | windowIsFullscreen]
+    rflags = (.|.) (SDL.rendererFlagPresentVSync) (SDL.rendererFlagAccelerated)
 
 {-| Initializes and runs the game engine. The supplied signal generator is
     constantly sampled for an element to render until the user quits.
@@ -104,29 +110,46 @@ run' engine smp = do
     off the stack, returning true if the game should keep running,
     false otherwise. -}
 run'' :: IO Bool
-run'' = do
-  event <- SDL.pollEvent
+run'' = alloca $ \eventptr -> do
+  status <- SDL.pollEvent eventptr
 
-  case event of
-    Just event ->
-      case SDL.eventData event of
-        SDL.Quit -> return False
-        _ -> run''
-    Nothing -> return True
+  if status == 1 then do
+    event <- peek eventptr
+
+    case event of
+      SDL.QuitEvent _ _ -> return False
+      _ -> run''
+  else
+    return True
 
 {-| A utility function that renders a previously sampled element
     using an engine state. -}
 render :: Engine -> Element -> IO ()
-render engine@(Engine { .. }) element = do
-  SDL.Size w h <- SDL.getWindowSize window
-  texture <- SDL.createTexture renderer SDL.PixelFormatARGB8888 SDL.TextureAccessStreaming w h
+render engine@(Engine { .. }) element = alloca $ \wptr      ->
+                                        alloca $ \hptr      ->
+                                        alloca $ \pixelsptr ->
+                                        alloca $ \pitchptr  -> do
+  SDL.getWindowSize window wptr hptr
 
-  SDL.lockTexture texture Nothing $ \(pixels, pitch) ->
-    Cairo.withImageSurfaceForData pixels Cairo.FormatARGB32 w h pitch $ \surface ->
-      Cairo.renderWith surface (evalStateT (render' w h element) engine)
+  w <- fromIntegral <$> peek wptr
+  h <- fromIntegral <$> peek hptr
+
+  -- We have to use a temporary constant here because the low-level SDL2 bindings
+  -- don't seem to expose pixel format constants
+  texture <- SDL.createTexture renderer 372645892 SDL.textureAccessStreaming (fromIntegral w) (fromIntegral h)
+
+  SDL.lockTexture texture nullPtr pixelsptr pitchptr
+
+  pixels <- peek pixelsptr
+  pitch <- fromIntegral <$> peek pitchptr
+
+  Cairo.withImageSurfaceForData (castPtr pixels) Cairo.FormatARGB32 w h pitch $ \surface ->
+    Cairo.renderWith surface (evalStateT (render' w h element) engine)
+
+  SDL.unlockTexture texture
 
   SDL.renderClear renderer
-  SDL.renderCopy renderer texture Nothing Nothing
+  SDL.renderCopy renderer texture nullPtr nullPtr
   SDL.renderPresent renderer
 
 

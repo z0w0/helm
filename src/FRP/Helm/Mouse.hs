@@ -8,10 +8,13 @@ module FRP.Helm.Mouse (
   position, x, y
 ) where
 
-import Control.Applicative
+import Data.Bits
+import Foreign.Marshal.Alloc
+import Foreign.Ptr
+import Foreign.Storable
 import FRP.Elerea.Simple
+import FRP.Helm.Utilities
 import qualified Graphics.UI.SDL as SDL
-import qualified Graphics.UI.SDL.Utilities as Util
 
 {-| A data structure describing a button on a mouse. -}
 data Mouse
@@ -38,17 +41,25 @@ instance Enum Mouse where
 
 {-| The current position of the mouse. -}
 position :: SignalGen (Signal (Int, Int))
-position = effectful $ (\(x_, y_, _) -> (x_, y_)) <$> SDL.getMouseState
+position = effectful $ alloca $ \xptr -> alloca $ \yptr -> do
+    _ <- SDL.getMouseState xptr yptr
+    x_ <- peek xptr
+    y_ <- peek yptr
+
+    return (fromIntegral x_, fromIntegral y_)
 
 {-| The current x-coordinate of the mouse. -}
 x :: SignalGen (Signal Int)
-x = effectful $ (\(x_, _, _) -> x_) <$> SDL.getMouseState
+x = (\(x_, _) -> x_) <~ position
 
 {-| The current y-coordinate of the mouse. -}
 y :: SignalGen (Signal Int)
-y = effectful $ (\(_, y_, _) -> y_) <$> SDL.getMouseState
+y = (\(_, y_) -> y_) <~ position
 
 {-| The current state of a certain mouse button.
     True if the mouse is down, false otherwise. -}
 isDown :: Mouse -> SignalGen (Signal Bool)
-isDown m = effectful $ (\(_, _, b_) -> elem (toEnum $ fromIntegral $ fromEnum m) b_) <$> SDL.getMouseState
+isDown m = effectful $ do
+  flags <- SDL.getMouseState nullPtr nullPtr
+
+  return $ ((.&.) (fromIntegral flags) (fromEnum m)) /= 0
