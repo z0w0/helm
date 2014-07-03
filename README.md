@@ -41,7 +41,6 @@ Helm.
     colors and a few pre-defined colors that are usually used in games.
   * `FRP.Helm.Graphics` contains all the graphics data structures, functions
     for composing these structures and other general graphical utilities.
-  * `FRP.Helm.Joystick` contains signals for working with joystick state.
   * `FRP.Helm.Keyboard` contains signals for working with keyboard state.
   * `FRP.Helm.Mouse` contains signals for working with mouse state.
   * `FRP.Helm.Text` contains functions for composing text, formatting it
@@ -71,7 +70,7 @@ main = do
 ```
 
 It renders a red square at the position `(100, 100)` with a side length of `64`.  
-  
+
 The next example is the barebones of a game that depends on input. It shows how to create
 an accumulated state that depends on the values sampled from signals (e.g. mouse input).
 You should see a white square on the screen and pressing the arrow keys allows you to move it.
@@ -96,7 +95,7 @@ main = do
     engine <- startup defaultConfig
 
     run engine $ render <~ Window.dimensions engine ~~ stepper
-  
+
   where
     state = State { mx = 0, my = 0 }
     stepper = foldp step state Keyboard.arrows
