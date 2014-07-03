@@ -1,5 +1,6 @@
 <p align="center">
   <a href="http://helm-engine.org" title="Homepage"><img src="http://helm-engine.org/img/logo-alt.png" /></a>
+  <br>
   <a href="https://travis-ci.org/switchface/helm" title="Travis CI"><img src="https://travis-ci.org/switchface/helm.svg" /></a>
 </p>
 
