@@ -69,8 +69,7 @@ There might be a few missing from this list, so check out the
 [*FRP.Helm.Color* documentation](http://hackage.haskell.org/packages/archive/helm/latest/doc/html/FRP-Helm-Color.html#v:red) just in case.
 
 There are many functions that actually use colors, such as filling or outling shapes.
-Check out the [Forms and Shapes section of the guide](/guide/forms-and-shapes) or
-the [*FRP.Helm.Graphics* documentation](http://hackage.haskell.org/packages/archive/helm/latest/doc/html/FRP-Helm-Graphics.html#v:filled)
+Check out the [*FRP.Helm.Graphics* documentation](http://hackage.haskell.org/packages/archive/helm/latest/doc/html/FRP-Helm-Graphics.html#v:filled)
 for some examples of these functions.
 
 ### Creating a Color Wheel
