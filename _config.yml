@@ -1,3 +1,4 @@
 name: Helm
 highlighter: rouge
 relative_permalinks: false
+markdown: kramdown
