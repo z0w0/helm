@@ -60,11 +60,11 @@ commands to install the dependencies using Homebrew:
 {% highlight bash %}
 $ brew doctor # if this is your first time using homebrew
 $ brew install sdl2
-$ brew install cairo --without-x
-$ brew install pango --without-x
+$ brew install cairo --without-x11
+$ brew install pango --without-x11
 {% endhighlight %}
 
-We need to add the `--without-x` flag when installing Cairo and Pango because we can't use the X11 backend
+We need to add the `--without-x11` flag when installing Cairo and Pango because we can't use the X11 backend
 on OS X without an X11 server (not that we want to, anyway). We can now run the Cabal package manager
 included in the previously installed Haskell platform to install the Helm libraries (in a similar
 manner to Linux):
