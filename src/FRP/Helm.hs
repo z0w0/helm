@@ -150,6 +150,7 @@ render engine@(Engine { .. }) element = alloca $ \wptr      ->
 
   SDL.renderClear renderer
   SDL.renderCopy renderer texture nullPtr nullPtr
+  SDL.destroyTexture texture
   SDL.renderPresent renderer
 
 
