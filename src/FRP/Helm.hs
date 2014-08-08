@@ -35,6 +35,7 @@ import FRP.Helm.Utilities as Utilities hiding (lift)
 import qualified FRP.Helm.Utilities (lift)
 import FRP.Helm.Time (Time)
 import System.FilePath
+import qualified Data.Text as T
 import qualified Data.Map as Map
 import qualified Graphics.UI.SDL as SDL
 import qualified Graphics.Rendering.Cairo as Cairo
@@ -220,7 +221,7 @@ renderElement (TextElement (Text { textColor = (Color r g b a), .. })) = do
 
     layout <- lift $ Pango.createLayout textUTF8
 
-    Cairo.liftIO $ Pango.layoutSetAttributes layout [Pango.AttrFamily { paStart = i, paEnd = j, paFamily = textTypeface },
+    Cairo.liftIO $ Pango.layoutSetAttributes layout [Pango.AttrFamily { paStart = i, paEnd = j, paFamily = T.pack textTypeface },
                                                      Pango.AttrWeight { paStart = i, paEnd = j, paWeight = mapFontWeight textWeight },
                                                      Pango.AttrStyle { paStart = i, paEnd = j, paStyle = mapFontStyle textStyle },
                                                      Pango.AttrSize { paStart = i, paEnd = j, paSize = textHeight }]
