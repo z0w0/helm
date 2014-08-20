@@ -24,7 +24,7 @@ library
   hs-source-dirs: src
   default-language: Haskell2010
   default-extensions: RecordWildCards, NamedFieldPuns
-  ghc-options: -threaded -Wall -fno-warn-unused-do-bind -O2
+  ghc-options: -Wall -fno-warn-unused-do-bind
 
   exposed-modules:
     FRP.Helm
