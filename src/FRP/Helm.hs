@@ -24,7 +24,6 @@ import Control.Monad.Trans.Class (lift)
 import Control.Monad.Trans.State
 import Data.Bits
 import Data.Foldable (forM_)
-import Debug.Trace
 import Foreign.C.String
 import Foreign.Marshal.Alloc
 import Foreign.Ptr
@@ -81,7 +80,7 @@ startup (EngineConfig { .. }) = withCAString windowTitle $ \title -> do
     wflags = foldl (.|.) 0 $ [SDL.windowFlagShown] ++
                              [SDL.windowFlagResizable | windowIsResizable] ++
                              [SDL.windowFlagFullscreen | windowIsFullscreen]
-    rflags = (.|.) (SDL.rendererFlagPresentVSync) (SDL.rendererFlagAccelerated)
+    rflags = (.|.) SDL.rendererFlagPresentVSync SDL.rendererFlagAccelerated
 
 {-| Initializes and runs the game engine. The supplied signal generator is
     constantly sampled for an element to render until the user quits.
@@ -104,8 +103,7 @@ run' :: Engine -> IO Element -> IO ()
 run' engine smp = do
   continue <- run''
 
-  when continue $ do
-    smp >>= render engine >>= flip run' smp
+  when continue $ smp >>= render engine >>= flip run' smp
 
 {-| A utility function called by 'run\'' that polls all SDL events
     off the stack, returning true if the game should keep running,
@@ -182,7 +180,6 @@ getSurface src = do
       return (surface, w, h)
 
     Nothing -> do
-      Cairo.liftIO $ traceIO $ ("Loaded" ++ show src)
       -- TODO: Use SDL_image to support more formats. I gave up after it was painful
       -- to convert between the two surface types safely.
       -- FIXME: Does this throw an error?
@@ -201,7 +198,7 @@ renderElement (CollageElement w h center forms) = do
             Cairo.clip
             forM_ center $ uncurry Cairo.translate
   mapM_ renderForm forms
-  lift $ Cairo.restore
+  lift Cairo.restore
 
 renderElement (ImageElement (sx, sy) sw sh src stretch) = do
   (surface, w, h) <- getSurface (normalise src)
@@ -221,7 +218,7 @@ renderElement (ImageElement (sx, sy) sw sh src stretch) = do
             Cairo.restore
 
 renderElement (TextElement (Text { textColor = (Color r g b a), .. })) = do
-    lift $ Cairo.save
+    lift Cairo.save
 
     layout <- lift $ Pango.createLayout textUTF8
 
@@ -260,7 +257,7 @@ withTransform :: Double -> Double -> Double -> Double -> Helm () -> Helm ()
 withTransform s t x y f = do
   lift $ Cairo.save >> Cairo.scale s s >> Cairo.translate x y >> Cairo.rotate t
   f
-  lift $ Cairo.restore
+  lift Cairo.restore
 
 {-| A utility function that sets the Cairo line cap based off of our version. -}
 setLineCap :: LineCap -> Cairo.Render ()
@@ -292,9 +289,9 @@ setLineStyle (LineStyle { lineColor = Color r g b a, .. }) = do
     to render with a fill style and then fills afterwards. Assumes
     that all drawing paths have already been setup before being called. -}
 setFillStyle :: FillStyle -> Helm ()
-setFillStyle (Solid (Color r g b a)) = do
-  lift $ do Cairo.setSourceRGBA r g b a
-            Cairo.fill
+setFillStyle (Solid (Color r g b a)) = lift $ do
+  Cairo.setSourceRGBA r g b a
+  Cairo.fill
 
 setFillStyle (Texture src) = do
   (surface, _, _) <- getSurface (normalise src)
@@ -319,23 +316,23 @@ setFillStyle' pattern points = do
 renderForm :: Form -> Helm ()
 renderForm Form { .. } = withTransform formScale formTheta formX formY $
   case formStyle of
-    PathForm style ~ps @ ((hx, hy) : _) -> do
-      lift $ do Cairo.newPath
-                Cairo.moveTo hx hy
-                mapM_ (uncurry Cairo.lineTo) ps
-                setLineStyle style
+    PathForm style ~ps @ ((hx, hy) : _) -> lift $ do
+      Cairo.newPath
+      Cairo.moveTo hx hy
+      mapM_ (uncurry Cairo.lineTo) ps
+      setLineStyle style
 
     ShapeForm style shape -> do
-      lift $ Cairo.newPath
+      lift Cairo.newPath
 
       case shape of
-        PolygonShape ~ps @ ((hx, hy) : _) -> do
+        PolygonShape ~ps @ ((hx, hy) : _) ->
           lift $ do Cairo.moveTo hx hy
                     mapM_ (uncurry Cairo.lineTo) ps
 
         RectangleShape (w, h) -> lift $ Cairo.rectangle (-w / 2) (-h / 2) w h
 
-        ArcShape (cx, cy) a1 a2 r (sx, sy) -> do
+        ArcShape (cx, cy) a1 a2 r (sx, sy) ->
           lift $ do Cairo.scale sx sy
                     Cairo.arc cx cy r a1 a2
                     Cairo.scale 1 1
@@ -347,4 +344,4 @@ renderForm Form { .. } = withTransform formScale formTheta formX formY $
       lift $ do Cairo.save
                 forM_ mayhaps Cairo.setMatrix
       mapM_ renderForm forms
-      lift $ Cairo.restore
+      lift Cairo.restore

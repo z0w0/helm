@@ -50,11 +50,11 @@ position = effectful $ alloca $ \xptr -> alloca $ \yptr -> do
 
 {-| The current x-coordinate of the mouse. -}
 x :: SignalGen (Signal Int)
-x = (\(x_, _) -> x_) <~ position
+x = fst <~ position
 
 {-| The current y-coordinate of the mouse. -}
 y :: SignalGen (Signal Int)
-y = (\(_, y_) -> y_) <~ position
+y = snd <~ position
 
 {-| The current state of a certain mouse button.
     True if the mouse is down, false otherwise. -}
@@ -62,4 +62,4 @@ isDown :: Mouse -> SignalGen (Signal Bool)
 isDown m = effectful $ do
   flags <- SDL.getMouseState nullPtr nullPtr
 
-  return $ ((.&.) (fromIntegral flags) (fromEnum m)) /= 0
+  return $ (.&.) (fromIntegral flags) (fromEnum m) /= 0

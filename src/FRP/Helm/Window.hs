@@ -22,8 +22,8 @@ dimensions (Engine { window }) = effectful $ alloca $ \wptr -> alloca $ \hptr ->
 		return (fromIntegral w, fromIntegral h)
 {-| The current width of the window. -}
 width :: Engine -> SignalGen (Signal Int)
-width engine = (\(w, _) -> w) <~ dimensions engine
+width engine = fst <~ dimensions engine
 
 {-| The current height of the window. -}
 height :: Engine -> SignalGen (Signal Int)
-height engine = (\(_, h) -> h) <~ dimensions engine
+height engine = snd <~ dimensions engine

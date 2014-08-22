@@ -72,7 +72,7 @@ delta = running >>= delta'
 
 {-| A utility function that does the real magic for 'delta'. -}
 delta' :: Signal Time -> SignalGen (Signal Time)
-delta' t = (fmap . fmap) ((*) millisecond . snd) $ transfer (0, 0) (\t2 (t1, _) -> (t2, t2 - t1)) t
+delta' t = fmap ((*) millisecond . snd) <$> transfer (0, 0) (\ t2 (t1, _) -> (t2, t2 - t1)) t
 
 {-| A signal that blocks the game thread for a certain amount of time when sampled and then returns the
     amount of time it blocked for. Please note that delaying by values smaller than 1 millisecond can have
