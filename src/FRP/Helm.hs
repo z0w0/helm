@@ -24,6 +24,7 @@ import Control.Monad.Trans.Class (lift)
 import Control.Monad.Trans.State
 import Data.Bits
 import Data.Foldable (forM_)
+import Debug.Trace
 import Foreign.C.String
 import Foreign.Marshal.Alloc
 import Foreign.Ptr
@@ -35,6 +36,7 @@ import FRP.Helm.Utilities as Utilities hiding (lift)
 import qualified FRP.Helm.Utilities (lift)
 import FRP.Helm.Time (Time)
 import System.FilePath
+import System.Endian
 import qualified Data.Map as Map
 import qualified Graphics.UI.SDL as SDL
 import qualified Graphics.Rendering.Cairo as Cairo
@@ -103,8 +105,7 @@ run' engine smp = do
   continue <- run''
 
   when continue $ do
-    smp >>= render engine
-    run' engine smp
+    smp >>= render engine >>= flip run' smp
 
 {-| A utility function called by 'run\'' that polls all SDL events
     off the stack, returning true if the game should keep running,
@@ -122,9 +123,10 @@ run'' = alloca $ \eventptr -> do
   else
     return True
 
+
 {-| A utility function that renders a previously sampled element
     using an engine state. -}
-render :: Engine -> Element -> IO ()
+render :: Engine -> Element -> IO Engine
 render engine@(Engine { .. }) element = alloca $ \wptr      ->
                                         alloca $ \hptr      ->
                                         alloca $ \pixelsptr ->
@@ -134,16 +136,15 @@ render engine@(Engine { .. }) element = alloca $ \wptr      ->
   w <- fromIntegral <$> peek wptr
   h <- fromIntegral <$> peek hptr
 
-  -- We have to use a temporary constant here because the low-level SDL2 bindings
-  -- don't seem to expose pixel format constants
-  texture <- SDL.createTexture renderer 372645892 SDL.textureAccessStreaming (fromIntegral w) (fromIntegral h)
+  format <- SDL.masksToPixelFormatEnum 32 (fromBE32 0x0000ff00) (fromBE32 0x00ff0000) (fromBE32 0xff000000) (fromBE32 0x000000ff)
+  texture <- SDL.createTexture renderer format SDL.textureAccessStreaming (fromIntegral w) (fromIntegral h)
 
   SDL.lockTexture texture nullPtr pixelsptr pitchptr
 
   pixels <- peek pixelsptr
   pitch <- fromIntegral <$> peek pitchptr
 
-  Cairo.withImageSurfaceForData (castPtr pixels) Cairo.FormatARGB32 w h pitch $ \surface ->
+  res <- Cairo.withImageSurfaceForData (castPtr pixels) Cairo.FormatARGB32 w h pitch $ \surface ->
     Cairo.renderWith surface (evalStateT (render' w h element) engine)
 
   SDL.unlockTexture texture
@@ -153,16 +154,19 @@ render engine@(Engine { .. }) element = alloca $ \wptr      ->
   SDL.destroyTexture texture
   SDL.renderPresent renderer
 
+  return res
+
 
 {-| A utility function called by 'render' that is called by Cairo
     when it's ready to do rendering. -}
-render' :: Int -> Int -> Element -> Helm ()
+render' :: Int -> Int -> Element -> Helm Engine
 render' w h element = do
   lift $ do Cairo.setSourceRGB 0 0 0
             Cairo.rectangle 0 0 (fromIntegral w) (fromIntegral h)
             Cairo.fill
 
   renderElement element
+  get
 
 {-| A utility function that lazily grabs an image surface from the cache,
     i.e. creating it if it's not already stored in it. -}
@@ -178,6 +182,7 @@ getSurface src = do
       return (surface, w, h)
 
     Nothing -> do
+      Cairo.liftIO $ traceIO $ ("Loaded" ++ show src)
       -- TODO: Use SDL_image to support more formats. I gave up after it was painful
       -- to convert between the two surface types safely.
       -- FIXME: Does this throw an error?
