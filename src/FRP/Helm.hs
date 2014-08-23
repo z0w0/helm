@@ -95,15 +95,16 @@ startup (EngineConfig { .. }) = withCAString windowTitle $ \title -> do
     > main = run defaultConfig $ lift render Window.dimensions
  -}
 run :: Engine -> SignalGen (Signal Element) -> IO ()
-run engine gen = finally (start gen >>= run' engine) SDL.quit
+run engine gen = finally (start gen >>= (\x -> evalStateT (run' x) engine)) SDL.quit
 
 {-| A utility function called by 'run' that samples the element
     or quits the entire engine if SDL events say to do so. -}
-run' :: Engine -> IO Element -> IO ()
-run' engine smp = do
-  continue <- run''
+run' :: IO Element -> Helm ()
+run' smp = do
+  engine <- get
+  continue <- Cairo.liftIO run''
 
-  when continue $ smp >>= render engine >>= flip run' smp
+  when continue $ Cairo.liftIO smp >>= render >> run' smp
 
 {-| A utility function called by 'run\'' that polls all SDL events
     off the stack, returning true if the game should keep running,
@@ -124,35 +125,41 @@ run'' = alloca $ \eventptr -> do
 
 {-| A utility function that renders a previously sampled element
     using an engine state. -}
-render :: Engine -> Element -> IO Engine
-render engine@(Engine { .. }) element = alloca $ \wptr      ->
-                                        alloca $ \hptr      ->
-                                        alloca $ \pixelsptr ->
-                                        alloca $ \pitchptr  -> do
-  SDL.getWindowSize window wptr hptr
+render :: Element -> Helm ()
+render element = do
+  engine@(Engine { .. }) <- get
 
-  w <- fromIntegral <$> peek wptr
-  h <- fromIntegral <$> peek hptr
+  (pixels, pitch, texture, w, h) <- Cairo.liftIO $  alloca $ \wptr      ->
+                                                    alloca $ \hptr      ->
+                                                    alloca $ \pixelsptr ->
+                                                    alloca $ \pitchptr  -> do
 
-  format <- SDL.masksToPixelFormatEnum 32 (fromBE32 0x0000ff00) (fromBE32 0x00ff0000) (fromBE32 0xff000000) (fromBE32 0x000000ff)
-  texture <- SDL.createTexture renderer format SDL.textureAccessStreaming (fromIntegral w) (fromIntegral h)
+      SDL.getWindowSize window wptr hptr
+      w <- fromIntegral <$> peek wptr
+      h <- fromIntegral <$> peek hptr
 
-  SDL.lockTexture texture nullPtr pixelsptr pitchptr
+      format <- SDL.masksToPixelFormatEnum 32 (fromBE32 0x0000ff00) (fromBE32 0x00ff0000) (fromBE32 0xff000000) (fromBE32 0x000000ff)
+      texture <- Cairo.liftIO $ SDL.createTexture renderer format SDL.textureAccessStreaming (fromIntegral w) (fromIntegral h)
 
-  pixels <- peek pixelsptr
-  pitch <- fromIntegral <$> peek pitchptr
+      SDL.lockTexture texture nullPtr pixelsptr pitchptr
 
-  res <- Cairo.withImageSurfaceForData (castPtr pixels) Cairo.FormatARGB32 w h pitch $ \surface ->
-    Cairo.renderWith surface (evalStateT (render' w h element) engine)
+      pixels <- peek pixelsptr
+      pitch <- fromIntegral <$> peek pitchptr
+      return (pixels, pitch, texture, w, h)
 
-  SDL.unlockTexture texture
+  res <- Cairo.liftIO $ do
+      res <- Cairo.withImageSurfaceForData (castPtr pixels) Cairo.FormatARGB32 w h pitch $ \surface ->
+        Cairo.renderWith surface (evalStateT (render' w h element) engine)
 
-  SDL.renderClear renderer
-  SDL.renderCopy renderer texture nullPtr nullPtr
-  SDL.destroyTexture texture
-  SDL.renderPresent renderer
+      SDL.unlockTexture texture
+      SDL.renderClear renderer
+      SDL.renderCopy renderer texture nullPtr nullPtr
+      SDL.destroyTexture texture
+      SDL.renderPresent renderer
 
-  return res
+      return res
+
+  put res
 
 
 {-| A utility function called by 'render' that is called by Cairo
