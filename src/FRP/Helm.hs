@@ -17,6 +17,7 @@ module FRP.Helm (
 ) where
 
 import Control.Applicative
+import Control.Concurrent (threadDelay)
 import Control.Exception
 import Control.Monad (when)
 import Control.Monad.IO.Class
@@ -28,7 +29,7 @@ import Foreign.C.String
 import Foreign.Marshal.Alloc
 import Foreign.Ptr
 import Foreign.Storable
-import FRP.Elerea.Simple
+import FRP.Elerea.Simple hiding (Signal)
 import FRP.Helm.Color as Color
 import FRP.Helm.Graphics as Graphics
 import FRP.Helm.Utilities as Utilities hiding (lift)
@@ -94,16 +95,23 @@ startup (EngineConfig { .. }) = withCAString windowTitle $ \title -> do
     > main :: IO ()
     > main = run defaultConfig $ lift render Window.dimensions
  -}
-run :: Engine -> SignalGen (Signal Element) -> IO ()
+run :: Engine -> Signal Element -> IO ()
 run engine gen = finally (start gen >>= run' engine) SDL.quit
 
 {-| A utility function called by 'run' that samples the element
     or quits the entire engine if SDL events say to do so. -}
-run' :: Engine -> IO Element -> IO ()
+run' :: Engine -> IO (Event Element) -> IO ()
 run' engine smp = do
   continue <- run''
 
-  when continue $ smp >>= render engine >>= flip run' smp
+  when continue $ smp >>= renderIfChanged engine >>= flip run' smp
+
+
+renderIfChanged :: Engine -> (Event Element) -> IO Engine
+renderIfChanged engine event =  case event of
+    Changed   element -> render engine element
+    Unchanged element -> do threadDelay 33000
+                            return engine
 
 {-| A utility function called by 'run\'' that polls all SDL events
     off the stack, returning true if the game should keep running,
