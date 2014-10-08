@@ -96,7 +96,7 @@ startup (EngineConfig { .. }) = withCAString windowTitle $ \title -> do
     > main = run defaultConfig $ lift render Window.dimensions
  -}
 run :: Engine -> Signal Element -> IO ()
-run engine gen = finally (start gen >>= run' engine) SDL.quit
+run engine (Signal gen) = finally (start gen >>= run' engine) SDL.quit
 
 {-| A utility function called by 'run' that samples the element
     or quits the entire engine if SDL events say to do so. -}
