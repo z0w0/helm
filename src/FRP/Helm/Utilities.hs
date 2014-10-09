@@ -22,12 +22,11 @@ instance Applicative Event where
 data Signal a = Signal (SignalGen (Elerea.Signal (Event a)))
 
 instance Functor Signal where
-    fmap f (Signal x) = Signal ((fmap . fmap . fmap) f x)
-
+    fmap = liftA
 
 instance Applicative Signal where
     pure = Signal . pure . pure . pure
-    -- (<*>) = ??
+    (Signal f) <*> (Signal x) = Signal $ (liftA2 (liftA2 (<*>))) f x
 
 {-| Creates a signal that never changes. -}
 constant :: a -> Signal a

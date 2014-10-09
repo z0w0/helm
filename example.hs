@@ -67,13 +67,12 @@ tree delta_a sc =
     ++ [trunk]
     ++ (branches trunk (-) delta_a sc)
 
-scene h =
+scene w h =
     let frac1 = 0.1
         frac2 = 0.8
-        w     = 800
     in centeredCollage w h $ map drawBranch $ tree (90 * frac1) frac2
 
 main :: IO ()
 main = do
     engine <- startup defaultConfig
-    run engine $ scene <~ constant 600
+    run engine $ lift2 scene (constant 800) (constant 600)
