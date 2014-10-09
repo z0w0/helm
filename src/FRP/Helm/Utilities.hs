@@ -24,6 +24,11 @@ data Signal a = Signal (SignalGen (Elerea.Signal (Event a)))
 instance Functor Signal where
     fmap f (Signal x) = Signal ((fmap . fmap . fmap) f x)
 
+
+instance Applicative Signal where
+    pure = Signal . pure . pure . pure
+    -- (<*>) = ??
+
 {-| Creates a signal that never changes. -}
 constant :: a -> Signal a
 constant x = Signal $ stateful (Changed x) (\_ -> Unchanged x)
@@ -31,23 +36,14 @@ constant x = Signal $ stateful (Changed x) (\_ -> Unchanged x)
 lift :: (a -> b) -> Signal a -> Signal b
 lift = fmap
 
+lift2 :: (a -> b -> c) -> Signal a -> Signal b -> Signal c
+lift2 f a b = fmap f a <*> b
+
 {-| An alias for 'lift'. -}
 (<~) :: (a -> b) -> Signal a -> Signal b
 (<~) = lift
 
 infixl 4 <~
-
-{-| Applies a function within a signal to a signal. This is a wrapper around the builtin '<*>' operator
-    that automatically binds the input signal out of the signal generator.
-
-    > render <~ Window.dimensions ~~ Window.position
- -}
---type Signal a = SignalGen (Elerea.Signal (Event a))
---(~~) :: Signal (a -> b) -> Signal a -> Signal b
---(~~) s1 s2 = (<*>)
-
-
---infixl 4 ~~
 
 {-| Converts degrees into the standard angle measurement (radians). -}
 degrees :: Double -> Double
