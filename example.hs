@@ -76,4 +76,4 @@ scene h =
 main :: IO ()
 main = do
     engine <- startup defaultConfig
-    run engine $ lift scene constant 600
+    run engine $ scene <~ constant 600
