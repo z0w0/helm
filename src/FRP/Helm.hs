@@ -110,10 +110,10 @@ run' engine smp = do
   when continue $ smp >>= renderIfChanged engine >>= flip run' smp
 
 
-renderIfChanged :: Engine -> (Sample Element) -> IO Engine
+renderIfChanged :: Engine -> Sample Element -> IO Engine
 renderIfChanged engine event =  case event of
     Changed   element -> render engine element
-    Unchanged element -> do threadDelay 33000
+    Unchanged _       -> do threadDelay 33000
                             return engine
 
 {-| A utility function called by 'run\'' that polls all SDL events

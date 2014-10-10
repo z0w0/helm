@@ -12,7 +12,6 @@ module FRP.Helm.Utilities (
   randomR
 ) where
 
-import Control.Applicative
 import Control.Monad (liftM)
 import FRP.Elerea.Simple hiding (Signal)
 import FRP.Helm.Sample
@@ -49,4 +48,4 @@ random = Signal $ effectful $ liftM Changed randomIO
 {-| Creates a signal of a random number based on the given range. -}
 --FIXME: This will drive the program at a stupidly fast rate
 randomR :: Random a => (a, a) -> Signal a
-randomR = Signal . effectful . (liftM Changed) . randomRIO
+randomR = Signal . effectful . liftM Changed . randomRIO

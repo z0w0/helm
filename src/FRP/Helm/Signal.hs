@@ -32,7 +32,7 @@ instance Functor Signal where
 
 instance Applicative Signal where
   pure = Signal . pure . pure . pure
-  (Signal f) <*> (Signal x) = Signal $ (liftA2 (liftA2 (<*>))) f x
+  (Signal f) <*> (Signal x) = Signal $ liftA2 (liftA2 (<*>)) f x
 
 {-| Creates a signal that never changes. -}
 constant :: a -> Signal a
@@ -107,10 +107,10 @@ infixl 4 ~~
 -}
 foldp :: (a -> b -> b) -> b -> Signal a -> Signal b
 foldp f ini (Signal gen) =
-  Signal $ gen >>= transfer (pure ini) update
+  Signal $ gen >>= transfer (pure ini) update_
                >>= delay (Changed ini)
-    where update (Unchanged _) y = Unchanged (value y)
-          update (Changed   x) y = Changed $ f x (value y)
+    where update_ (Unchanged _) y = Unchanged (value y)
+          update_ (Changed   x) y = Changed $ f x (value y)
 
 {-| Count the number of events that have occurred.-}
 count :: Signal a -> Signal Int
