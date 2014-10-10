@@ -29,9 +29,7 @@ module FRP.Helm.Utilities (
   lift7,
   lift8,
   -- Signal
-  Signal(..),
-  Sample(..),
-  sampleValue
+  Signal(..)
 ) where
 
 import Control.Applicative
@@ -40,6 +38,7 @@ import Data.Traversable (sequenceA)
 import FRP.Elerea.Simple hiding (Signal)
 import qualified FRP.Elerea.Simple as Elerea (Signal)
 import System.Random (Random, randomIO, randomRIO)
+import FRP.Helm.Sample
 
 {-| Converts radians into the standard angle measurement (radians). -}
 radians :: Double -> Double
@@ -140,8 +139,8 @@ foldp :: (a -> b -> b) -> b -> Signal a -> Signal b
 foldp f ini (Signal gen) =
   Signal $ gen >>= transfer (pure ini) update
                >>= delay (Changed ini)
-    where update (Unchanged _) y = Unchanged (sampleValue y)
-          update (Changed   x) y = Changed $ f x (sampleValue y)
+    where update (Unchanged _) y = Unchanged (value y)
+          update (Changed   x) y = Changed $ f x (value y)
 
 {-| Count the number of events that have occurred.-}
 count :: Signal a -> Signal Int
@@ -161,22 +160,6 @@ random = Signal $ effectful $ liftM Changed randomIO
 randomR :: Random a => (a, a) -> Signal a
 randomR = Signal . effectful . (liftM Changed) . randomRIO
 
-data Sample a = Changed a | Unchanged a
-  deriving (Show, Eq)
-
-instance Functor Sample where
-  fmap = liftA
-
-instance Applicative Sample where
-  pure = Unchanged
-  (Changed   f) <*> (Changed   x) = Changed (f x)
-  (Changed   f) <*> (Unchanged x) = Changed (f x)
-  (Unchanged f) <*> (Changed   x) = Changed (f x)
-  (Unchanged f) <*> (Unchanged x) = Unchanged (f x)
-
-sampleValue :: Sample a -> a
-sampleValue (Changed   x) = x
-sampleValue (Unchanged x) = x
 
 data Signal a = Signal (SignalGen (Elerea.Signal (Sample a)))
 

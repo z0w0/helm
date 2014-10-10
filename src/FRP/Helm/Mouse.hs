@@ -17,6 +17,7 @@ import Foreign.Storable
 import FRP.Elerea.Simple hiding (Signal)
 import qualified FRP.Elerea.Simple as Elerea (Signal)
 import FRP.Helm.Utilities
+import FRP.Helm.Sample
 import qualified Graphics.UI.SDL as SDL
 
 {-| A data structure describing a button on a mouse. -}
@@ -52,11 +53,6 @@ position = Signal $ getPosition >>= transfer (pure (0,0)) update
       y_ <- peek yptr
 
       return (fromIntegral x_, fromIntegral y_)
-
-update :: Eq a => a -> Sample a -> Sample a
-update new old = if new == sampleValue old
-                 then Unchanged new
-                 else Changed   new
 
 {-| The current x-coordinate of the mouse. -}
 x :: Signal Int

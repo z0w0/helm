@@ -34,6 +34,7 @@ import FRP.Helm.Color as Color
 import FRP.Helm.Graphics as Graphics
 import FRP.Helm.Utilities as Utilities hiding (lift)
 import qualified FRP.Helm.Utilities (lift)
+import FRP.Helm.Sample
 import FRP.Helm.Time (Time)
 import System.FilePath
 import System.Endian

@@ -36,6 +36,7 @@ library
     FRP.Helm.Text
     FRP.Helm.Time
     FRP.Helm.Utilities
+    FRP.Helm.Sample
     FRP.Helm.Window
     FRP.Helm.Transition
 
