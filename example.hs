@@ -5,6 +5,8 @@
 
 import FRP.Helm
 import qualified FRP.Helm.Window as Window
+import qualified FRP.Helm.Mouse as Mouse
+import FRP.Elerea.Simple
 
 data Branch = Branch { branch_x1   :: Double
                      , branch_y1   :: Double
@@ -67,12 +69,21 @@ tree delta_a sc =
     ++ [trunk]
     ++ (branches trunk (-) delta_a sc)
 
-scene w h =
-    let frac1 = 0.1
-        frac2 = 0.8
+fraction1 w eng =
+    (\x -> fromIntegral x / fromIntegral w)
+    <~ Mouse.x
+fraction2 h eng =
+    (\y -> 1.0 - fromIntegral y / fromIntegral h)
+    <~ Mouse.y
+
+scene frac1 frac2=
+    let w = 800
+        h = 600
     in centeredCollage w h $ map drawBranch $ tree (90 * frac1) frac2
 
 main :: IO ()
 main = do
     engine <- startup defaultConfig
-    run engine $ scene <~ constant 800 ~~ constant 600
+    run engine $ scene
+        <~ fraction1 800 engine
+        ~~ fraction2 600 engine

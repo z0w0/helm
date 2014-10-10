@@ -31,6 +31,7 @@ module FRP.Helm.Utilities (
   -- Signal
   Signal(..),
   Sample(..),
+  sampleValue
 ) where
 
 import Control.Applicative
@@ -137,12 +138,10 @@ infixl 4 ~~
 
 foldp :: (a -> b -> b) -> b -> Signal a -> Signal b
 foldp f ini (Signal gen) =
-  Signal $ gen >>= transfer (Unchanged ini) update
+  Signal $ gen >>= transfer (pure ini) update
                >>= delay (Changed ini)
-    where update (Unchanged _) (Unchanged y) = Unchanged y
-          update (Unchanged _) (Changed   y) = Unchanged y
-          update (Changed   x) (Changed   y) = Changed $ f x y
-          update (Changed   x) (Unchanged y) = Changed $ f x y
+    where update (Unchanged _) y = Unchanged (sampleValue y)
+          update (Changed   x) y = Changed $ f x (sampleValue y)
 
 {-| Count the number of events that have occurred.-}
 count :: Signal a -> Signal Int
@@ -174,6 +173,10 @@ instance Applicative Sample where
   (Changed   f) <*> (Unchanged x) = Changed (f x)
   (Unchanged f) <*> (Changed   x) = Changed (f x)
   (Unchanged f) <*> (Unchanged x) = Unchanged (f x)
+
+sampleValue :: Sample a -> a
+sampleValue (Changed   x) = x
+sampleValue (Unchanged x) = x
 
 data Signal a = Signal (SignalGen (Elerea.Signal (Sample a)))
 
