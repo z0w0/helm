@@ -75,4 +75,4 @@ scene w h =
 main :: IO ()
 main = do
     engine <- startup defaultConfig
-    run engine $ lift2 scene (constant 800) (constant 600)
+    run engine $ scene <~ constant 800 ~~ constant 600
