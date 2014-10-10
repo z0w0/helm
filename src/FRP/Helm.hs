@@ -100,14 +100,14 @@ run engine (Signal gen) = finally (start gen >>= run' engine) SDL.quit
 
 {-| A utility function called by 'run' that samples the element
     or quits the entire engine if SDL events say to do so. -}
-run' :: Engine -> IO (Event Element) -> IO ()
+run' :: Engine -> IO (Sample Element) -> IO ()
 run' engine smp = do
   continue <- run''
 
   when continue $ smp >>= renderIfChanged engine >>= flip run' smp
 
 
-renderIfChanged :: Engine -> (Event Element) -> IO Engine
+renderIfChanged :: Engine -> (Sample Element) -> IO Engine
 renderIfChanged engine event =  case event of
     Changed   element -> render engine element
     Unchanged element -> do threadDelay 33000

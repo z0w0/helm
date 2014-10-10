@@ -30,7 +30,7 @@ module FRP.Helm.Utilities (
   lift8,
   -- Signal
   Signal(..),
-  Event(..),
+  Sample(..),
 ) where
 
 import Control.Applicative
@@ -162,20 +162,20 @@ random = Signal $ effectful $ liftM Changed randomIO
 randomR :: Random a => (a, a) -> Signal a
 randomR = Signal . effectful . (liftM Changed) . randomRIO
 
-data Event a = Changed a | Unchanged a
+data Sample a = Changed a | Unchanged a
   deriving (Show, Eq)
 
-instance Functor Event where
+instance Functor Sample where
   fmap = liftA
 
-instance Applicative Event where
+instance Applicative Sample where
   pure = Unchanged
   (Changed   f) <*> (Changed   x) = Changed (f x)
   (Changed   f) <*> (Unchanged x) = Changed (f x)
   (Unchanged f) <*> (Changed   x) = Changed (f x)
   (Unchanged f) <*> (Unchanged x) = Unchanged (f x)
 
-data Signal a = Signal (SignalGen (Elerea.Signal (Event a)))
+data Signal a = Signal (SignalGen (Elerea.Signal (Sample a)))
 
 instance Functor Signal where
   fmap = liftA
