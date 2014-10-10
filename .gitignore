@@ -1,1 +1,7 @@
 dist
+*.o
+*.sw*
+*.dyn_*
+*.hi
+cabal.sandbox.config
+.cabal-sandbox/
