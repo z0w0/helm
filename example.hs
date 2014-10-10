@@ -69,21 +69,21 @@ tree delta_a sc =
     ++ [trunk]
     ++ (branches trunk (-) delta_a sc)
 
-fraction1 w eng =
-    (\x -> fromIntegral x / fromIntegral w)
-    <~ Mouse.x
-fraction2 h eng =
-    (\y -> 1.0 - fromIntegral y / fromIntegral h)
-    <~ Mouse.y
+fraction1 eng =
+    (\x w -> fromIntegral x / fromIntegral w)
+    <~ Mouse.x  ~~ Window.width eng
+fraction2 eng =
+    (\y h -> 1.0 - fromIntegral y / fromIntegral h)
+    <~ Mouse.y ~~ Window.height eng
 
-scene frac1 frac2=
-    let w = 800
-        h = 600
-    in centeredCollage w h $ map drawBranch $ tree (90 * frac1) frac2
+scene frac1 frac2 w h =
+    centeredCollage w h $ map drawBranch $ tree (90 * frac1) frac2
 
 main :: IO ()
 main = do
     engine <- startup defaultConfig
     run engine $ scene
-        <~ fraction1 800 engine
-        ~~ fraction2 600 engine
+        <~ fraction1 engine
+        ~~ fraction2 engine
+        ~~ Window.width engine
+        ~~ Window.height engine
