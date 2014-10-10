@@ -13,7 +13,8 @@ module FRP.Helm (
   module Color,
   module Graphics,
   module Utilities,
-  FRP.Helm.Utilities.lift
+  module Signal,
+  FRP.Helm.Signal.lift
 ) where
 
 import Control.Applicative
@@ -32,9 +33,10 @@ import Foreign.Storable
 import FRP.Elerea.Simple hiding (Signal)
 import FRP.Helm.Color as Color
 import FRP.Helm.Graphics as Graphics
-import FRP.Helm.Utilities as Utilities hiding (lift)
-import qualified FRP.Helm.Utilities (lift)
+import FRP.Helm.Utilities as Utilities
 import FRP.Helm.Sample
+import FRP.Helm.Signal as Signal hiding (lift)
+import qualified FRP.Helm.Signal (lift)
 import FRP.Helm.Time (Time)
 import System.FilePath
 import System.Endian

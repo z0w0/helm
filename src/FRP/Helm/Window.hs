@@ -9,8 +9,8 @@ import Foreign.Marshal.Alloc
 import Foreign.Storable
 import FRP.Elerea.Simple hiding (Signal)
 import FRP.Helm (Engine(..))
-import FRP.Helm.Utilities
 import FRP.Helm.Sample
+import FRP.Helm.Signal
 import qualified Graphics.UI.SDL as SDL
 
 {-| The current dimensions of the window. -}

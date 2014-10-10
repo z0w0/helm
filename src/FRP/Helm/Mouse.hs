@@ -15,9 +15,8 @@ import Foreign.Marshal.Alloc
 import Foreign.Ptr
 import Foreign.Storable
 import FRP.Elerea.Simple hiding (Signal)
-import qualified FRP.Elerea.Simple as Elerea (Signal)
-import FRP.Helm.Utilities
 import FRP.Helm.Sample
+import FRP.Helm.Signal
 import qualified Graphics.UI.SDL as SDL
 
 {-| A data structure describing a button on a mouse. -}

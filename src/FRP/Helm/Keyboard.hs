@@ -13,8 +13,8 @@ import Data.List
 import Foreign hiding (shift)
 import Foreign.C.Types
 import FRP.Elerea.Simple hiding (Signal)
-import FRP.Helm.Utilities
 import FRP.Helm.Sample
+import FRP.Helm.Signal
 
 {-| The SDL bindings for Haskell don't wrap this, so we have to use the FFI ourselves. -}
 foreign import ccall unsafe "SDL_GetKeyboardState" sdlGetKeyState :: Ptr CInt -> IO (Ptr Word8)
