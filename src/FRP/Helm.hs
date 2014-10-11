@@ -95,25 +95,51 @@ startup (EngineConfig { .. }) = withCAString windowTitle $ \title -> do
  -}
 run :: Engine -> Signal Element -> IO ()
 run engine sig = let go (Signal gen) = (start gen >>= run' (engine,True)) `finally` SDL.quit
-                     addDimensions   = newScene <~ sig ~~ Window.dimensions engine ~~ Window.continue
-                     newScene :: Element -> (Int, Int) -> Bool -> (Element, (Int, Int), Bool)
-                     newScene e d c = (e, d, c)
-                 in go addDimensions
+                 in go $ (\s d c _ -> (s,d,c)) <~ sig ~~ Window.dimensions engine ~~ continue ~~ exposed
 
+exposed :: Signal ()
+exposed = Signal $ getExposed
+  where
+    getExposed = effectful $ alloca $ \eventptr -> do
+      SDL.pumpEvents
+      status <- SDL.pollEvent eventptr
 
+      if status == 1 then do
+        event <- peek eventptr
+
+        case event of
+          SDL.WindowEvent _ _ _ e _ _ -> if e == SDL.windowEventExposed
+                                         then return $ Changed ()
+                                         else return $ Unchanged ()
+          _ -> return $ Unchanged ()
+      else return $ Unchanged ()
+
+quit :: Signal ()
+quit = Signal $ getQuit
+  where
+    getQuit = effectful $ do
+      q <- SDL.quitRequested
+      if q then return $ Changed ()
+      else return $ Unchanged ()
+
+continue :: Signal Bool
+continue = (==0) <~ count quit
 
 {-| A utility function called by 'run' that samples the element
     or quits the entire engine if SDL events say to do so. -}
 run' :: (Engine, Bool) -> IO (Sample (Element, (Int, Int), Bool)) -> IO ()
-run' (engine, continue) smp = do
-  when continue $ smp >>= renderIfChanged engine >>= flip run' smp
+run' (engine, continue') smp = do
+  when continue' $ smp >>= renderIfChanged engine >>= flip run' smp
 
 
 renderIfChanged :: Engine -> Sample (Element, (Int, Int), Bool) -> IO (Engine, Bool)
 renderIfChanged engine event =  case event of
-    Changed   (element, dims, continue) -> do e <- render engine element dims
-                                              return (e, continue)
-    Unchanged _ -> do threadDelay 33000
+    Changed   (element, dims, continue') -> if continue'
+                                            then do e <- render engine element dims
+                                                    return (e, True)
+                                            else return (engine, False)
+
+    Unchanged _ -> do threadDelay 1000
                       return (engine, True)
 
 {-| A utility function that renders a previously sampled element

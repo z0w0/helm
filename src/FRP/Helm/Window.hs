@@ -4,8 +4,7 @@ module FRP.Helm.Window (
   dimensions,
   width,
   height,
-  position,
-  continue
+  position
 ) where
 
 import Control.Applicative (pure)
@@ -42,37 +41,6 @@ position (Engine { window }) =
 	    y <- peek yptr
 
 	    return (fromIntegral x, fromIntegral y)
-
---exposed :: Signal ()
---exposed = Signal $ getExposed
---  where
---    pass eventptr = SDL.pushEvent eventptr >> return (Unchanged ())
---    getExposed = effectful $ alloca $ \eventptr -> do
---      status <- SDL.pollEvent eventptr
---
---      if status == 1 then do
---        event <- peek eventptr
---
---        case event of
---          SDL.WindowEvent t _ _ _ _ _ -> if t == SDL.windowEventExposed
---                                         then return $ Changed ()
---                                         else pass eventptr
---          _ -> pass eventptr
---      else return $ Unchanged ()
-
-continue :: Signal Bool
-continue = Signal $ getQuit
-  where
-    getQuit = effectful $ alloca $ \eventptr -> do
-      status <- SDL.pollEvent eventptr
-
-      if status == 1 then do
-        event <- peek eventptr
-
-        case event of
-          SDL.QuitEvent _ _ -> return $ Changed False
-          _ -> return $ Unchanged True
-      else return $ Unchanged True
 
 {-| The current width of the window. -}
 width :: Engine -> Signal Int
