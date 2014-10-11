@@ -49,6 +49,12 @@ import qualified Graphics.Rendering.Pango as Pango
 
 type Helm a = StateT Engine Cairo.Render a
 
+data Application = Application {
+  mainElement    :: Element,
+  mainDimensions :: (Int, Int),
+  mainContinue   :: Bool
+}
+
 {-| A data structure describing miscellaneous initial configurations of the game window and engine. -}
 data EngineConfig = EngineConfig {
   windowDimensions :: (Int, Int),
@@ -72,7 +78,7 @@ startup (EngineConfig { .. }) = withCAString windowTitle $ \title -> do
     window <- SDL.createWindow title 0 0 (fromIntegral w) (fromIntegral h) wflags
     renderer <- SDL.createRenderer window (-1) rflags
 
-    return Engine { window = window, renderer = renderer, cache = Map.empty }
+    return Engine { window = window, renderer = renderer, cache = Map.empty, continue = True }
 
   where
     (w, h) = windowDimensions
@@ -93,12 +99,16 @@ startup (EngineConfig { .. }) = withCAString windowTitle $ \title -> do
     > main :: IO ()
     > main = run defaultConfig $ lift render Window.dimensions
  -}
+
 run :: Engine -> Signal Element -> IO ()
-run engine sig = let go (Signal gen) = (start gen >>= run' (engine,True)) `finally` SDL.quit
-                 in go $ (\s d c _ -> (s,d,c)) <~ sig ~~ Window.dimensions engine ~~ continue ~~ exposed
+run engine element = run' $ application <~ element ~~ Window.dimensions engine ~~ continue' ~~ exposed
+  where
+    application :: Element -> (Int, Int) -> Bool -> () -> Application
+    application e d c _ = Application e d c
+    run' (Signal gen) = (start gen >>= run'' engine) `finally` SDL.quit
 
 exposed :: Signal ()
-exposed = Signal $ getExposed
+exposed = Signal getExposed
   where
     getExposed = effectful $ alloca $ \eventptr -> do
       SDL.pumpEvents
@@ -108,39 +118,35 @@ exposed = Signal $ getExposed
         event <- peek eventptr
 
         case event of
-          SDL.WindowEvent _ _ _ e _ _ -> if e == SDL.windowEventExposed
-                                         then return $ Changed ()
-                                         else return $ Unchanged ()
+          SDL.WindowEvent _ _ _ e _ _ -> return $ if e == SDL.windowEventExposed
+                                                  then Changed ()
+                                                  else Unchanged ()
           _ -> return $ Unchanged ()
       else return $ Unchanged ()
 
 quit :: Signal ()
-quit = Signal $ getQuit
+quit = Signal getQuit
   where
     getQuit = effectful $ do
       q <- SDL.quitRequested
-      if q then return $ Changed ()
-      else return $ Unchanged ()
+      return (if q then Changed () else Unchanged ())
 
-continue :: Signal Bool
-continue = (==0) <~ count quit
+continue' :: Signal Bool
+continue' = (==0) <~ count quit
 
 {-| A utility function called by 'run' that samples the element
     or quits the entire engine if SDL events say to do so. -}
-run' :: (Engine, Bool) -> IO (Sample (Element, (Int, Int), Bool)) -> IO ()
-run' (engine, continue') smp = do
-  when continue' $ smp >>= renderIfChanged engine >>= flip run' smp
+run'' :: Engine -> IO (Sample Application) -> IO ()
+run'' engine smp = when (continue engine) $ smp >>= renderIfChanged engine >>= flip run'' smp
 
-
-renderIfChanged :: Engine -> Sample (Element, (Int, Int), Bool) -> IO (Engine, Bool)
+renderIfChanged :: Engine -> Sample Application -> IO Engine
 renderIfChanged engine event =  case event of
-    Changed   (element, dims, continue') -> if continue'
-                                            then do e <- render engine element dims
-                                                    return (e, True)
-                                            else return (engine, False)
+    Changed   app -> if mainContinue app
+                     then render engine (mainElement app) (mainDimensions app)
+                     else return engine { continue = False }
 
     Unchanged _ -> do threadDelay 1000
-                      return (engine, True)
+                      return engine
 
 {-| A utility function that renders a previously sampled element
     using an engine state. -}
@@ -183,7 +189,7 @@ render' w h element = do
     i.e. creating it if it's not already stored in it. -}
 getSurface :: FilePath -> Helm (Cairo.Surface, Int, Int)
 getSurface src = do
-  Engine _ _ cache <- get
+  Engine _ _ cache _ <- get
 
   case Map.lookup src cache of
     Just surface -> do
