@@ -32,12 +32,14 @@ import Foreign.Ptr
 import Foreign.Storable
 import FRP.Elerea.Simple hiding (Signal)
 import FRP.Helm.Color as Color
+import FRP.Helm.Engine
 import FRP.Helm.Graphics as Graphics
 import FRP.Helm.Utilities as Utilities
 import FRP.Helm.Sample
 import FRP.Helm.Signal as Signal hiding (lift)
 import qualified FRP.Helm.Signal (lift)
 import FRP.Helm.Time (Time)
+import qualified FRP.Helm.Window as Window
 import System.FilePath
 import System.Endian
 import qualified Data.Map as Map
@@ -62,13 +64,6 @@ defaultConfig = EngineConfig {
   windowIsFullscreen = False,
   windowIsResizable = True,
   windowTitle = ""
-}
-
-{-| A data structure describing the current engine state. -}
-data Engine = Engine {
-  window :: SDL.Window,
-  renderer :: SDL.Renderer,
-  cache :: Map.Map FilePath Cairo.Surface
 }
 
 {-| Creates a new engine that can be run later using 'run'. -}
@@ -99,52 +94,33 @@ startup (EngineConfig { .. }) = withCAString windowTitle $ \title -> do
     > main = run defaultConfig $ lift render Window.dimensions
  -}
 run :: Engine -> Signal Element -> IO ()
-run engine (Signal gen) = finally (start gen >>= run' engine) SDL.quit
+run engine sig = let go (Signal gen) = (start gen >>= run' (engine,True)) `finally` SDL.quit
+                     addDimensions   = newScene <~ sig ~~ Window.dimensions engine ~~ Window.continue
+                     newScene :: Element -> (Int, Int) -> Bool -> (Element, (Int, Int), Bool)
+                     newScene e d c = (e, d, c)
+                 in go addDimensions
+
+
 
 {-| A utility function called by 'run' that samples the element
     or quits the entire engine if SDL events say to do so. -}
-run' :: Engine -> IO (Sample Element) -> IO ()
-run' engine smp = do
-  continue <- run''
-
+run' :: (Engine, Bool) -> IO (Sample (Element, (Int, Int), Bool)) -> IO ()
+run' (engine, continue) smp = do
   when continue $ smp >>= renderIfChanged engine >>= flip run' smp
 
 
-renderIfChanged :: Engine -> Sample Element -> IO Engine
+renderIfChanged :: Engine -> Sample (Element, (Int, Int), Bool) -> IO (Engine, Bool)
 renderIfChanged engine event =  case event of
-    Changed   element -> render engine element
-    Unchanged _       -> do threadDelay 33000
-                            return engine
-
-{-| A utility function called by 'run\'' that polls all SDL events
-    off the stack, returning true if the game should keep running,
-    false otherwise. -}
-run'' :: IO Bool
-run'' = alloca $ \eventptr -> do
-  status <- SDL.pollEvent eventptr
-
-  if status == 1 then do
-    event <- peek eventptr
-
-    case event of
-      SDL.QuitEvent _ _ -> return False
-      _ -> run''
-  else
-    return True
-
+    Changed   (element, dims, continue) -> do e <- render engine element dims
+                                              return (e, continue)
+    Unchanged _ -> do threadDelay 33000
+                      return (engine, True)
 
 {-| A utility function that renders a previously sampled element
     using an engine state. -}
-render :: Engine -> Element -> IO Engine
-render engine@(Engine { .. }) element = alloca $ \wptr      ->
-                                        alloca $ \hptr      ->
-                                        alloca $ \pixelsptr ->
-                                        alloca $ \pitchptr  -> do
-  SDL.getWindowSize window wptr hptr
-
-  w <- fromIntegral <$> peek wptr
-  h <- fromIntegral <$> peek hptr
-
+render :: Engine -> Element -> (Int, Int) -> IO Engine
+render engine@(Engine { .. }) element (w, h) = alloca $ \pixelsptr ->
+                                               alloca $ \pitchptr  -> do
   format <- SDL.masksToPixelFormatEnum 32 (fromBE32 0x0000ff00) (fromBE32 0x00ff0000) (fromBE32 0xff000000) (fromBE32 0x000000ff)
   texture <- SDL.createTexture renderer format SDL.textureAccessStreaming (fromIntegral w) (fromIntegral h)
 

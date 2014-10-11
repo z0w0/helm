@@ -25,5 +25,5 @@ value (Unchanged x) = x
 
 update :: Eq a => a -> Sample a -> Sample a
 update new old = if new == value old
-                 then Unchanged new
+                 then Unchanged $ value old
                  else Changed   new
