@@ -28,7 +28,6 @@ library
 
   exposed-modules:
     FRP.Helm
-    FRP.Helm.Animation
     FRP.Helm.Color
     FRP.Helm.Graphics
     FRP.Helm.Engine
@@ -38,7 +37,6 @@ library
     FRP.Helm.Signal
     FRP.Helm.Text
     FRP.Helm.Time
-    FRP.Helm.Transition
     FRP.Helm.Utilities
     FRP.Helm.Window
 
