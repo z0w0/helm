@@ -13,10 +13,12 @@ module FRP.Helm (
   module Color,
   module Graphics,
   module Utilities,
-  FRP.Helm.Utilities.lift
+  module Signal,
+  FRP.Helm.Signal.lift
 ) where
 
 import Control.Applicative
+import Control.Concurrent (threadDelay)
 import Control.Exception
 import Control.Monad (when)
 import Control.Monad.IO.Class
@@ -28,12 +30,16 @@ import Foreign.C.String
 import Foreign.Marshal.Alloc
 import Foreign.Ptr
 import Foreign.Storable
-import FRP.Elerea.Simple
+import FRP.Elerea.Simple hiding (Signal)
 import FRP.Helm.Color as Color
+import FRP.Helm.Engine
 import FRP.Helm.Graphics as Graphics
-import FRP.Helm.Utilities as Utilities hiding (lift)
-import qualified FRP.Helm.Utilities (lift)
+import FRP.Helm.Utilities as Utilities
+import FRP.Helm.Sample
+import FRP.Helm.Signal as Signal hiding (lift)
+import qualified FRP.Helm.Signal (lift)
 import FRP.Helm.Time (Time)
+import qualified FRP.Helm.Window as Window
 import System.FilePath
 import System.Endian
 import qualified Data.Map as Map
@@ -42,6 +48,12 @@ import qualified Graphics.Rendering.Cairo as Cairo
 import qualified Graphics.Rendering.Pango as Pango
 
 type Helm a = StateT Engine Cairo.Render a
+
+data Application = Application {
+  mainElement    :: Element,
+  mainDimensions :: (Int, Int),
+  mainContinue   :: Bool
+}
 
 {-| A data structure describing miscellaneous initial configurations of the game window and engine. -}
 data EngineConfig = EngineConfig {
@@ -60,20 +72,13 @@ defaultConfig = EngineConfig {
   windowTitle = ""
 }
 
-{-| A data structure describing the current engine state. -}
-data Engine = Engine {
-  window :: SDL.Window,
-  renderer :: SDL.Renderer,
-  cache :: Map.Map FilePath Cairo.Surface
-}
-
 {-| Creates a new engine that can be run later using 'run'. -}
 startup :: EngineConfig -> IO Engine
 startup (EngineConfig { .. }) = withCAString windowTitle $ \title -> do
     window <- SDL.createWindow title 0 0 (fromIntegral w) (fromIntegral h) wflags
     renderer <- SDL.createRenderer window (-1) rflags
 
-    return Engine { window = window, renderer = renderer, cache = Map.empty }
+    return Engine { window = window, renderer = renderer, cache = Map.empty, continue = True }
 
   where
     (w, h) = windowDimensions
@@ -94,46 +99,60 @@ startup (EngineConfig { .. }) = withCAString windowTitle $ \title -> do
     > main :: IO ()
     > main = run defaultConfig $ lift render Window.dimensions
  -}
-run :: Engine -> SignalGen (Signal Element) -> IO ()
-run engine gen = finally (start gen >>= run' engine) SDL.quit
+
+run :: Engine -> Signal Element -> IO ()
+run engine element = run' $ application <~ element ~~ Window.dimensions engine ~~ continue' ~~ exposed
+  where
+    application :: Element -> (Int, Int) -> Bool -> () -> Application
+    application e d c _ = Application e d c
+    run' (Signal gen) = (start gen >>= run'' engine) `finally` SDL.quit
+
+exposed :: Signal ()
+exposed = Signal getExposed
+  where
+    getExposed = effectful $ alloca $ \eventptr -> do
+      SDL.pumpEvents
+      status <- SDL.pollEvent eventptr
+
+      if status == 1 then do
+        event <- peek eventptr
+
+        case event of
+          SDL.WindowEvent _ _ _ e _ _ -> return $ if e == SDL.windowEventExposed
+                                                  then Changed ()
+                                                  else Unchanged ()
+          _ -> return $ Unchanged ()
+      else return $ Unchanged ()
+
+quit :: Signal ()
+quit = Signal getQuit
+  where
+    getQuit = effectful $ do
+      q <- SDL.quitRequested
+      return (if q then Changed () else Unchanged ())
+
+continue' :: Signal Bool
+continue' = (==0) <~ count quit
 
 {-| A utility function called by 'run' that samples the element
     or quits the entire engine if SDL events say to do so. -}
-run' :: Engine -> IO Element -> IO ()
-run' engine smp = do
-  continue <- run''
+run'' :: Engine -> IO (Sample Application) -> IO ()
+run'' engine smp = when (continue engine) $ smp >>= renderIfChanged engine >>= flip run'' smp
 
-  when continue $ smp >>= render engine >>= flip run' smp
+renderIfChanged :: Engine -> Sample Application -> IO Engine
+renderIfChanged engine event =  case event of
+    Changed   app -> if mainContinue app
+                     then render engine (mainElement app) (mainDimensions app)
+                     else return engine { continue = False }
 
-{-| A utility function called by 'run\'' that polls all SDL events
-    off the stack, returning true if the game should keep running,
-    false otherwise. -}
-run'' :: IO Bool
-run'' = alloca $ \eventptr -> do
-  status <- SDL.pollEvent eventptr
-
-  if status == 1 then do
-    event <- peek eventptr
-
-    case event of
-      SDL.QuitEvent _ _ -> return False
-      _ -> run''
-  else
-    return True
-
+    Unchanged _ -> do threadDelay 1000
+                      return engine
 
 {-| A utility function that renders a previously sampled element
     using an engine state. -}
-render :: Engine -> Element -> IO Engine
-render engine@(Engine { .. }) element = alloca $ \wptr      ->
-                                        alloca $ \hptr      ->
-                                        alloca $ \pixelsptr ->
-                                        alloca $ \pitchptr  -> do
-  SDL.getWindowSize window wptr hptr
-
-  w <- fromIntegral <$> peek wptr
-  h <- fromIntegral <$> peek hptr
-
+render :: Engine -> Element -> (Int, Int) -> IO Engine
+render engine@(Engine { .. }) element (w, h) = alloca $ \pixelsptr ->
+                                               alloca $ \pitchptr  -> do
   format <- SDL.masksToPixelFormatEnum 32 (fromBE32 0x0000ff00) (fromBE32 0x00ff0000) (fromBE32 0xff000000) (fromBE32 0x000000ff)
   texture <- SDL.createTexture renderer format SDL.textureAccessStreaming (fromIntegral w) (fromIntegral h)
 
@@ -170,7 +189,7 @@ render' w h element = do
     i.e. creating it if it's not already stored in it. -}
 getSurface :: FilePath -> Helm (Cairo.Surface, Int, Int)
 getSurface src = do
-  Engine _ _ cache <- get
+  Engine _ _ cache _ <- get
 
   case Map.lookup src cache of
     Just surface -> do

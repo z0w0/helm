@@ -12,7 +12,9 @@ import Control.Applicative
 import Data.List
 import Foreign hiding (shift)
 import Foreign.C.Types
-import FRP.Elerea.Simple
+import FRP.Elerea.Simple hiding (Signal)
+import FRP.Helm.Sample
+import FRP.Helm.Signal
 
 {-| The SDL bindings for Haskell don't wrap this, so we have to use the FFI ourselves. -}
 foreign import ccall unsafe "SDL_GetKeyboardState" sdlGetKeyState :: Ptr CInt -> IO (Ptr Word8)
@@ -756,36 +758,36 @@ instance Enum Key where
   toEnum _ = error "FRP.Helm.Keyboard.Key.toEnum: bad argument"
 
 {-| Whether a key is pressed. -}
-isDown :: Key -> SignalGen (Signal Bool)
-isDown k = effectful $ elem (fromEnum k) <$> getKeyState
+isDown :: Key -> Signal Bool
+isDown k = Signal $ getDown >>= transfer (pure True) update
+  where getDown = effectful $ elem (fromEnum k) <$> getKeyState
 
 {-| A list of keys that are currently being pressed. -}
-keysDown :: SignalGen (Signal [Key])
-keysDown = effectful $ map toEnum <$> getKeyState
+keysDown :: Signal [Key]
+keysDown = Signal $ getDown >>= transfer (pure []) update
+  where getDown = effectful $ map toEnum <$> getKeyState
 
 {-| A directional tuple combined from the arrow keys. When none of the arrow keys
     are being pressed this signal samples to /(0, 0)/, otherwise it samples to a
     direction based on which keys are pressed. For example, pressing the left key
     results in /(-1, 0)/, the down key /(0, 1)/, up and right /(1, -1)/, etc. -}
-arrows :: SignalGen (Signal (Int, Int))
-arrows = do
-  up <- isDown UpKey
-  left <- isDown LeftKey
-  down <- isDown DownKey
-  right <- isDown RightKey
+arrows :: Signal (Int, Int)
+arrows =  arrows' <$> up <*> left <*> down <*> right
+  where up    = isDown UpKey
+        left  = isDown LeftKey
+        down  = isDown DownKey
+        right = isDown RightKey
 
-  return $ arrows' <$> up <*> left <*> down <*> right
 
 {-| A utility function for setting up a vector signal from directional keys. -}
 arrows' :: Bool -> Bool -> Bool -> Bool -> (Int, Int)
 arrows' u l d r = (-1 * fromEnum l + 1 * fromEnum r, -1 * fromEnum u + 1 * fromEnum d)
 
 {-| Similar to the 'arrows' signal, but uses the popular WASD movement controls instead. -}
-wasd :: SignalGen (Signal (Int, Int))
-wasd = do
-  w <- isDown WKey
-  a <- isDown AKey
-  s <- isDown SKey
-  d <- isDown DKey
+wasd :: Signal (Int, Int)
+wasd = arrows' <$> w <*> a <*> s <*> d
+  where w = isDown WKey
+        a = isDown AKey
+        s = isDown SKey
+        d = isDown DKey
 
-  return $ arrows' <$> w <*> a <*> s <*> d

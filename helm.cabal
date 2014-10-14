@@ -28,16 +28,19 @@ library
 
   exposed-modules:
     FRP.Helm
+    FRP.Helm.Animation
     FRP.Helm.Color
     FRP.Helm.Graphics
-    FRP.Helm.Animation
+    FRP.Helm.Engine
     FRP.Helm.Keyboard
     FRP.Helm.Mouse
+    FRP.Helm.Sample
+    FRP.Helm.Signal
     FRP.Helm.Text
     FRP.Helm.Time
+    FRP.Helm.Transition
     FRP.Helm.Utilities
     FRP.Helm.Window
-    FRP.Helm.Transition
 
   build-depends:
     base >= 4 && < 5,
