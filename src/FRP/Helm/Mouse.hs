@@ -4,9 +4,11 @@ module FRP.Helm.Mouse
   -- * Types
   Mouse(..),
   -- * Position
-  isDown,
+  position, x, y,
   -- * Mouse State
-  position, x, y
+  isDown,
+  isDownButton,
+  clicks
 ) where
 
 import Control.Applicative (pure)
@@ -61,12 +63,24 @@ x = fst <~ position
 y :: Signal Int
 y = snd <~ position
 
-{-| The current state of a certain mouse button.
-    True if the mouse is down, false otherwise. -}
-isDown :: Mouse -> Signal Bool
-isDown m = Signal $ getDown >>= transfer (pure False) update
+{-| The current state of the left mouse-button. True when the button is down,
+    and false otherwise. -}
+isDown :: Signal Bool
+isDown = isDownButton LeftMouse
+
+{-| The current state of a given mouse button. True if down, false otherwise.
+    -}
+isDownButton :: Mouse -> Signal Bool
+isDownButton m = Signal $ getDown >>= transfer (pure False) update
   where
     getDown = effectful $ do
       flags <- SDL.getMouseState nullPtr nullPtr
 
       return $ (.&.) (fromIntegral flags) (fromEnum m) /= 0
+
+{-| Always equal to unit. Event triggers on every mouse click. -}
+clicks :: Signal ()
+clicks = Signal $ signalGen isDown >>= transfer (pure ()) update_
+  where update_ (Changed True) _ = Changed ()
+        update_ _ _              = Unchanged ()
+
