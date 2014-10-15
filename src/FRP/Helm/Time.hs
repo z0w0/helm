@@ -72,7 +72,7 @@ inHours n = n / hour
 fps :: Double -> Signal Time
 fps n = snd <~ every' t
   where --Ain't nobody got time for infinity
-    t = if n == 0 then 0 else second * 1/n
+    t = if n == 0 then 0 else second / n
 
 {-| Same as the fps function, but you can turn it on and off. Allows you to do
    brief animations based on user input without major inefficiencies. The first
@@ -115,7 +115,7 @@ every'' t = getTime >>= transfer (0,0) update_
     Unlike in Elm the timestamps are not tied to the underlying signals so the
     timestamps for Mouse.x and  Mouse.y will be slightly different. -}
 timestamp :: Signal a -> Signal (Time, a)
-timestamp sig = lift2 (,) pure_time sig
+timestamp = lift2 (,) pure_time
   where pure_time = fst <~ (Signal $ (fmap . fmap) pure (every'' millisecond))
 
 {-| Delay a signal by a certain amount of time. So (delay second Mouse.clicks)
@@ -129,13 +129,13 @@ delay t (Signal gen) = Signal $ (fmap . fmap) fst $
      -- XXX uses unsafePerformIO, is there a better way?
     ini = pure $ value $ (unsafePerformIO . unsafePerformIO) (start gen)
     update_ waiting new (old, olds) = if waiting then (old, new:olds)
-                                      else (last olds, new:(init olds))
+                                      else (last olds, new:init olds)
     timeout = every'' t >>= transfer False (\(time,delta) _ -> time /= delta)
                         -- 'Elerea.until' will lose the reference to the input so
                         -- we don't keep looking up the time even though the
                         -- output can never change again
                         >>= Elerea.until
-                        >>= transfer True (\new old -> if old then not new else False)
+                        >>= transfer True (\new old -> old && not new)
 
 {-| Takes a time t and any signal. The resulting boolean signal is true for
     time t after every event on the input signal. So (second `since`
