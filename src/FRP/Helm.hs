@@ -99,14 +99,17 @@ startup (EngineConfig { .. }) = withCAString windowTitle $ \title -> do
     > main :: IO ()
     > main = run defaultConfig $ lift render Window.dimensions
  -}
-
 run :: Engine -> Signal Element -> IO ()
-run engine element = run' $ application <~ element ~~ Window.dimensions engine ~~ continue' ~~ exposed
+run engine element = run_ $ application <~ element
+                                        ~~ Window.dimensions engine
+                                        ~~ continue'
+                                        ~~ exposed
   where
     application :: Element -> (Int, Int) -> Bool -> () -> Application
     application e d c _ = Application e d c
-    run' (Signal gen) = (start gen >>= run'' engine) `finally` SDL.quit
+    run_ (Signal gen) = (start gen >>= run' engine) `finally` SDL.quit
 
+{-| An event that triggers when SDL thinks we need to re-draw. -}
 exposed :: Signal ()
 exposed = Signal getExposed
   where
@@ -124,6 +127,7 @@ exposed = Signal getExposed
           _ -> return $ Unchanged ()
       else return $ Unchanged ()
 
+{-| An event that triggers when SDL thinks we need to quit. -}
 quit :: Signal ()
 quit = Signal getQuit
   where
@@ -136,9 +140,11 @@ continue' = (==0) <~ count quit
 
 {-| A utility function called by 'run' that samples the element
     or quits the entire engine if SDL events say to do so. -}
-run'' :: Engine -> IO (Sample Application) -> IO ()
-run'' engine smp = when (continue engine) $ smp >>= renderIfChanged engine >>= flip run'' smp
+run' :: Engine -> IO (Sample Application) -> IO ()
+run' engine smp = when (continue engine) $ smp >>= renderIfChanged engine
+                                               >>= flip run' smp
 
+{-| Renders when the sample is marked as changed delays the thread otherwise -}
 renderIfChanged :: Engine -> Sample Application -> IO Engine
 renderIfChanged engine event =  case event of
     Changed   app -> if mainContinue app
@@ -153,16 +159,20 @@ renderIfChanged engine event =  case event of
 render :: Engine -> Element -> (Int, Int) -> IO Engine
 render engine@(Engine { .. }) element (w, h) = alloca $ \pixelsptr ->
                                                alloca $ \pitchptr  -> do
-  format <- SDL.masksToPixelFormatEnum 32 (fromBE32 0x0000ff00) (fromBE32 0x00ff0000) (fromBE32 0xff000000) (fromBE32 0x000000ff)
-  texture <- SDL.createTexture renderer format SDL.textureAccessStreaming (fromIntegral w) (fromIntegral h)
+  format <- SDL.masksToPixelFormatEnum 32 (fromBE32 0x0000ff00)
+              (fromBE32 0x00ff0000) (fromBE32 0xff000000) (fromBE32 0x000000ff)
+
+  texture <- SDL.createTexture renderer format
+               SDL.textureAccessStreaming (fromIntegral w) (fromIntegral h)
 
   SDL.lockTexture texture nullPtr pixelsptr pitchptr
 
   pixels <- peek pixelsptr
   pitch <- fromIntegral <$> peek pitchptr
 
-  res <- Cairo.withImageSurfaceForData (castPtr pixels) Cairo.FormatARGB32 w h pitch $ \surface ->
-    Cairo.renderWith surface (evalStateT (render' w h element) engine)
+  res <- Cairo.withImageSurfaceForData (castPtr pixels)
+           Cairo.FormatARGB32 w h pitch $ \surface -> Cairo.renderWith surface
+             $ evalStateT (render' w h element) engine
 
   SDL.unlockTexture texture
 
@@ -226,7 +236,8 @@ renderElement (ImageElement (sx, sy) sw sh src stretch) = do
             Cairo.translate (-fromIntegral sx) (-fromIntegral sy)
 
             if stretch then
-              Cairo.scale (fromIntegral sw / fromIntegral w) (fromIntegral sh / fromIntegral h)
+              Cairo.scale (fromIntegral sw / fromIntegral w)
+                (fromIntegral sh / fromIntegral h)
             else
               Cairo.scale 1 1
 
@@ -241,12 +252,15 @@ renderElement (TextElement (Text { textColor = (Color r g b a), .. })) = do
 
     layout <- lift $ Pango.createLayout textUTF8
 
-    Cairo.liftIO $ Pango.layoutSetAttributes layout [Pango.AttrFamily { paStart = i, paEnd = j, paFamily = textTypeface },
-                                                     Pango.AttrWeight { paStart = i, paEnd = j, paWeight = mapFontWeight textWeight },
-                                                     Pango.AttrStyle { paStart = i, paEnd = j, paStyle = mapFontStyle textStyle },
-                                                     Pango.AttrSize { paStart = i, paEnd = j, paSize = textHeight }]
+    Cairo.liftIO $ Pango.layoutSetAttributes layout
+      [ Pango.AttrFamily { paStart = i, paEnd = j, paFamily = textTypeface }
+      , Pango.AttrWeight { paStart = i, paEnd = j, paWeight = mapFontWeight textWeight }
+      , Pango.AttrStyle  { paStart = i, paEnd = j, paStyle = mapFontStyle textStyle }
+      , Pango.AttrSize   { paStart = i, paEnd = j, paSize = textHeight }
+      ]
 
-    Pango.PangoRectangle x y w h <- fmap snd $ Cairo.liftIO $ Pango.layoutGetExtents layout
+    Pango.PangoRectangle x y w h <- fmap snd
+      $ Cairo.liftIO $ Pango.layoutGetExtents layout
 
     lift $ do Cairo.translate ((-w / 2) -x) ((-h / 2) - y)
               Cairo.setSourceRGBA r g b a
@@ -319,10 +333,12 @@ setFillStyle (Texture src) = do
             Cairo.fill
 
 setFillStyle (Gradient (Linear (sx, sy) (ex, ey) points)) =
-  lift $ Cairo.withLinearPattern sx sy ex ey $ \pattern -> setFillStyle' pattern points
+  lift $ Cairo.withLinearPattern sx sy ex ey
+       $ \pattern -> setFillStyle' pattern points
 
 setFillStyle (Gradient (Radial (sx, sy) sr (ex, ey) er points)) =
-  lift $ Cairo.withRadialPattern sx sy sr ex ey er $ \pattern -> setFillStyle' pattern points
+  lift $ Cairo.withRadialPattern sx sy sr ex ey er
+       $ \pattern -> setFillStyle' pattern points
 
 {-| A utility function that adds color stops to a pattern and then fills it. -}
 setFillStyle' :: Cairo.Pattern -> [(Double, Color)] -> Cairo.Render ()
