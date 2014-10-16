@@ -1,8 +1,7 @@
 {-| Contains functions for composing units of time and signals that sample from the game clock. -}
 module FRP.Helm.Time (
-  -- * Types
+  -- * Units
   Time,
-  -- * Composing
   millisecond,
   second,
   minute,
@@ -11,19 +10,27 @@ module FRP.Helm.Time (
   inSeconds,
   inMinutes,
   inHours,
+  -- * Tickers
   fps,
-  -- * Clock State
-  running,
-  delta,
-  delay
+  fpsWhen,
+  every,
+  -- * Timing
+  timestamp,
+  delay,
+  since
 ) where
 
 import Control.Applicative
-import FRP.Elerea.Simple hiding (delay)
-import qualified Graphics.UI.SDL as SDL
+import Control.Monad
+import FRP.Elerea.Simple hiding (delay, Signal, until)
+import qualified FRP.Elerea.Simple as Elerea (Signal, until)
+import Data.Time.Clock.POSIX (getPOSIXTime)
+import FRP.Helm.Signal
+import FRP.Helm.Sample
+import System.IO.Unsafe (unsafePerformIO)
 
-{-| A type describing an amount of time in an arbitary unit. Use the time composing/converting functions to manipulate
-    time values. -}
+{-| A type describing an amount of time in an arbitary unit. Use the time
+    composing/converting functions to manipulate time values. -}
 type Time = Double
 
 {-| A time value representing one millisecond. -}
@@ -58,31 +65,81 @@ inMinutes n = n / minute
 inHours :: Time -> Double
 inHours n = n / hour
 
-{-| Converts a frames-per-second value into a time value. -}
-fps :: Int -> Time
-fps n = second / realToFrac n
+{-| Takes desired number of frames per second (fps). The resulting signal gives
+   a sequence of time deltas as quickly as possible until it reaches the
+   desired FPS. A time delta is the time between the last frame and the current
+   frame. -}
+fps :: Double -> Signal Time
+fps n = snd <~ every' t
+  where --Ain't nobody got time for infinity
+    t = if n == 0 then 0 else second / n
 
-{-| A signal that returns the time that the game has been running for when sampled. -}
-running :: SignalGen (Signal Time)
-running = effectful $ (*) millisecond <$> realToFrac <$> SDL.getTicks
+{-| Same as the fps function, but you can turn it on and off. Allows you to do
+   brief animations based on user input without major inefficiencies. The first
+   time delta after a pause is always zero, no matter how long the pause was.
+   This way summing the deltas will actually give the amount of time that the
+   output signal has been running. -}
+fpsWhen :: Double -> Signal Bool -> Signal Time
+fpsWhen n sig = Signal $ do c <- signalGen sig
+                            f <- signalGen (fps n)
+                            transfer2 (pure 0) update_ f c
+  where update_ new (Unchanged cont) old = if cont
+                                           then new
+                                           else Unchanged $ value old
+        update_ _   (Changed   cont) old = if cont
+                                           then Changed 0
+                                           else Unchanged $ value old
+{-| Takes a time interval t. The resulting signal is the current time, updated
+    every t. -}
+every :: Time -> Signal Time
+every t = fst <~ every' t
 
-{-| A signal that returns the time since it was last sampled when sampled. -}
-delta :: SignalGen (Signal Time)
-delta = running >>= delta'
+{-| A utility signal used by 'fps' and 'every' that returns the current time
+    and a delta every t. -}
+every' :: Time -> Signal (Time, Time)
+every' t = Signal $ every'' t >>= transfer (pure (0,0)) update
 
-{-| A utility function that does the real magic for 'delta'. -}
-delta' :: Signal Time -> SignalGen (Signal Time)
-delta' t = fmap ((*) millisecond . snd) <$> transfer (0, 0) (\ t2 (t1, _) -> (t2, t2 - t1)) t
-
-{-| A signal that blocks the game thread for a certain amount of time when sampled and then returns the
-    amount of time it blocked for. Please note that delaying by values smaller than 1 millisecond can have
-    platform-specific results. -}
-delay :: Time -> SignalGen (Signal Time)
-delay t = effectful $ do
-    before <- SDL.getTicks
-
-    SDL.delay fixed
-    (*) millisecond <$> realToFrac <$> flip (-) before <$> SDL.getTicks
-
+{-| Another utility signal that does all the magic for 'every'' by working on
+    the Elerea SignalGen level -}
+every'' :: Time -> SignalGen (Elerea.Signal (Time, Time))
+every'' t = getTime >>= transfer (0,0) update_
   where
-    fixed = max 0 $ round $ inMilliseconds t
+    getTime = effectful $ liftM ((second *) . realToFrac) getPOSIXTime
+    update_ new old = let delta = new - fst old
+                      in if delta >= t then (new, delta) else old
+
+{-| Add a timestamp to any signal. Timestamps increase monotonically. When you
+    create (timestamp Mouse.x), an initial timestamp is produced. The timestamp
+    updates whenever Mouse.x updates.
+
+    Unlike in Elm the timestamps are not tied to the underlying signals so the
+    timestamps for Mouse.x and  Mouse.y will be slightly different. -}
+timestamp :: Signal a -> Signal (Time, a)
+timestamp = lift2 (,) pure_time
+  where pure_time = fst <~ (Signal $ (fmap . fmap) pure (every'' millisecond))
+
+{-| Delay a signal by a certain amount of time. So (delay second Mouse.clicks)
+    will update one second later than any mouse click. -}
+delay :: Time -> Signal a -> Signal a
+delay t (Signal gen) = Signal $ (fmap . fmap) fst $
+                         do s <- gen
+                            w <- timeout
+                            transfer2 (ini, []) update_ w s
+  where
+     -- XXX uses unsafePerformIO, is there a better way?
+    ini = pure $ value $ (unsafePerformIO . unsafePerformIO) (start gen)
+    update_ waiting new (old, olds) = if waiting then (old, new:olds)
+                                      else (last olds, new:init olds)
+    timeout = every'' t >>= transfer False (\(time,delta) _ -> time /= delta)
+                        -- 'Elerea.until' will lose the reference to the input so
+                        -- we don't keep looking up the time even though the
+                        -- output can never change again
+                        >>= Elerea.until
+                        >>= transfer True (\new old -> old && not new)
+
+{-| Takes a time t and any signal. The resulting boolean signal is true for
+    time t after every event on the input signal. So (second `since`
+    Mouse.clicks) would result in a signal that is true for one second after
+    each mouse click and false otherwise. -}
+since :: Time -> Signal a -> Signal Bool
+since t s = lift2 (/=) (count s) (count (delay t s))

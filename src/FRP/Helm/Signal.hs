@@ -25,7 +25,7 @@ import FRP.Elerea.Simple hiding (Signal)
 import qualified FRP.Elerea.Simple as Elerea (Signal)
 import FRP.Helm.Sample
 
-data Signal a = Signal (SignalGen (Elerea.Signal (Sample a)))
+newtype Signal a = Signal {signalGen :: SignalGen (Elerea.Signal (Sample a))}
 
 instance Functor Signal where
   fmap = liftA
