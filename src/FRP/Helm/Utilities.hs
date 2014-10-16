@@ -7,16 +7,7 @@ module FRP.Helm.Utilities (
   -- * Applying
   (<|),
   (|>),
-  -- * Random numbers
-  random,
-  randomR
 ) where
-
-import Control.Monad (liftM)
-import FRP.Elerea.Simple hiding (Signal)
-import FRP.Helm.Sample
-import FRP.Helm.Signal
-import System.Random (Random, randomIO, randomRIO)
 
 {-| Converts radians into the standard angle measurement (radians). -}
 radians :: Double -> Double
@@ -39,13 +30,3 @@ turns n = 2 * pi * n
     more consistent. -}
 (<|) :: (a -> b) -> a -> b
 (<|) = ($)
-
-{-| Creates a signal of a random number. -}
---FIXME: This will drive the program at a stupidly fast rate
-random :: Random a => Signal a
-random = Signal $ effectful $ liftM Changed randomIO
-
-{-| Creates a signal of a random number based on the given range. -}
---FIXME: This will drive the program at a stupidly fast rate
-randomR :: Random a => (a, a) -> Signal a
-randomR = Signal . effectful . liftM Changed . randomRIO
