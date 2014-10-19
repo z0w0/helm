@@ -69,6 +69,8 @@ test-suite helm-tests
 
   build-depends:
     base >= 4 && < 5,
+    cairo > 0.12 && < 0.13,
+    containers >= 0.5 && < 1,
     HUnit >= 1.2 && < 2,
     test-framework >= 0.8 && < 1,
     test-framework-hunit >= 0.3 && < 1,

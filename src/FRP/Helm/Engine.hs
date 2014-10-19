@@ -9,4 +9,3 @@ data Engine = Engine {
   cache    :: Map.Map FilePath Cairo.Surface,
   continue :: Bool
 }
-

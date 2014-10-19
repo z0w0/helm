@@ -16,7 +16,7 @@ import Data.Bits
 import Foreign.Marshal.Alloc
 import Foreign.Ptr
 import Foreign.Storable
-import FRP.Elerea.Simple hiding (Signal)
+import FRP.Elerea.Param hiding (Signal)
 import FRP.Helm.Sample
 import FRP.Helm.Signal
 import qualified Graphics.UI.SDL as SDL
@@ -81,6 +81,6 @@ isDownButton m = Signal $ getDown >>= transfer (pure False) update
 {-| Always equal to unit. Event triggers on every mouse click. -}
 clicks :: Signal ()
 clicks = Signal $ signalGen isDown >>= transfer (pure ()) update_
-  where update_ (Changed True) _ = Changed ()
-        update_ _ _              = Unchanged ()
+  where update_ _ (Changed True) _ = Changed ()
+        update_ _ _ _              = Unchanged ()
 
