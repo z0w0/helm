@@ -66,13 +66,10 @@ render :: (Int, Int) -> Element
 render (w, h) = collage w h [move (100, 100) $ filled red $ square 64]
 
 main :: IO ()
-main = do
-  engine <- startup defaultConfig
-
-  run engine $ render <~ Window.dimensions engine
+main = run defaultConfig $ render <~ Window.dimensions engine
 ```
 
-It renders a red square at the position `(100, 100)` with a side length of `64`.  
+It renders a red square at the position `(100, 100)` with a side length of `64`.
 
 The next example is the barebones of a game that depends on input. It shows how to create
 an accumulated state that depends on the values sampled from signals (e.g. mouse input).
@@ -86,23 +83,18 @@ import qualified FRP.Helm.Window as Window
 data State = State { mx :: Double, my :: Double }
 
 step :: (Int, Int) -> State -> State
-step (dx, dy) state = state { mx = (realToFrac dx) + mx state,
-                              my = (realToFrac dy) + my state }
+step (dx, dy) state = state { mx = (10 * (realToFrac dx)) + mx state,
+                              my = (10 * (realToFrac dy)) + my state }
 
 render :: (Int, Int) -> State -> Element
 render (w, h) (State { mx = mx, my = my }) =
   centeredCollage w h [move (mx, my) $ filled white $ square 100]
 
 main :: IO ()
-main = do
-    engine <- startup defaultConfig
-
-    run engine $ render <~ Window.dimensions engine ~~ stepper
-
+main = run defaultConfig $ render <~ Window.dimensions ~~ stepper
   where
     state = State { mx = 0, my = 0 }
     stepper = foldp step state Keyboard.arrows
-
 ```
 
 Checkout the demos folder for more examples.

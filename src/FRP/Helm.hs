@@ -3,10 +3,8 @@
 module FRP.Helm (
   -- * Types
   Time,
-  Engine(..),
   EngineConfig(..),
   -- * Engine
-  startup,
   run,
   defaultConfig,
   -- * Prelude
