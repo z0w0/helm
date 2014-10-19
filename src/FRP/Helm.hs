@@ -49,13 +49,16 @@ import qualified Graphics.Rendering.Pango as Pango
 
 type Helm a = StateT Engine Cairo.Render a
 
+{-| A data structure holding the main element and information required for
+    rendering. -}
 data Application = Application {
   mainElement    :: Element,
   mainDimensions :: (Int, Int),
   mainContinue   :: Bool
 }
 
-{-| A data structure describing miscellaneous initial configurations of the game window and engine. -}
+{-| A data structure describing miscellaneous initial configurations of the
+    game window and engine. -}
 data EngineConfig = EngineConfig {
   windowDimensions :: (Int, Int),
   windowIsFullscreen :: Bool,
@@ -63,7 +66,8 @@ data EngineConfig = EngineConfig {
   windowTitle :: String
 }
 
-{-| Creates the default configuration for the engine. You should change the fields where necessary before passing it to 'run'. -}
+{-| Creates the default configuration for the engine. You should change the
+    fields where necessary before passing it to 'run'. -}
 defaultConfig :: EngineConfig
 defaultConfig = EngineConfig {
   windowDimensions = (800, 600),
@@ -78,7 +82,11 @@ startup (EngineConfig { .. }) = withCAString windowTitle $ \title -> do
     window <- SDL.createWindow title 0 0 (fromIntegral w) (fromIntegral h) wflags
     renderer <- SDL.createRenderer window (-1) rflags
 
-    return Engine { window = window, renderer = renderer, cache = Map.empty, continue = True }
+    return Engine { window   = window
+                  , renderer = renderer
+                  , cache    = Map.empty
+                  , continue = True
+                  }
 
   where
     (w, h) = windowDimensions
@@ -285,7 +293,8 @@ mapFontStyle style = case style of
   ObliqueStyle -> Pango.StyleOblique
   ItalicStyle  -> Pango.StyleItalic
 
-{-| A utility function that goes into a state of transformation and then pops it when finished. -}
+{-| A utility function that goes into a state of transformation and then pops
+    it when finished. -}
 withTransform :: Double -> Double -> Double -> Double -> Helm () -> Helm ()
 withTransform s t x y f = do
   lift $ Cairo.save >> Cairo.scale s s >> Cairo.translate x y >> Cairo.rotate t
