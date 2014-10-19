@@ -107,11 +107,12 @@ startup (EngineConfig { .. }) = withCAString windowTitle $ \title -> do
     > main :: IO ()
     > main = run defaultConfig $ lift render Window.dimensions
  -}
-run :: Engine -> Signal Element -> IO ()
-run engine element = run_ engine $ application <~ element
-                                               ~~ Window.dimensions
-                                               ~~ continue'
-                                               ~~ exposed
+run :: EngineConfig -> Signal Element -> IO ()
+run config element = do engine <- startup config
+                        run_ engine $ application <~ element
+                                                  ~~ Window.dimensions
+                                                  ~~ continue'
+                                                  ~~ exposed
   where
     application :: Element -> (Int, Int) -> Bool -> () -> Application
     application e d c _ = Application e d c
