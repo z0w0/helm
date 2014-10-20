@@ -38,20 +38,19 @@ Helm.
     also includes some utility functions and the modules `FRP.Helm.Color`, `FRP.Helm.Utilities`
     and `FRP.Helm.Graphics` in the style of a sort of prelude library, allowing it to be included
     and readily make the most basic of games.
-  * `FRP.Helm.Animation` contains a simple implementation of animations. Each
-    animation is made up of a list of frames which render a form at a specific time.
   * `FRP.Helm.Color` contains the `Color` data structure, functions for composing
     colors and a few pre-defined colors that are usually used in games.
   * `FRP.Helm.Graphics` contains all the graphics data structures, functions
     for composing these structures and other general graphical utilities.
   * `FRP.Helm.Keyboard` contains signals for working with keyboard state.
   * `FRP.Helm.Mouse` contains signals for working with mouse state.
+  * `FRP.Helm.Random` contains signals for generating random values
+  * `FRP.Helm.Signal`  constains useful functions for working with signals such
+     as lifting/folding
   * `FRP.Helm.Text` contains functions for composing text, formatting it
     and then turning it into an element.
-  * `FRP.Helm.Utilities` contains a few useful functions, such as lifting/folding signal generators
-    containing signals.
-  * `FRP.Helm.Time` contains functions for composing units of time and signals that sample from the game clock.
-  * `FRP.Helm.Transition` contains functions for composing transitions allowing you to animate between interpolable types, e.g. colors.
+  * `FRP.Helm.Time` contains functions for composing units of time and time-dependant signals
+  * `FRP.Helm.Utilities` contains an assortment of useful functions,
   * `FRP.Helm.Window` contains signals for working with the game window state.
 
 ## Example
@@ -66,7 +65,7 @@ render :: (Int, Int) -> Element
 render (w, h) = collage w h [move (100, 100) $ filled red $ square 64]
 
 main :: IO ()
-main = run defaultConfig $ render <~ Window.dimensions engine
+main = run defaultConfig $ render <~ Window.dimensions
 ```
 
 It renders a red square at the position `(100, 100)` with a side length of `64`.
@@ -96,8 +95,6 @@ main = run defaultConfig $ render <~ Window.dimensions ~~ stepper
     state = State { mx = 0, my = 0 }
     stepper = foldp step state Keyboard.arrows
 ```
-
-Checkout the demos folder for more examples.
 
 ## Installing and Building
 
