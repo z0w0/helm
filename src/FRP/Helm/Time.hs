@@ -22,8 +22,8 @@ module FRP.Helm.Time (
 
 import Control.Applicative
 import Control.Monad
-import FRP.Elerea.Simple hiding (delay, Signal, until)
-import qualified FRP.Elerea.Simple as Elerea (Signal, until)
+import FRP.Elerea.Param hiding (delay, Signal, until)
+import qualified FRP.Elerea.Param as Elerea (Signal, until)
 import Data.Time.Clock.POSIX (getPOSIXTime)
 import FRP.Helm.Signal
 import FRP.Helm.Sample
@@ -83,12 +83,12 @@ fpsWhen :: Double -> Signal Bool -> Signal Time
 fpsWhen n sig = Signal $ do c <- signalGen sig
                             f <- signalGen (fps n)
                             transfer2 (pure 0) update_ f c
-  where update_ new (Unchanged cont) old = if cont
-                                           then new
-                                           else Unchanged $ value old
-        update_ _   (Changed   cont) old = if cont
-                                           then Changed 0
-                                           else Unchanged $ value old
+  where update_ _ new (Unchanged cont) old = if cont
+                                             then new
+                                             else Unchanged $ value old
+        update_ _ _   (Changed   cont) old = if cont
+                                             then Changed 0
+                                             else Unchanged $ value old
 {-| Takes a time interval t. The resulting signal is the current time, updated
     every t. -}
 every :: Time -> Signal Time
@@ -101,12 +101,12 @@ every' t = Signal $ every'' t >>= transfer (pure (0,0)) update
 
 {-| Another utility signal that does all the magic for 'every'' by working on
     the Elerea SignalGen level -}
-every'' :: Time -> SignalGen (Elerea.Signal (Time, Time))
+every'' :: Time -> SignalGen p (Elerea.Signal (Time, Time))
 every'' t = getTime >>= transfer (0,0) update_
   where
     getTime = effectful $ liftM ((second *) . realToFrac) getPOSIXTime
-    update_ new old = let delta = new - fst old
-                      in if delta >= t then (new, delta) else old
+    update_ _ new old = let delta = new - fst old
+                        in if delta >= t then (new, delta) else old
 
 {-| Add a timestamp to any signal. Timestamps increase monotonically. When you
     create (timestamp Mouse.x), an initial timestamp is produced. The timestamp
@@ -124,18 +124,19 @@ delay :: Time -> Signal a -> Signal a
 delay t (Signal gen) = Signal $ (fmap . fmap) fst $
                          do s <- gen
                             w <- timeout
-                            transfer2 (ini, []) update_ w s
+                            e <- snapshot =<< input
+                            transfer2 (makeInit e, []) update_ w s
   where
      -- XXX uses unsafePerformIO, is there a better way?
-    ini = pure $ value $ (unsafePerformIO . unsafePerformIO) (start gen)
-    update_ waiting new (old, olds) = if waiting then (old, new:olds)
-                                      else (last olds, new:init olds)
-    timeout = every'' t >>= transfer False (\(time,delta) _ -> time /= delta)
+    makeInit e = pure $ value $ unsafePerformIO (start gen >>= (\f -> f e))
+    update_ _ waiting new (old, olds) = if waiting then (old, new:olds)
+                                        else (last olds, new:init olds)
+    timeout = every'' t >>= transfer False (\_ (time,delta) _ -> time /= delta)
                         -- 'Elerea.until' will lose the reference to the input so
                         -- we don't keep looking up the time even though the
                         -- output can never change again
                         >>= Elerea.until
-                        >>= transfer True (\new old -> old && not new)
+                        >>= transfer True (\_ new old -> old && not new)
 
 {-| Takes a time t and any signal. The resulting boolean signal is true for
     time t after every event on the input signal. So (second `since`

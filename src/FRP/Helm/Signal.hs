@@ -21,11 +21,12 @@ module FRP.Helm.Signal(
 ) where
 import Control.Applicative
 import Data.Traversable (sequenceA)
-import FRP.Elerea.Simple hiding (Signal)
-import qualified FRP.Elerea.Simple as Elerea (Signal)
+import FRP.Elerea.Param hiding (Signal)
+import qualified FRP.Elerea.Param as Elerea (Signal)
 import FRP.Helm.Sample
+import FRP.Helm.Engine
 
-newtype Signal a = Signal {signalGen :: SignalGen (Elerea.Signal (Sample a))}
+newtype Signal a = Signal {signalGen :: SignalGen Engine (Elerea.Signal (Sample a))}
 
 instance Functor Signal where
   fmap = liftA
@@ -36,7 +37,7 @@ instance Applicative Signal where
 
 {-| Creates a signal that never changes. -}
 constant :: a -> Signal a
-constant x = Signal $ stateful (Changed x) (\_ -> Unchanged x)
+constant x = Signal $ stateful (Changed x) (\_ _ -> Unchanged x)
 
 {-| Combines a list of signals into a signal of lists. -}
 combine :: [Signal a] -> Signal [a]
@@ -109,8 +110,8 @@ foldp :: (a -> b -> b) -> b -> Signal a -> Signal b
 foldp f ini (Signal gen) =
   Signal $ gen >>= transfer (pure ini) update_
                >>= delay (Changed ini)
-    where update_ (Unchanged _) y = Unchanged (value y)
-          update_ (Changed   x) y = Changed $ f x (value y)
+    where update_ _ (Unchanged _) y = Unchanged (value y)
+          update_ _ (Changed   x) y = Changed $ f x (value y)
 
 {-| Count the number of events that have occurred.-}
 count :: Signal a -> Signal Int

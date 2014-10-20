@@ -23,7 +23,7 @@ value :: Sample a -> a
 value (Changed   x) = x
 value (Unchanged x) = x
 
-update :: Eq a => a -> Sample a -> Sample a
-update new old = if new == value old
-                 then Unchanged $ value old
-                 else Changed   new
+update :: Eq a => p -> a -> Sample a -> Sample a
+update _ new old = if new == value old
+                   then Unchanged $ value old
+                   else Changed new

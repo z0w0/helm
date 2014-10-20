@@ -3,10 +3,8 @@
 module FRP.Helm (
   -- * Types
   Time,
-  Engine(..),
   EngineConfig(..),
   -- * Engine
-  startup,
   run,
   defaultConfig,
   -- * Prelude
@@ -30,7 +28,7 @@ import Foreign.C.String
 import Foreign.Marshal.Alloc
 import Foreign.Ptr
 import Foreign.Storable
-import FRP.Elerea.Simple hiding (Signal)
+import FRP.Elerea.Param hiding (Signal)
 import FRP.Helm.Color as Color
 import FRP.Helm.Engine
 import FRP.Helm.Graphics as Graphics
@@ -49,13 +47,16 @@ import qualified Graphics.Rendering.Pango as Pango
 
 type Helm a = StateT Engine Cairo.Render a
 
+{-| A data structure holding the main element and information required for
+    rendering. -}
 data Application = Application {
   mainElement    :: Element,
   mainDimensions :: (Int, Int),
   mainContinue   :: Bool
 }
 
-{-| A data structure describing miscellaneous initial configurations of the game window and engine. -}
+{-| A data structure describing miscellaneous initial configurations of the
+    game window and engine. -}
 data EngineConfig = EngineConfig {
   windowDimensions :: (Int, Int),
   windowIsFullscreen :: Bool,
@@ -63,7 +64,8 @@ data EngineConfig = EngineConfig {
   windowTitle :: String
 }
 
-{-| Creates the default configuration for the engine. You should change the fields where necessary before passing it to 'run'. -}
+{-| Creates the default configuration for the engine. You should change the
+    fields where necessary before passing it to 'run'. -}
 defaultConfig :: EngineConfig
 defaultConfig = EngineConfig {
   windowDimensions = (800, 600),
@@ -78,7 +80,11 @@ startup (EngineConfig { .. }) = withCAString windowTitle $ \title -> do
     window <- SDL.createWindow title 0 0 (fromIntegral w) (fromIntegral h) wflags
     renderer <- SDL.createRenderer window (-1) rflags
 
-    return Engine { window = window, renderer = renderer, cache = Map.empty, continue = True }
+    return Engine { window   = window
+                  , renderer = renderer
+                  , cache    = Map.empty
+                  , continue = True
+                  }
 
   where
     (w, h) = windowDimensions
@@ -99,15 +105,16 @@ startup (EngineConfig { .. }) = withCAString windowTitle $ \title -> do
     > main :: IO ()
     > main = run defaultConfig $ lift render Window.dimensions
  -}
-run :: Engine -> Signal Element -> IO ()
-run engine element = run_ $ application <~ element
-                                        ~~ Window.dimensions engine
-                                        ~~ continue'
-                                        ~~ exposed
+run :: EngineConfig -> Signal Element -> IO ()
+run config element = do engine <- startup config
+                        run_ engine $ application <~ element
+                                                  ~~ Window.dimensions
+                                                  ~~ continue'
+                                                  ~~ exposed
   where
     application :: Element -> (Int, Int) -> Bool -> () -> Application
     application e d c _ = Application e d c
-    run_ (Signal gen) = (start gen >>= run' engine) `finally` SDL.quit
+    run_ eng (Signal gen) = (start gen >>= run' eng) `finally` SDL.quit
 
 {-| An event that triggers when SDL thinks we need to re-draw. -}
 exposed :: Signal ()
@@ -140,9 +147,9 @@ continue' = (==0) <~ count quit
 
 {-| A utility function called by 'run' that samples the element
     or quits the entire engine if SDL events say to do so. -}
-run' :: Engine -> IO (Sample Application) -> IO ()
-run' engine smp = when (continue engine) $ smp >>= renderIfChanged engine
-                                               >>= flip run' smp
+run' :: Engine -> (Engine -> IO (Sample Application)) -> IO ()
+run' engine smp = when (continue engine) $ smp engine >>= renderIfChanged engine
+                                                      >>= flip run' smp
 
 {-| Renders when the sample is marked as changed delays the thread otherwise -}
 renderIfChanged :: Engine -> Sample Application -> IO Engine
@@ -285,7 +292,8 @@ mapFontStyle style = case style of
   ObliqueStyle -> Pango.StyleOblique
   ItalicStyle  -> Pango.StyleItalic
 
-{-| A utility function that goes into a state of transformation and then pops it when finished. -}
+{-| A utility function that goes into a state of transformation and then pops
+    it when finished. -}
 withTransform :: Double -> Double -> Double -> Double -> Helm () -> Helm ()
 withTransform s t x y f = do
   lift $ Cairo.save >> Cairo.scale s s >> Cairo.translate x y >> Cairo.rotate t

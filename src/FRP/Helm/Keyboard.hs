@@ -12,7 +12,7 @@ import Control.Applicative
 import Data.List
 import Foreign hiding (shift)
 import Foreign.C.Types
-import FRP.Elerea.Simple hiding (Signal)
+import FRP.Elerea.Param hiding (Signal)
 import FRP.Helm.Sample
 import FRP.Helm.Signal
 
