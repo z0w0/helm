@@ -105,6 +105,11 @@ infixl 4 ~~
     wrapper around the 'transfer' function that automatically binds the input
     signal out of the signal generator. This function is useful for making a render
     function that depends on some accumulated state.
+    
+    > playerPosition :: (Int, Int) -> SignalGen (Signal (Int, Int))
+    > playerPosition initial = foldp update initial arrows
+    >     where update (dx, dy) (x, y) = (x + dx, y + dy)
+
 -}
 foldp :: (a -> b -> b) -> b -> Signal a -> Signal b
 foldp f ini (Signal gen) =
