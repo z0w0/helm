@@ -251,7 +251,11 @@ renderElement (ImageElement (sx, sy) sw sh src stretch) = do
             Cairo.setSourceSurface surface 0 0
             Cairo.translate (fromIntegral sx) (fromIntegral sy)
             Cairo.rectangle 0 0 (fromIntegral sw) (fromIntegral sh)
-            Cairo.fill
+            if stretch then
+                Cairo.paint
+            else
+                Cairo.fill
+                
             Cairo.restore
 
 renderElement (TextElement (Text { textColor = (Color r g b a), .. })) = do
