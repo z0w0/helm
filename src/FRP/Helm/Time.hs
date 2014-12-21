@@ -102,9 +102,11 @@ every' t = Signal $ every'' t >>= transfer (pure (0,0)) update
 {-| Another utility signal that does all the magic for 'every'' by working on
     the Elerea SignalGen level -}
 every'' :: Time -> SignalGen p (Elerea.Signal (Time, Time))
-every'' t = getTime >>= transfer (0,0) update_
+every'' t = do
+    it <- execute getTime
+    effectful getTime >>= transfer (it,0) update_
   where
-    getTime = effectful $ liftM ((second *) . realToFrac) getPOSIXTime
+    getTime = liftM ((second *) . realToFrac) getPOSIXTime
     update_ _ new old = let delta = new - fst old
                         in if delta >= t then (new, delta) else old
 
