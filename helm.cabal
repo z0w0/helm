@@ -1,5 +1,5 @@
 name: helm
-version: 0.7.2
+version: 0.8
 synopsis: A functionally reactive game engine.
 description: A functionally reactive game engine, with headgear to protect you
              from the headache of game development provided.
@@ -48,7 +48,7 @@ library
     containers >= 0.5 && < 1,
     elerea >= 2.7 && < 3,
     filepath >= 1.3 && < 2,
-    sdl2 >= 1.1 && <= 1.3.0,
+    sdl2 == 1.3.0,
     text >= 1.1.1.3,
     time >= 1.4 && < 1.5,
     random >= 1.0.1.1 && < 1.2,
