@@ -88,10 +88,10 @@ startup (EngineConfig { .. }) = withCAString windowTitle $ \title -> do
 
   where
     (w, h) = windowDimensions
-    wflags = foldl (.|.) 0 $ [SDL.windowFlagShown] ++
-                             [SDL.windowFlagResizable | windowIsResizable] ++
-                             [SDL.windowFlagFullscreen | windowIsFullscreen]
-    rflags = (.|.) SDL.rendererFlagPresentVSync SDL.rendererFlagAccelerated
+    wflags = foldl (.|.) 0 $ [SDL.SDL_WINDOWEVENT_SHOWN] ++
+                             [SDL.SDL_WINDOW_RESIZABLE | windowIsResizable] ++
+                             [SDL.SDL_WINDOW_FULLSCREEN | windowIsFullscreen]
+    rflags = (.|.) SDL.SDL_RENDERER_PRESENTVSYNC SDL.SDL_RENDERER_ACCELERATED
 
 {-| Initializes and runs the game engine. The supplied signal generator is
     constantly sampled for an element to render until the user quits.
@@ -128,7 +128,7 @@ exposed = Signal getExposed
         event <- peek eventptr
 
         case event of
-          SDL.WindowEvent _ _ _ e _ _ -> return $ if e == SDL.windowEventExposed
+          SDL.WindowEvent _ _ _ e _ _ -> return $ if e == SDL.SDL_WINDOWEVENT_EXPOSED
                                                   then Changed ()
                                                   else Unchanged ()
           _ -> return $ Unchanged ()
@@ -170,7 +170,7 @@ render engine@(Engine { .. }) element (w, h) = alloca $ \pixelsptr ->
               (fromBE32 0x00ff0000) (fromBE32 0xff000000) (fromBE32 0x000000ff)
 
   texture <- SDL.createTexture renderer format
-               SDL.textureAccessStreaming (fromIntegral w) (fromIntegral h)
+               SDL.SDL_TEXTUREACCESS_STREAMING (fromIntegral w) (fromIntegral h)
 
   SDL.lockTexture texture nullPtr pixelsptr pitchptr
 
