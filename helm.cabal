@@ -14,7 +14,7 @@ maintainer: Zack Corr <zack@z0w0.me>
 copyright: (c) 2013-2014, Zack Corr
 category: Game Engine, FRP
 build-type: Simple
-cabal-version: >=1.18
+cabal-version: >=1.10
 
 source-repository head
   type: git
