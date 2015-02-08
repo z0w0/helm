@@ -1,6 +1,6 @@
 language: haskell
 ghc:
-  - 7.6
+  - 7.8
 before_install:
   - sudo apt-get -qq update
   - sudo apt-get -qq install build-essential xorg-dev libudev-dev libts-dev libgl1-mesa-dev libglu1-mesa-dev libasound2-dev libpulse-dev libopenal-dev libogg-dev libvorbis-dev libaudiofile-dev libpng12-dev libfreetype6-dev libusb-dev libdbus-1-dev zlib1g-dev libdirectfb-dev libcairo2-dev
@@ -10,4 +10,6 @@ before_install:
   - ./configure
   - sudo make install
   - cd ..
+  - cabal install alex happy # Make sure a recent version is installed, required by gtk2hs-buildtools
   - cabal install gtk2hs-buildtools
+
