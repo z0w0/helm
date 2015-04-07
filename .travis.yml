@@ -10,4 +10,5 @@ before_install:
   - ./configure
   - sudo make install
   - cd ..
+  - cabal install alex happy
   - cabal install gtk2hs-buildtools
