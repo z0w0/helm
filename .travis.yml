@@ -11,3 +11,5 @@ before_install:
   - sudo make install
   - cd ..
   - cabal install gtk2hs-buildtools
+install:
+  - cabal install --only-dependencies --enable-tests --constraint="text -integer-simple"
