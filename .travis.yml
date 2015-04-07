@@ -12,3 +12,5 @@ before_install:
   - cd ..
   - cabal install alex happy
   - cabal install gtk2hs-buildtools
+install:
+    - cabal install --only-dependencies --enable-tests --force-reinstalls
