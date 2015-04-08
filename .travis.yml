@@ -10,7 +10,7 @@ before_install:
   - ./configure
   - sudo make install
   - cd ..
-  - cabal install alex happy
-  - cabal install gtk2hs-buildtools
+  - cabal install Cabal gtk2hs-buildtools
+>>>>>>> ghc76and78
 install:
     - cabal install --only-dependencies --enable-tests --force-reinstalls
