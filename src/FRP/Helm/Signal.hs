@@ -3,6 +3,8 @@ module FRP.Helm.Signal(
   -- * Composing
   constant,
   combine,
+  merge,
+  mergeMany,
   lift,
   lift2,
   lift3,
@@ -42,6 +44,29 @@ constant x = Signal $ stateful (Changed x) (\_ _ -> Unchanged x)
 {-| Combines a list of signals into a signal of lists. -}
 combine :: [Signal a] -> Signal [a]
 combine = sequenceA
+
+{-|
+Merge two signals into one. This function is extremely useful for bringing
+together lots of different signals to feed into a foldp.
+
+If an update comes from either of the incoming signals, it updates the outgoing
+signal. If an update comes on both signals at the same time, the left update
+wins (i.e., the right update is discarded).
+-}
+merge :: Signal a -> Signal a -> Signal a
+merge s1 s2 = Signal $ do
+  s1' <- signalGen s1
+  s2' <- signalGen s2
+  transfer2 undefined update' s1' s2'
+    where update' _ (Changed   x) _  _ = Changed x
+          update' _ (Unchanged _) sy _ = sy
+
+{-| Merge many signals into one. This is useful when you are merging more than
+   two signals. When multiple updates come in at the same time, the left-most
+   update wins, just like with merge. -}
+mergeMany :: [Signal a] -> Signal a
+mergeMany = foldl1' merge
+
 
 {-| Applies a function to a signal producing a new signal. This is a synonym of
    'fmap'. It automatically binds the input signal out of the signal generator.
