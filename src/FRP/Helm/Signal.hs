@@ -57,15 +57,16 @@ merge :: Signal a -> Signal a -> Signal a
 merge s1 s2 = Signal $ do
   s1' <- signalGen s1
   s2' <- signalGen s2
-  transfer2 undefined update' s1' s2'
-    where update' _ (Changed   x) _  _ = Changed x
-          update' _ (Unchanged _) sy _ = sy
+  return $ update' <$> s1' <*> s2'
+    where update' (Changed   x) _             = Changed x
+          update' (Unchanged x) (Changed y)   = Changed y
+          update' (Unchanged x) (Unchanged y) = Unchanged x
 
 {-| Merge many signals into one. This is useful when you are merging more than
    two signals. When multiple updates come in at the same time, the left-most
    update wins, just like with merge. -}
 mergeMany :: [Signal a] -> Signal a
-mergeMany = foldl1' merge
+mergeMany = foldl1 merge
 
 
 {-| Applies a function to a signal producing a new signal. This is a synonym of
@@ -130,8 +131,8 @@ infixl 4 ~~
     wrapper around the 'transfer' function that automatically binds the input
     signal out of the signal generator. This function is useful for making a render
     function that depends on some accumulated state.
-    
-    > playerPosition :: (Int, Int) -> SignalGen (Signal (Int, Int))
+
+    > playerPosition :: (Int, Int) -> Signal (Int, Int)
     > playerPosition initial = foldp update initial arrows
     >     where update (dx, dy) (x, y) = (x + dx, y + dy)
 
