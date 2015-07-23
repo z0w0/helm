@@ -5,6 +5,7 @@ module FRP.Helm.Signal(
   combine,
   merge,
   mergeMany,
+  sampleOn,
   lift,
   lift2,
   lift3,
@@ -68,6 +69,16 @@ merge s1 s2 = Signal $ do
 mergeMany :: [Signal a] -> Signal a
 mergeMany = foldl1 merge
 
+{-| Sample the second signal based on the first. -}
+sampleOn :: Signal a -> Signal b -> Signal b
+sampleOn s1 s2 = Signal $ do
+  s1' <- signalGen s1
+  s2' <- signalGen s2
+  return $ update' <$> s1' <*> s2'
+    where update' (Unchanged _) (Changed   y) = Unchanged y
+          update' (Unchanged _) (Unchanged y) = Unchanged y
+          update' (Changed   _) (Changed   y) = Changed y
+          update' (Changed   _) (Unchanged y) = Changed y
 
 {-| Applies a function to a signal producing a new signal. This is a synonym of
    'fmap'. It automatically binds the input signal out of the signal generator.
