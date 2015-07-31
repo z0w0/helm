@@ -40,6 +40,7 @@ import FRP.Helm.Time (Time)
 import qualified FRP.Helm.Window as Window
 import System.FilePath
 import System.Endian
+import System.Glib.UTFString
 import qualified Data.Map as Map
 import qualified Graphics.UI.SDL as SDL
 import qualified Graphics.Rendering.Cairo as Cairo
@@ -264,7 +265,7 @@ renderElement (TextElement (Text { textColor = (Color r g b a), .. })) = do
     layout <- lift $ Pango.createLayout textUTF8
 
     Cairo.liftIO $ Pango.layoutSetAttributes layout
-      [ Pango.AttrFamily { paStart = i, paEnd = j, paFamily = textTypeface }
+      [ Pango.AttrFamily { paStart = i, paEnd = j, paFamily = (stringToGlib textTypeface) }
       , Pango.AttrWeight { paStart = i, paEnd = j, paWeight = mapFontWeight textWeight }
       , Pango.AttrStyle  { paStart = i, paEnd = j, paStyle = mapFontStyle textStyle }
       , Pango.AttrSize   { paStart = i, paEnd = j, paSize = textHeight }
