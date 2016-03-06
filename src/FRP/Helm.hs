@@ -15,19 +15,19 @@ module FRP.Helm (
   FRP.Helm.Signal.lift
 ) where
 
-import Control.Applicative
+
 import Control.Concurrent (threadDelay)
 import Control.Exception
 import Control.Monad (when)
 import Control.Monad.IO.Class
 import Control.Monad.Trans.Class (lift)
 import Control.Monad.Trans.State
-import Data.Bits
+
 import Data.Foldable (forM_)
-import Foreign.C.String
-import Foreign.Marshal.Alloc
+
+
 import Foreign.Ptr
-import Foreign.Storable
+
 import FRP.Elerea.Param hiding (Signal)
 import FRP.Helm.Color as Color
 import FRP.Helm.Engine
@@ -39,11 +39,16 @@ import qualified FRP.Helm.Signal (lift)
 import FRP.Helm.Time (Time)
 import qualified FRP.Helm.Window as Window
 import System.FilePath
-import System.Endian
+
 import qualified Data.Map as Map
-import qualified Graphics.UI.SDL as SDL
+import SDL.Event
+import SDL.Video hiding (windowTitle)
+import Linear.V2 (V2(V2))
+import qualified SDL.Init
+import qualified SDL.Video.Renderer as Renderer
 import qualified Graphics.Rendering.Cairo as Cairo
 import qualified Graphics.Rendering.Pango as Pango
+import Data.Text (pack)
 
 type Helm a = StateT Engine Cairo.Render a
 
@@ -76,9 +81,11 @@ defaultConfig = EngineConfig {
 
 {-| Creates a new engine that can be run later using 'run'. -}
 startup :: EngineConfig -> IO Engine
-startup (EngineConfig { .. }) = withCAString windowTitle $ \title -> do
-    window <- SDL.createWindow title 0 0 (fromIntegral w) (fromIntegral h) wflags
-    renderer <- SDL.createRenderer window (-1) rflags
+startup (EngineConfig { .. }) = do
+    SDL.Init.initializeAll
+    window <- createWindow (pack windowTitle) winCfg
+    renderer <- createRenderer window (-1) renCfg
+    showWindow window
 
     return Engine { window   = window
                   , renderer = renderer
@@ -88,10 +95,11 @@ startup (EngineConfig { .. }) = withCAString windowTitle $ \title -> do
 
   where
     (w, h) = windowDimensions
-    wflags = foldl (.|.) 0 $ [SDL.windowFlagShown] ++
-                             [SDL.windowFlagResizable | windowIsResizable] ++
-                             [SDL.windowFlagFullscreen | windowIsFullscreen]
-    rflags = (.|.) SDL.rendererFlagPresentVSync SDL.rendererFlagAccelerated
+    winCfg = defaultWindow { windowInitialSize = V2 (fromIntegral w) (fromIntegral h)
+                           , windowMode = if windowIsFullscreen then Fullscreen else Windowed
+                           , windowResizable = windowIsResizable
+                           }
+    renCfg = RendererConfig AcceleratedVSyncRenderer False
 
 {-| Initializes and runs the game engine. The supplied signal generator is
     constantly sampled for an element to render until the user quits.
@@ -114,33 +122,32 @@ run config element = do engine <- startup config
   where
     application :: Element -> (Int, Int) -> Bool -> () -> Application
     application e d c _ = Application e d c
-    run_ eng (Signal gen) = (start gen >>= run' eng) `finally` SDL.quit
+    run_ eng (Signal gen) = (start gen >>= run' eng) `finally` SDL.Init.quit
 
 {-| An event that triggers when SDL thinks we need to re-draw. -}
 exposed :: Signal ()
 exposed = Signal getExposed
   where
-    getExposed = effectful $ alloca $ \eventptr -> do
-      SDL.pumpEvents
-      status <- SDL.pollEvent eventptr
-
-      if status == 1 then do
-        event <- peek eventptr
-
-        case event of
-          SDL.WindowEvent _ _ _ e _ _ -> return $ if e == SDL.windowEventExposed
-                                                  then Changed ()
-                                                  else Unchanged ()
-          _ -> return $ Unchanged ()
-      else return $ Unchanged ()
+    getExposed = effectful $ do
+      pumpEvents
+      mEvent <- pollEvent
+      case mEvent of
+        Just (Event _ (WindowExposedEvent _)) ->
+          return $ Changed ()
+        _ ->
+          return $ Unchanged ()
 
 {-| An event that triggers when SDL thinks we need to quit. -}
 quit :: Signal ()
 quit = Signal getQuit
   where
     getQuit = effectful $ do
-      q <- SDL.quitRequested
-      return (if q then Changed () else Unchanged ())
+      mEvent <- pollEvent
+      case mEvent of
+        Just (Event _ QuitEvent) ->
+          return $ Changed ()
+        _ ->
+          return $ Unchanged ()
 
 continue' :: Signal Bool
 continue' = (==0) <~ count quit
@@ -164,29 +171,22 @@ renderIfChanged engine event =  case event of
 {-| A utility function that renders a previously sampled element
     using an engine state. -}
 render :: Engine -> Element -> (Int, Int) -> IO Engine
-render engine@(Engine { .. }) element (w, h) = alloca $ \pixelsptr ->
-                                               alloca $ \pitchptr  -> do
-  format <- SDL.masksToPixelFormatEnum 32 (fromBE32 0x0000ff00)
-              (fromBE32 0x00ff0000) (fromBE32 0xff000000) (fromBE32 0x000000ff)
+render engine@(Engine { .. }) element (w, h) = do
+  texture <- Renderer.createTexture renderer Renderer.ARGB8888
+               Renderer.TextureAccessStreaming (V2 (fromIntegral w) (fromIntegral h))
 
-  texture <- SDL.createTexture renderer format
-               SDL.textureAccessStreaming (fromIntegral w) (fromIntegral h)
-
-  SDL.lockTexture texture nullPtr pixelsptr pitchptr
-
-  pixels <- peek pixelsptr
-  pitch <- fromIntegral <$> peek pitchptr
+  (pixels, pitch) <- Renderer.lockTexture texture Nothing
 
   res <- Cairo.withImageSurfaceForData (castPtr pixels)
-           Cairo.FormatARGB32 w h pitch $ \surface -> Cairo.renderWith surface
+           Cairo.FormatARGB32 w h (fromIntegral pitch) $ \surface -> Cairo.renderWith surface
              $ evalStateT (render' w h element) engine
 
-  SDL.unlockTexture texture
+  Renderer.unlockTexture texture
 
-  SDL.renderClear renderer
-  SDL.renderCopy renderer texture nullPtr nullPtr
-  SDL.destroyTexture texture
-  SDL.renderPresent renderer
+  Renderer.clear renderer
+  Renderer.copy renderer texture Nothing Nothing
+  Renderer.destroyTexture texture
+  Renderer.present renderer
 
   return res
 
@@ -255,7 +255,7 @@ renderElement (ImageElement (sx, sy) sw sh src stretch) = do
                 Cairo.paint
             else
                 Cairo.fill
-                
+
             Cairo.restore
 
 renderElement (TextElement (Text { textColor = (Color r g b a), .. })) = do
@@ -264,7 +264,7 @@ renderElement (TextElement (Text { textColor = (Color r g b a), .. })) = do
     layout <- lift $ Pango.createLayout textUTF8
 
     Cairo.liftIO $ Pango.layoutSetAttributes layout
-      [ Pango.AttrFamily { paStart = i, paEnd = j, paFamily = textTypeface }
+      [ Pango.AttrFamily { paStart = i, paEnd = j, paFamily = pack textTypeface }
       , Pango.AttrWeight { paStart = i, paEnd = j, paWeight = mapFontWeight textWeight }
       , Pango.AttrStyle  { paStart = i, paEnd = j, paStyle = mapFontStyle textStyle }
       , Pango.AttrSize   { paStart = i, paEnd = j, paSize = textHeight }

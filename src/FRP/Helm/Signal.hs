@@ -23,7 +23,7 @@ module FRP.Helm.Signal(
   lift8
 ) where
 import Control.Applicative
-import Data.Traversable (sequenceA)
+
 import FRP.Elerea.Param hiding (Signal)
 import qualified FRP.Elerea.Param as Elerea (Signal)
 import FRP.Helm.Sample
@@ -60,8 +60,8 @@ merge s1 s2 = Signal $ do
   s2' <- signalGen s2
   return $ update' <$> s1' <*> s2'
     where update' (Changed   x) _             = Changed x
-          update' (Unchanged x) (Changed y)   = Changed y
-          update' (Unchanged x) (Unchanged y) = Unchanged x
+          update' (Unchanged _) (Changed y)   = Changed y
+          update' (Unchanged x) (Unchanged _) = Unchanged x
 
 {-| Merge many signals into one. This is useful when you are merging more than
    two signals. When multiple updates come in at the same time, the left-most

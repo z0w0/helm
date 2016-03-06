@@ -4,7 +4,6 @@ module FRP.Helm.Random (
   float,
   floatList
 ) where
-import Control.Applicative (pure)
 import Control.Monad (liftM, join, replicateM)
 import FRP.Elerea.Param hiding (Signal)
 import qualified FRP.Elerea.Param as Elerea (Signal)

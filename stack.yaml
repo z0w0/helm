@@ -1,11 +1,7 @@
 flags: {}
 packages:
-    - '.'
+- '.'
 extra-deps:
-    - elerea-2.8.0
-    - cairo-0.12.5.3
-    - utf8-string-0.3.8
-    - pango-0.12.5.3
-    - sdl2-1.2.0
-    - glib-0.12.5.4
-resolver: lts-2.14
+- elerea-2.8.0
+- text-1.2.2.0
+resolver: lts-5.5

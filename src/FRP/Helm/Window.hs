@@ -7,14 +7,13 @@ module FRP.Helm.Window (
   position
 ) where
 
-import Control.Applicative (pure)
-import Foreign.Marshal.Alloc
-import Foreign.Storable
 import FRP.Elerea.Param hiding (Signal)
 import FRP.Helm.Engine
 import FRP.Helm.Sample
 import FRP.Helm.Signal
-import qualified Graphics.UI.SDL as SDL
+import SDL
+import qualified SDL.Video as Video
+import Linear.V2 (V2(V2))
 
 {-| The current dimensions of the window. -}
 dimensions :: Signal (Int, Int)
@@ -22,13 +21,9 @@ dimensions =
   Signal $ input >>= getDimensions >>= transfer (pure (0,0)) update
   where
     getDimensions = effectful1 action
-    action engine = alloca $ \wptr -> alloca $ \hptr -> do
-	  SDL.getWindowSize (window engine) wptr hptr
-
-	  w <- peek wptr
-	  h <- peek hptr
-
-	  return (fromIntegral w, fromIntegral h)
+    action engine = do
+      V2 w h <- SDL.get $ Video.windowSize (window engine)
+      return (fromIntegral w, fromIntegral h)
 
 {-| The current position of the window. -}
 position :: Signal (Int, Int)
@@ -36,13 +31,9 @@ position =
   Signal $ input >>= getPosition >>= transfer (pure (0,0)) update
   where
     getPosition = effectful1 action
-    action engine = alloca $ \xptr -> alloca $ \yptr -> do
-	  SDL.getWindowPosition (window engine) xptr yptr
-
-	  x <- peek xptr
-	  y <- peek yptr
-
-	  return (fromIntegral x, fromIntegral y)
+    action engine = do
+        V2 x y <- Video.getWindowAbsolutePosition (window engine)
+        return (fromIntegral x, fromIntegral y)
 
 {-| The current width of the window. -}
 width :: Signal Int
