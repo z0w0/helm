@@ -20,7 +20,7 @@ module FRP.Helm.Time (
   since
 ) where
 
-import Control.Applicative
+
 import Control.Monad
 import FRP.Elerea.Param hiding (delay, Signal, until)
 import qualified FRP.Elerea.Param as Elerea (Signal, until)

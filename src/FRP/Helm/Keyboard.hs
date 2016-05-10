@@ -8,7 +8,6 @@ module FRP.Helm.Keyboard (
   arrows, wasd
 ) where
 
-import Control.Applicative
 import Data.List
 import Foreign hiding (shift)
 import Foreign.C.Types
@@ -790,4 +789,3 @@ wasd = arrows' <$> w <*> a <*> s <*> d
         a = isDown AKey
         s = isDown SKey
         d = isDown DKey
-
