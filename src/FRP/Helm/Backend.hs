@@ -19,13 +19,13 @@ class BEngine engine where
   type Helm engine a
   type Helm engine a = StateT engine (RenderMonad engine) a
   data BApplication engine :: *
-  type BConfig engine :: *
+  data EngineConfig engine :: *
   type BElement engine :: *
 
-  defaultConfig :: BConfig engine
+  defaultConfig :: EngineConfig engine
 
   initApplication :: BElement engine -> (Int, Int) -> Bool -> () -> BApplication engine
-  startup :: BConfig engine -> IO engine
+  startup :: EngineConfig engine -> IO engine
   engineFinalizer :: engine -> IO ()
 
   exposedSignal :: Signal engine ()

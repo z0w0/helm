@@ -29,6 +29,7 @@ library
   exposed-modules:
     FRP.Helm
     FRP.Helm.Backend
+    FRP.Helm.Backend.SDL
     FRP.Helm.Backend.SDL.Color
     FRP.Helm.Backend.SDL.Engine
     FRP.Helm.Backend.SDL.Graphics

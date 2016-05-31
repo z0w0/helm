@@ -39,19 +39,6 @@ data Engine = Engine {
   continue :: Bool
 }
 
---data Application = Application {
---  mainElement    :: Element,
---  mainDimensions :: (Int, Int),
---  mainContinue   :: Bool
---}
-
-data EngineConfig = EngineConfig {
-  windowDimensions :: (Int, Int),
-  windowIsFullscreen :: Bool,
-  windowIsResizable :: Bool,
-  windowTitle :: String
-}
-
 instance BEngine Engine where
   type RenderMonad Engine = Cairo.Render
 
@@ -65,8 +52,12 @@ instance BEngine Engine where
 
   {-| A data structure describing miscellaneous initial configurations of the
       game window and engine. -}
-  type BConfig Engine = EngineConfig
-
+  data EngineConfig Engine = EngineConfig {
+    windowDimensions :: (Int, Int),
+    windowIsFullscreen :: Bool,
+    windowIsResizable :: Bool,
+    windowTitle :: String
+  }
 
   type BElement Engine = Element
 

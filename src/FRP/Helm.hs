@@ -6,7 +6,6 @@ module FRP.Helm (
   Time,
   -- * Engine
   run,
-  defaultConfig,
   -- * Prelude
   module Utilities,
   module Signal,
@@ -38,7 +37,7 @@ import FRP.Helm.Backend
     > main :: IO ()
     > main = run defaultConfig $ lift render Window.dimensions
  -}
-run :: BEngine engine => BConfig engine -> Signal engine (BElement engine) -> IO ()
+run :: BEngine engine => EngineConfig engine -> Signal engine (BElement engine) -> IO ()
 run config element = do
   engine <- startup config
   let (Signal gen) = initApplication <~ element
