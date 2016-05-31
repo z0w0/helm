@@ -1,4 +1,3 @@
-{-# LANGUAGE InstanceSigs #-}
 {-# LANGUAGE TypeFamilies #-}
 module FRP.Helm.Backend.SDL.Engine where
 
@@ -85,7 +84,6 @@ instance BEngine Engine where
   continueExecution = continue
 
   {-| Creates a new engine that can be run later using 'run'. -}
-  startup :: EngineConfig -> IO Engine
   startup (EngineConfig { .. }) = do
       SDL.Init.initializeAll
       window <- createWindow (pack windowTitle) winCfg
@@ -136,7 +134,6 @@ instance BEngine Engine where
 -- TODO: Refactor
 
   {-| Renders when the sample is marked as changed delays the thread otherwise -}
-  renderIfChanged :: Engine -> Sample (BApplication Engine) -> IO Engine
   renderIfChanged engine event =  case event of
       Changed   app -> if mainContinue app
                        then render engine (mainElement app) (mainDimensions app)
@@ -146,7 +143,6 @@ instance BEngine Engine where
                         return engine
 
   {-| The current dimensions of the window. -}
-  dimensions :: Signal Engine (Int, Int)
   dimensions =
     Signal $ input >>= getDimensions >>= transfer (pure (0,0)) update
     where
@@ -156,7 +152,6 @@ instance BEngine Engine where
         return (fromIntegral w, fromIntegral h)
 
   {-| The current position of the window. -}
-  position :: Signal Engine (Int, Int)
   position =
     Signal $ input >>= getPosition >>= transfer (pure (0,0)) update
     where
