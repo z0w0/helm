@@ -79,4 +79,5 @@ test-suite helm-tests
     test-framework-quickcheck2 >= 0.3 && < 1,
     time >= 1.4 && < 2,
     elerea >= 2.7 && < 3,
-    sdl2 >= 2 && < 3
+    sdl2 >= 2 && < 3,
+    transformers >= 0.3.0.0 && < 0.5

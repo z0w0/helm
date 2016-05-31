@@ -1,6 +1,6 @@
 module Color where
 
-import FRP.Helm.Color
+import FRP.Helm.Backend.SDL.Color
 import Test.HUnit hiding (Test)
 import Test.Framework (Test)
 import Test.Framework.Providers.HUnit
