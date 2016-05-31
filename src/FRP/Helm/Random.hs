@@ -7,30 +7,30 @@ module FRP.Helm.Random (
 import Control.Monad (liftM, join, replicateM)
 import FRP.Elerea.Param hiding (Signal)
 import qualified FRP.Elerea.Param as Elerea (Signal)
+import FRP.Helm.Backend (BEngine)
 import FRP.Helm.Signal
 import FRP.Helm.Sample
-import FRP.Helm.Engine
 import System.Random (Random, randomRIO)
 
 {-| Given a range from low to high and a signal of values, this produces
 a new signal that changes whenever the input signal changes. The new
 values are random number between 'low' and 'high' inclusive.
 -}
-range :: Int -> Int -> Signal a -> Signal Int
+range :: BEngine engine => Int -> Int -> Signal engine a -> Signal engine Int
 range x y = rand (x,y)
 
 {-| Produces a new signal that changes whenever the input signal changes.
 The new values are random numbers in [0..1).
 -}
-float :: Signal a -> Signal Float
+float :: BEngine engine => Signal engine a -> Signal engine Float
 float = rand (0,1)
 
 {-| A utility signal that does the work for 'float' and 'range'. -}
-rand :: (Random a, Num a) =>
-          (a, a) -> Signal b -> Signal a
+rand :: (Random a, Num a, BEngine engine) =>
+          (a, a) -> Signal engine b -> Signal engine a
 rand limits s = Signal $ do
   s' <- signalGen s
-  rs :: Elerea.Signal (SignalGen Engine (Elerea.Signal a))
+  rs :: Elerea.Signal (SignalGen engine (Elerea.Signal a))
      <- randomGens limits s'
   r  :: Elerea.Signal (Elerea.Signal a)
      <- generator rs
@@ -57,10 +57,10 @@ rand limits s = Signal $ do
 changes. The input signal specifies the length of the random list. Each value is
 a random number in [0..1).
 -}
-floatList :: Signal Int -> Signal [Float]
+floatList :: BEngine engine => Signal engine Int -> Signal engine [Float]
 floatList s = Signal $ do
   s' <- signalGen s
-  fl :: Elerea.Signal (SignalGen Engine (Elerea.Signal [Float]))
+  fl :: Elerea.Signal (SignalGen engine (Elerea.Signal [Float]))
      <- floatListGens s'
   ss :: Elerea.Signal (Elerea.Signal [Float])
      <- generator fl

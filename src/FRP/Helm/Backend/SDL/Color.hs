@@ -1,6 +1,6 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-| Contains all data structures and functions for composing colors. -}
-module FRP.Helm.Color (
+module FRP.Helm.Backend.SDL.Color (
   -- * Types
   Color(..),
   Gradient(..),
@@ -162,7 +162,7 @@ hsva h s v a
     f = h' - fromIntegral h''
     p = v * (1 - s)
     q = v * (1 - f * s)
-    t = v * (1 - (1 - f) * s)    
+    t = v * (1 - (1 - f) * s)
 
 {-| Create an RGB color from HSV values. -}
 hsv :: Double -> Double -> Double -> Color

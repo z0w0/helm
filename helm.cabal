@@ -28,18 +28,19 @@ library
 
   exposed-modules:
     FRP.Helm
-    FRP.Helm.Color
-    FRP.Helm.Graphics
-    FRP.Helm.Engine
-    FRP.Helm.Keyboard
-    FRP.Helm.Mouse
+    FRP.Helm.Backend
+    FRP.Helm.Backend.SDL.Color
+    FRP.Helm.Backend.SDL.Engine
+    FRP.Helm.Backend.SDL.Graphics
+    FRP.Helm.Backend.SDL.Keyboard
+    FRP.Helm.Backend.SDL.Mouse
+    FRP.Helm.Backend.SDL.Text
+    FRP.Helm.Backend.SDL.Window
     FRP.Helm.Random
     FRP.Helm.Sample
     FRP.Helm.Signal
-    FRP.Helm.Text
     FRP.Helm.Time
     FRP.Helm.Utilities
-    FRP.Helm.Window
 
   build-depends:
     base >= 4 && < 5,

@@ -1,6 +1,6 @@
 {-| Contains all the data structures and functions for composing
     and rendering graphics. -}
-module FRP.Helm.Graphics (
+module FRP.Helm.Backend.SDL.Graphics (
   -- * Types
   Element(..),
   FontWeight(..),
@@ -55,7 +55,7 @@ module FRP.Helm.Graphics (
   ngon
 ) where
 
-import FRP.Helm.Color (Color, black, Gradient)
+import FRP.Helm.Backend.SDL.Color (Color, black, Gradient)
 import Graphics.Rendering.Cairo.Matrix (Matrix)
 
 {-| A data structure describing the weight of a piece of font. -}
@@ -298,6 +298,6 @@ circle r = ArcShape (0, 0) 0 (2 * pi) r (1, 1)
     an amount of sides and radius. -}
 ngon :: Int -> Double -> Shape
 ngon n r = PolygonShape (map (\i -> (r * cos (t * i), r * sin (t * i))) [0 .. fromIntegral (n - 1)])
-  where 
+  where
     m = fromIntegral n
     t = 2 * pi / m
