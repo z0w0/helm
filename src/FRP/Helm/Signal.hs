@@ -1,3 +1,4 @@
+{-# LANGUAGE ExistentialQuantification #-}
 module FRP.Helm.Signal(
   Signal(..),
   -- * Composing
@@ -27,23 +28,22 @@ import Control.Applicative
 import FRP.Elerea.Param hiding (Signal)
 import qualified FRP.Elerea.Param as Elerea (Signal)
 import FRP.Helm.Sample
-import FRP.Helm.Engine
 
-newtype Signal a = Signal {signalGen :: SignalGen Engine (Elerea.Signal (Sample a))}
+newtype Signal engine a = Signal {signalGen :: SignalGen engine (Elerea.Signal (Sample a))}
 
-instance Functor Signal where
+instance Functor (Signal engine) where
   fmap = liftA
 
-instance Applicative Signal where
+instance Applicative (Signal engine) where
   pure = Signal . pure . pure . pure
   (Signal f) <*> (Signal x) = Signal $ liftA2 (liftA2 (<*>)) f x
 
 {-| Creates a signal that never changes. -}
-constant :: a -> Signal a
+constant :: a -> Signal engine a
 constant x = Signal $ stateful (Changed x) (\_ _ -> Unchanged x)
 
 {-| Combines a list of signals into a signal of lists. -}
-combine :: [Signal a] -> Signal [a]
+combine :: [Signal engine a] -> Signal engine [a]
 combine = sequenceA
 
 {-|
@@ -54,7 +54,7 @@ If an update comes from either of the incoming signals, it updates the outgoing
 signal. If an update comes on both signals at the same time, the left update
 wins (i.e., the right update is discarded).
 -}
-merge :: Signal a -> Signal a -> Signal a
+merge :: Signal engine a -> Signal engine a -> Signal engine a
 merge s1 s2 = Signal $ do
   s1' <- signalGen s1
   s2' <- signalGen s2
@@ -66,11 +66,11 @@ merge s1 s2 = Signal $ do
 {-| Merge many signals into one. This is useful when you are merging more than
    two signals. When multiple updates come in at the same time, the left-most
    update wins, just like with merge. -}
-mergeMany :: [Signal a] -> Signal a
+mergeMany :: [Signal engine a] -> Signal engine a
 mergeMany = foldl1 merge
 
 {-| Sample the second signal based on the first. -}
-sampleOn :: Signal a -> Signal b -> Signal b
+sampleOn :: Signal engine a -> Signal engine b -> Signal engine b
 sampleOn s1 s2 = Signal $ do
   s1' <- signalGen s1
   s2' <- signalGen s2
@@ -85,45 +85,50 @@ sampleOn s1 s2 = Signal $ do
 
     > lift render Window.dimensions
  -}
-lift :: (a -> b) -> Signal a -> Signal b
+lift :: (a -> b) -> Signal engine a -> Signal engine b
 lift = fmap
 
 {-| Applies a function to two signals. -}
-lift2 :: (a -> b -> c) -> Signal a -> Signal b -> Signal c
+lift2 :: (a -> b -> c) -> Signal engine a -> Signal engine b -> Signal engine c
 lift2 f a b = f <~ a ~~ b
 
 {-| Applies a function to three signals. -}
-lift3 :: (a -> b -> c -> d) -> Signal a -> Signal b -> Signal c -> Signal d
+lift3 :: (a -> b -> c -> d) -> Signal engine a -> Signal engine b
+                            -> Signal engine c -> Signal engine d
 lift3 f a b c = f <~ a ~~ b ~~ c
 
 {-| Applies a function to four signals. -}
-lift4 :: (a -> b -> c -> d -> e) -> Signal a -> Signal b -> Signal c -> Signal d
-                                 -> Signal e
+lift4 :: (a -> b -> c -> d -> e) -> Signal engine a -> Signal engine b -> Signal engine c
+                                 -> Signal engine d -> Signal engine e
 lift4 f a b c d = f <~ a ~~ b ~~ c ~~ d
 
 {-| Applies a function to five signals. -}
-lift5 :: (a -> b -> c -> d -> e -> f) -> Signal a -> Signal b -> Signal c -> Signal d
-                                      -> Signal e -> Signal f
+lift5 :: (a -> b -> c -> d -> e -> f)
+            -> Signal engine a -> Signal engine b -> Signal engine c
+            -> Signal engine d -> Signal engine e -> Signal engine f
 lift5 f a b c d e = f <~ a ~~ b ~~ c ~~ d ~~ e
 
 {-| Applies a function to six signals. -}
-lift6 :: (a -> b -> c -> d -> e -> f -> g) -> Signal a -> Signal b -> Signal c -> Signal d
-                                           -> Signal e -> Signal f -> Signal g
+lift6 :: (a -> b -> c -> d -> e -> f -> g)
+            -> Signal engine a -> Signal engine b -> Signal engine c -> Signal engine d
+            -> Signal engine e -> Signal engine f -> Signal engine g
 lift6 f a b c d e f1 = f <~ a ~~ b ~~ c ~~ d ~~ e ~~ f1
 
 {-| Applies a function to seven signals. -}
-lift7 :: (a -> b -> c -> d -> e -> f -> g -> h) -> Signal a -> Signal b -> Signal c -> Signal d
-                                                -> Signal e -> Signal f -> Signal g -> Signal h
+lift7 :: (a -> b -> c -> d -> e -> f -> g -> h)
+            -> Signal engine a -> Signal engine b -> Signal engine c-> Signal engine d
+            -> Signal engine e -> Signal engine f -> Signal engine g -> Signal engine h
 lift7 f a b c d e f1 g = f <~ a ~~ b ~~ c ~~ d ~~ e ~~ f1 ~~ g
 
 {-| Applies a function to eight signals. -}
-lift8 :: (a -> b -> c -> d -> e -> f -> g -> h -> i) -> Signal a -> Signal b -> Signal c -> Signal d
-                                                     -> Signal e -> Signal f -> Signal g -> Signal h
-                                                     -> Signal i
+lift8 :: (a -> b -> c -> d -> e -> f -> g -> h -> i)
+            -> Signal engine a -> Signal engine b -> Signal engine c -> Signal engine d
+            -> Signal engine e -> Signal engine f -> Signal engine g -> Signal engine h
+            -> Signal engine i
 lift8 f a b c d e f1 g h = f <~ a ~~ b ~~ c ~~ d ~~ e ~~ f1 ~~ g ~~ h
 
 {-| An alias for 'lift'. -}
-(<~) :: (a -> b) -> Signal a -> Signal b
+(<~) :: (a -> b) -> Signal engine a -> Signal engine b
 (<~) = lift
 
 infixl 4 <~
@@ -133,7 +138,7 @@ infixl 4 <~
 
     > render <~ Window.dimensions ~~ Window.position
  -}
-(~~) :: Signal (a -> b) -> Signal a -> Signal b
+(~~) :: Signal engine (a -> b) -> Signal engine a -> Signal engine b
 (~~) = (<*>)
 
 infixl 4 ~~
@@ -148,7 +153,7 @@ infixl 4 ~~
     >     where update (dx, dy) (x, y) = (x + dx, y + dy)
 
 -}
-foldp :: (a -> b -> b) -> b -> Signal a -> Signal b
+foldp :: (a -> b -> b) -> b -> Signal engine a -> Signal engine b
 foldp f ini (Signal gen) =
   Signal $ gen >>= transfer (pure ini) update_
                >>= delay (Changed ini)
@@ -156,9 +161,9 @@ foldp f ini (Signal gen) =
           update_ _ (Changed   x) y = Changed $ f x (value y)
 
 {-| Count the number of events that have occurred.-}
-count :: Signal a -> Signal Int
+count :: Signal engine a -> Signal engine Int
 count = foldp (\_ y -> y + 1) 0
 
 {-| Count the number of events that have occurred that satisfy a given predicate.-}
-countIf :: (a -> Bool) -> Signal a -> Signal Int
+countIf :: (a -> Bool) -> Signal engine a -> Signal engine Int
 countIf f = foldp (\v c -> c + fromEnum (f v)) 0

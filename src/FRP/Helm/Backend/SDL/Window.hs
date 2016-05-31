@@ -1,5 +1,5 @@
 {-| Contains signals that sample input from the game window. -}
-module FRP.Helm.Window (
+module FRP.Helm.Backend.SDL.Window (
   -- * Dimensions
   dimensions,
   width,
@@ -8,7 +8,7 @@ module FRP.Helm.Window (
 ) where
 
 import FRP.Elerea.Param hiding (Signal)
-import FRP.Helm.Engine
+import FRP.Helm.Backend.SDL.Engine
 import FRP.Helm.Sample
 import FRP.Helm.Signal
 import SDL
@@ -16,7 +16,7 @@ import qualified SDL.Video as Video
 import Linear.V2 (V2(V2))
 
 {-| The current dimensions of the window. -}
-dimensions :: Signal (Int, Int)
+dimensions :: Signal Engine (Int, Int)
 dimensions =
   Signal $ input >>= getDimensions >>= transfer (pure (0,0)) update
   where
@@ -26,7 +26,7 @@ dimensions =
       return (fromIntegral w, fromIntegral h)
 
 {-| The current position of the window. -}
-position :: Signal (Int, Int)
+position :: Signal Engine (Int, Int)
 position =
   Signal $ input >>= getPosition >>= transfer (pure (0,0)) update
   where
@@ -36,9 +36,9 @@ position =
         return (fromIntegral x, fromIntegral y)
 
 {-| The current width of the window. -}
-width :: Signal Int
+width :: Signal Engine Int
 width = fst <~ dimensions
 
 {-| The current height of the window. -}
-height :: Signal Int
+height :: Signal Engine Int
 height = snd <~ dimensions

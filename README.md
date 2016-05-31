@@ -38,12 +38,12 @@ Helm.
     also includes some utility functions and the modules `FRP.Helm.Color`, `FRP.Helm.Utilities`
     and `FRP.Helm.Graphics` in the style of a sort of prelude library, allowing it to be included
     and readily make the most basic of games.
-  * `FRP.Helm.Color` contains the `Color` data structure, functions for composing
+  * `FRP.Helm.Backend.SDL.Color` contains the `Color` data structure, functions for composing
     colors and a few pre-defined colors that are usually used in games.
-  * `FRP.Helm.Graphics` contains all the graphics data structures, functions
+  * `FRP.Helm.Backend.SDL.Graphics` contains all the graphics data structures, functions
     for composing these structures and other general graphical utilities.
-  * `FRP.Helm.Keyboard` contains signals for working with keyboard state.
-  * `FRP.Helm.Mouse` contains signals for working with mouse state.
+  * `FRP.Helm.Backend.SDL.Keyboard` contains signals for working with keyboard state.
+  * `FRP.Helm.Backend.SDL.Mouse` contains signals for working with mouse state.
   * `FRP.Helm.Random` contains signals for generating random values
   * `FRP.Helm.Signal`  constains useful functions for working with signals such
      as lifting/folding
@@ -51,7 +51,7 @@ Helm.
     and then turning it into an element.
   * `FRP.Helm.Time` contains functions for composing units of time and time-dependant signals
   * `FRP.Helm.Utilities` contains an assortment of useful functions,
-  * `FRP.Helm.Window` contains signals for working with the game window state.
+  * `FRP.Helm.Backend.SDL.Window` contains signals for working with the game window state.
 
 ## Example
 
@@ -59,7 +59,8 @@ The simplest example of a Helm game that doesn't require any input from the user
 
 ```haskell
 import FRP.Helm
-import qualified FRP.Helm.Window as Window
+import FRP.Helm.Backend.SDL
+import qualified FRP.Helm.Backend.SDL.Window as Window
 
 render :: (Int, Int) -> Element
 render (w, h) = collage w h [move (100, 100) $ filled red $ square 64]
@@ -76,8 +77,9 @@ You should see a white square on the screen and pressing the arrow keys allows y
 
 ```haskell
 import FRP.Helm
-import qualified FRP.Helm.Keyboard as Keyboard
-import qualified FRP.Helm.Window as Window
+import FRP.Helm.Backend.SDL
+import qualified FRP.Helm.Backend.SDL.Keyboard as Keyboard
+import qualified FRP.Helm.Backend.SDL.Window as Window
 
 data State = State { mx :: Double, my :: Double }
 

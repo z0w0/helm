@@ -1,5 +1,5 @@
 {-| Contains signals that sample input from the keyboard. -}
-module FRP.Helm.Keyboard (
+module FRP.Helm.Backend.SDL.Keyboard (
   -- * Types
   Key(..),
   -- * Key State
@@ -12,6 +12,7 @@ import Data.List
 import Foreign hiding (shift)
 import Foreign.C.Types
 import FRP.Elerea.Param hiding (Signal)
+import FRP.Helm.Backend.SDL.Engine
 import FRP.Helm.Sample
 import FRP.Helm.Signal
 
@@ -757,12 +758,12 @@ instance Enum Key where
   toEnum _ = error "FRP.Helm.Keyboard.Key.toEnum: bad argument"
 
 {-| Whether a key is pressed. -}
-isDown :: Key -> Signal Bool
+isDown :: Key -> Signal Engine Bool
 isDown k = Signal $ getDown >>= transfer (pure True) update
   where getDown = effectful $ elem (fromEnum k) <$> getKeyState
 
 {-| A list of keys that are currently being pressed. -}
-keysDown :: Signal [Key]
+keysDown :: Signal Engine [Key]
 keysDown = Signal $ getDown >>= transfer (pure []) update
   where getDown = effectful $ map toEnum <$> getKeyState
 
@@ -770,7 +771,7 @@ keysDown = Signal $ getDown >>= transfer (pure []) update
     are being pressed this signal samples to /(0, 0)/, otherwise it samples to a
     direction based on which keys are pressed. For example, pressing the left key
     results in /(-1, 0)/, the down key /(0, 1)/, up and right /(1, -1)/, etc. -}
-arrows :: Signal (Int, Int)
+arrows :: Signal Engine (Int, Int)
 arrows =  arrows' <$> up <*> left <*> down <*> right
   where up    = isDown UpKey
         left  = isDown LeftKey
@@ -783,7 +784,7 @@ arrows' :: Bool -> Bool -> Bool -> Bool -> (Int, Int)
 arrows' u l d r = (-1 * fromEnum l + 1 * fromEnum r, -1 * fromEnum u + 1 * fromEnum d)
 
 {-| Similar to the 'arrows' signal, but uses the popular WASD movement controls instead. -}
-wasd :: Signal (Int, Int)
+wasd :: Signal Engine (Int, Int)
 wasd = arrows' <$> w <*> a <*> s <*> d
   where w = isDown WKey
         a = isDown AKey

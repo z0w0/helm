@@ -25,6 +25,7 @@ import Control.Monad
 import FRP.Elerea.Param hiding (delay, Signal, until)
 import qualified FRP.Elerea.Param as Elerea (Signal, until)
 import Data.Time.Clock.POSIX (getPOSIXTime)
+import FRP.Helm.Backend (BEngine)
 import FRP.Helm.Signal
 import FRP.Helm.Sample
 import System.IO.Unsafe (unsafePerformIO)
@@ -69,7 +70,7 @@ inHours n = n / hour
    a sequence of time deltas as quickly as possible until it reaches the
    desired FPS. A time delta is the time between the last frame and the current
    frame. -}
-fps :: Double -> Signal Time
+fps :: BEngine engine => Double -> Signal engine Time
 fps n = snd <~ every' t
   where --Ain't nobody got time for infinity
     t = if n == 0 then 0 else second / n
@@ -79,7 +80,7 @@ fps n = snd <~ every' t
    time delta after a pause is always zero, no matter how long the pause was.
    This way summing the deltas will actually give the amount of time that the
    output signal has been running. -}
-fpsWhen :: Double -> Signal Bool -> Signal Time
+fpsWhen :: BEngine engine => Double -> Signal engine Bool -> Signal engine Time
 fpsWhen n sig = Signal $ do c <- signalGen sig
                             f <- signalGen (fps n)
                             transfer2 (pure 0) update_ f c
@@ -91,12 +92,12 @@ fpsWhen n sig = Signal $ do c <- signalGen sig
                                              else Unchanged $ value old
 {-| Takes a time interval t. The resulting signal is the current time, updated
     every t. -}
-every :: Time -> Signal Time
+every :: BEngine engine => Time -> Signal engine Time
 every t = fst <~ every' t
 
 {-| A utility signal used by 'fps' and 'every' that returns the current time
     and a delta every t. -}
-every' :: Time -> Signal (Time, Time)
+every' :: BEngine engine => Time -> Signal engine (Time, Time)
 every' t = Signal $ every'' t >>= transfer (pure (0,0)) update
 
 {-| Another utility signal that does all the magic for 'every'' by working on
@@ -116,13 +117,13 @@ every'' t = do
 
     Unlike in Elm the timestamps are not tied to the underlying signals so the
     timestamps for Mouse.x and  Mouse.y will be slightly different. -}
-timestamp :: Signal a -> Signal (Time, a)
+timestamp :: BEngine engine => Signal engine a -> Signal engine (Time, a)
 timestamp = lift2 (,) pure_time
   where pure_time = fst <~ (Signal $ (fmap . fmap) pure (every'' millisecond))
 
 {-| Delay a signal by a certain amount of time. So (delay second Mouse.clicks)
     will update one second later than any mouse click. -}
-delay :: Time -> Signal a -> Signal a
+delay :: BEngine engine => Time -> Signal engine a -> Signal engine a
 delay t (Signal gen) = Signal $ (fmap . fmap) fst $
                          do s <- gen
                             w <- timeout
@@ -144,5 +145,5 @@ delay t (Signal gen) = Signal $ (fmap . fmap) fst $
     time t after every event on the input signal. So (second `since`
     Mouse.clicks) would result in a signal that is true for one second after
     each mouse click and false otherwise. -}
-since :: Time -> Signal a -> Signal Bool
+since :: BEngine engine => Time -> Signal engine a -> Signal engine Bool
 since t s = lift2 (/=) (count s) (count (delay t s))
