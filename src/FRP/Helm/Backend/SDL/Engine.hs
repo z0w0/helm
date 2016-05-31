@@ -20,7 +20,7 @@ import FRP.Helm.Signal hiding (lift)
 import System.FilePath
 
 import qualified Data.Map as Map
-import qualified SDL as SDL
+import qualified SDL
 import SDL.Event
 import SDL.Video hiding (windowTitle)
 import qualified SDL.Video as Video
