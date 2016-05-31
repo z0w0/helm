@@ -59,7 +59,8 @@ The simplest example of a Helm game that doesn't require any input from the user
 
 ```haskell
 import FRP.Helm
-import qualified FRP.Helm.Window as Window
+import FRP.Helm.Backend.SDL
+import qualified FRP.Helm.Backend.SDL.Window as Window
 
 render :: (Int, Int) -> Element
 render (w, h) = collage w h [move (100, 100) $ filled red $ square 64]
@@ -76,8 +77,9 @@ You should see a white square on the screen and pressing the arrow keys allows y
 
 ```haskell
 import FRP.Helm
-import qualified FRP.Helm.Keyboard as Keyboard
-import qualified FRP.Helm.Window as Window
+import FRP.Helm.Backend.SDL
+import qualified FRP.Helm.Backend.SDL.Keyboard as Keyboard
+import qualified FRP.Helm.Backend.SDL.Window as Window
 
 data State = State { mx :: Double, my :: Double }
 
