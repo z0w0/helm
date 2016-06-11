@@ -1,6 +1,6 @@
 {-| Contains all the data structures and functions for composing
     and rendering graphics. -}
-module FRP.Helm.Graphics (
+module Helm.Graphics2D (
   -- * Types
   Element(..),
   FontWeight(..),
@@ -12,8 +12,9 @@ module FRP.Helm.Graphics (
   LineCap(..),
   LineJoin(..),
   LineStyle(..),
-  Path,
+  Path(..),
   Shape(..),
+  Transform(..),
   -- * Elements
   image,
   fittedImage,
@@ -55,8 +56,8 @@ module FRP.Helm.Graphics (
   ngon
 ) where
 
-import FRP.Helm.Color (Color, black, Gradient)
-import Graphics.Rendering.Cairo.Matrix (Matrix)
+import Helm.Color (Color, rgb, Gradient)
+import Helm.Graphics2D.Transform (Transform(..))
 
 {-| A data structure describing the weight of a piece of font. -}
 data FontWeight = LightWeight |
@@ -143,7 +144,7 @@ data LineStyle = LineStyle {
     flat caps and regular sharp joints. -}
 defaultLine :: LineStyle
 defaultLine = LineStyle {
-  lineColor = black,
+  lineColor = rgb 0 0 0,
   lineWidth = 1,
   lineCap = FlatCap,
   lineJoin = SharpJoin 10,
@@ -153,22 +154,22 @@ defaultLine = LineStyle {
 
 {-| Create a solid line style with a color. -}
 solid :: Color -> LineStyle
-solid color = defaultLine { lineColor = color }
+solid col = defaultLine { lineColor = col }
 
 {-| Create a dashed line style with a color. -}
 dashed :: Color -> LineStyle
-dashed color = defaultLine { lineColor = color, lineDashing = [8, 4] }
+dashed col = defaultLine { lineColor = col, lineDashing = [8, 4] }
 
 {-| Create a dotted line style with a color. -}
 dotted :: Color -> LineStyle
-dotted color = defaultLine { lineColor = color, lineDashing = [3, 3] }
+dotted col = defaultLine { lineColor = col, lineDashing = [3, 3] }
 
 {-| A data structure describing a few ways that graphics that can be wrapped in a form
     and hence transformed. -}
 data FormStyle = PathForm LineStyle Path |
                  ShapeForm (Either LineStyle FillStyle) Shape |
                  ElementForm Element |
-                 GroupForm (Maybe Matrix) [Form] deriving (Show, Eq)
+                 GroupForm (Maybe Transform) [Form] deriving (Show, Eq)
 
 {-| Utility function for creating a form. -}
 form :: FormStyle -> Form
@@ -180,7 +181,7 @@ fill style shape = form (ShapeForm (Right style) shape)
 
 {-| Creates a form from a shape by filling it with a specific color. -}
 filled :: Color -> Shape -> Form
-filled color = fill (Solid color)
+filled col = fill (Solid col)
 
 {-| Creates a form from a shape with a tiled texture and image file path. -}
 textured :: String -> Shape -> Form
@@ -215,9 +216,9 @@ blank = group []
 group :: [Form] -> Form
 group forms = form (GroupForm Nothing forms)
 
-{-| Groups a collection of forms into a single one, also applying a matrix transformation. -}
-groupTransform :: Matrix -> [Form] -> Form
-groupTransform matrix forms = form (GroupForm (Just matrix) forms)
+{-| Groups a collection of forms into a single one, also applying a 2D transformation. -}
+groupTransform :: Transform -> [Form] -> Form
+groupTransform trans forms = form (GroupForm (Just trans) forms)
 
 {-| Rotates a form by an amount (in radians). -}
 rotate :: Double -> Form -> Form
@@ -258,15 +259,15 @@ fixedCollage :: Int -> Int -> (Double, Double) -> [Form] -> Element
 fixedCollage w h (x, y) = CollageElement w h (Just (realToFrac w / 2 - x, realToFrac h / 2 - y))
 
 {-| A data type made up a collection of points that form a path when joined. -}
-type Path = [(Double, Double)]
+data Path = Path [(Double, Double)] deriving (Show, Eq, Ord, Read)
 
 {-| Creates a path for a collection of points. -}
 path :: [(Double, Double)] -> Path
-path points = points
+path points = Path points
 
 {-| Creates a path from a line segment, i.e. a start and end point. -}
 segment :: (Double, Double) -> (Double, Double) -> Path
-segment p1 p2 = [p1, p2]
+segment p1 p2 = Path [p1, p2]
 
 {-| A data structure describing a some sort of graphically representable object,
     such as a polygon formed from a list of points or a rectangle. -}
@@ -297,7 +298,7 @@ circle r = ArcShape (0, 0) 0 (2 * pi) r (1, 1)
 {-| Creates a generic n-sided polygon (e.g. octagon, pentagon, etc) with
     an amount of sides and radius. -}
 ngon :: Int -> Double -> Shape
-ngon n r = PolygonShape (map (\i -> (r * cos (t * i), r * sin (t * i))) [0 .. fromIntegral (n - 1)])
-  where 
+ngon n r = PolygonShape $ Path (map (\i -> (r * cos (t * i), r * sin (t * i))) [0 .. fromIntegral (n - 1)])
+  where
     m = fromIntegral n
     t = 2 * pi / m

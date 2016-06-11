@@ -1,6 +1,6 @@
 {-| Contains all the data structures and functions for composing
     pieces of formatted text. -}
-module FRP.Helm.Text (
+module Helm.Graphics2D.Text (
   -- * Elements
   plainText,
   asText,
@@ -20,15 +20,15 @@ module FRP.Helm.Text (
   height
 ) where
 
-import FRP.Helm.Color (Color, black)
-import FRP.Helm.Graphics (Element(TextElement), Text(..), FontWeight(..), FontStyle(..))
+import Helm.Color (Color(..), rgb)
+import Helm.Graphics2D (Element(TextElement), Text(..), FontWeight(..), FontStyle(..))
 
 {-| Creates the default text. By default the text is black sans-serif
     with a height of 14pt. -}
 defaultText :: Text
 defaultText = Text {
   textUTF8 = "",
-  textColor = black,
+  textColor = rgb 0 0 0,
   textTypeface = "sans-serif",
   textHeight = 14,
   textWeight = NormalWeight,
@@ -51,15 +51,6 @@ asText val = text $ monospace $ toText $ show val
 {-| Creates an element from a text. -}
 text :: Text -> Element
 text = TextElement
-
-{- TODO:
-centered
-justified
-righted
-underline
-strikeThrough
-overline
--}
 
 {-| Sets the weight of a piece of text to bold. -}
 bold :: Text -> Text

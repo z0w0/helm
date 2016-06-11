@@ -1,7 +1,7 @@
 flags: {}
 packages:
-- '.'
+  - '.'
 extra-deps:
-- elerea-2.8.0
-- text-1.2.2.0
+  - elerea-2.8.0
+  - text-1.2.2.0
 resolver: lts-5.5

@@ -1,6 +1,6 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-| Contains all data structures and functions for composing colors. -}
-module FRP.Helm.Color (
+module Helm.Color (
   -- * Types
   Color(..),
   Gradient(..),
@@ -12,25 +12,7 @@ module FRP.Helm.Color (
   blend,
   complement,
   linear,
-  radial,
-  -- * Constants
-  red,
-  lime,
-  blue,
-  yellow,
-  cyan,
-  magenta,
-  black,
-  white,
-  gray,
-  grey,
-  maroon,
-  navy,
-  green,
-  teal,
-  purple,
-  violet,
-  forestGreen
+  radial
 ) where
 
 import GHC.Generics
@@ -50,82 +32,17 @@ rgba r g b a
   | r < 0 || r > 1 ||
     g < 0 || g > 1 ||
     b < 0 || b > 1 ||
-    a < 0 || a > 1 = error "FRP.Helm.Color.rgba: color components must be between 0 and 1"
+    a < 0 || a > 1 = error "Helm.Color.rgba: color components must be between 0 and 1"
   | otherwise = Color r g b a
-
-{-| A bright red color. -}
-red :: Color
-red = rgb 1 0 0
-
-{-| A bright green color. -}
-lime :: Color
-lime = rgb 0 1 0
-
-{-| A bright blue color. -}
-blue :: Color
-blue = rgb 0 0 1
-
-{-| A yellow color, made from combining red and green. -}
-yellow :: Color
-yellow = rgb 1 1 0
-
-{-| A cyan color, combined from bright green and blue. -}
-cyan :: Color
-cyan = rgb 0 1 1
-
-{-| A magenta color, combined from bright red and blue. -}
-magenta :: Color
-magenta = rgb 1 0 1
-
-{-| A black color. -}
-black :: Color
-black = rgb 0 0 0
-
-{-| A white color. -}
-white :: Color
-white = rgb 1 1 1
-
-{-| A gray color, exactly halfway between black and white. -}
-gray :: Color
-gray = rgb 0.5 0.5 0.5
-
-{-| Common alternative spelling of 'gray'. -}
-grey :: Color
-grey = gray
-
-{-| A medium red color. -}
-maroon :: Color
-maroon = rgb 0.5 0 0
-
-{-| A medium blue color. -}
-navy :: Color
-navy = rgb 0 0 0.5
-
-{-| A medium green color. -}
-green :: Color
-green = rgb 0 0.5 0
-
-{-| A teal color, combined from medium green and blue. -}
-teal :: Color
-teal = rgb 0 0.5 0.5
-
-{-| A purple color, combined from medium red and blue. -}
-purple :: Color
-purple = rgb 0.5 0 0.5
-
-{-| A violet color. -}
-violet :: Color
-violet = rgb 0.923 0.508 0.923
-
-{-| A dark green color. -}
-forestGreen :: Color
-forestGreen = rgb 0.133 0.543 0.133
 
 {-| Takes a list of colors and turns it into a single color by
     averaging the color components. -}
 blend :: [Color] -> Color
-blend colors = (\(Color r g b a) -> Color (r / denom) (g / denom) (b / denom) (a / denom)) $ foldl blend' black colors
+blend colors =
+  (\(Color r g b a) -> Color (r / denom) (g / denom) (b / denom) (a / denom)) $ foldl blend' black colors
+
   where
+    black = rgb 0 0 0
     denom = fromIntegral $ length colors
 
 {-| A utility function that adds colors together. -}
@@ -162,7 +79,7 @@ hsva h s v a
     f = h' - fromIntegral h''
     p = v * (1 - s)
     q = v * (1 - f * s)
-    t = v * (1 - (1 - f) * s)    
+    t = v * (1 - (1 - f) * s)
 
 {-| Create an RGB color from HSV values. -}
 hsv :: Double -> Double -> Double -> Color

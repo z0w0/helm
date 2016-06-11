@@ -2,19 +2,17 @@
   <a href="http://helm-engine.org" title="Homepage"><img src="http://helm-engine.org/img/logo-alt.png" /></a>
   <br>
   <br>
-  <a href="https://travis-ci.org/switchface/helm" title="Travis CI"><img src="https://travis-ci.org/switchface/helm.svg" /></a>
+  <a href="https://travis-ci.org/z0w0/helm" title="Travis CI"><img src="https://travis-ci.org/z0w0/helm.svg" /></a>
 </p>
 
 ## Introduction
 
-Helm is a functionally reactive game engine written in Haskell and built around
-the [Elerea FRP framework](https://github.com/cobbpg/elerea). Helm is
-heavily inspired by the [Elm programming language](http://elm-lang.org) (especially the API).
-All rendering is done through a vector-graphics based API. At the core, Helm is
-built on SDL and the Cairo vector graphics library.
+Helm is a purely functional game engine written in Haskell and built with
+the [Elerea FRP framework](https://github.com/cobbpg/elerea). Helm was
+originally inspired by the [Elm programming language](http://elm-lang.org).
 
 In Helm, every piece of input that can be gathered from a user (or the operating system)
-is hidden behind a signal. For those unfamiliar with FRP, signals are essentially
+is hidden behind a subscription. For those unfamiliar with FRP, signals are essentially
 a value that changes over time. This sort of architecture used for a game allows for pretty
 simplistic (and in my opinion, artistic) code.
 
@@ -34,32 +32,32 @@ Helm.
   those as you would with any pixel-blitting engine.
 * Straightforward API heavily inspired by the Elm programming language. The API
   is broken up into the following areas:
-  * `FRP.Helm` contains the main code for interfacing with the game engine but
-    also includes some utility functions and the modules `FRP.Helm.Color`, `FRP.Helm.Utilities`
-    and `FRP.Helm.Graphics` in the style of a sort of prelude library, allowing it to be included
+  * `Helm` contains the main code for interfacing with the game engine but
+    also includes some utility functions and the modules `Helm.Color`, `Helm.Utilities`
+    and `Helm.Graphics` in the style of a sort of prelude library, allowing it to be included
     and readily make the most basic of games.
-  * `FRP.Helm.Color` contains the `Color` data structure, functions for composing
+  * `Helm.Color` contains the `Color` data structure, functions for composing
     colors and a few pre-defined colors that are usually used in games.
-  * `FRP.Helm.Graphics` contains all the graphics data structures, functions
+  * `Helm.Graphics` contains all the graphics data structures, functions
     for composing these structures and other general graphical utilities.
-  * `FRP.Helm.Keyboard` contains signals for working with keyboard state.
-  * `FRP.Helm.Mouse` contains signals for working with mouse state.
-  * `FRP.Helm.Random` contains signals for generating random values
-  * `FRP.Helm.Signal`  constains useful functions for working with signals such
+  * `Helm.Keyboard` contains signals for working with keyboard state.
+  * `Helm.Mouse` contains signals for working with mouse state.
+  * `Helm.Random` contains signals for generating random values
+  * `Helm.Signal`  constains useful functions for working with signals such
      as lifting/folding
-  * `FRP.Helm.Text` contains functions for composing text, formatting it
+  * `Helm.Text` contains functions for composing text, formatting it
     and then turning it into an element.
-  * `FRP.Helm.Time` contains functions for composing units of time and time-dependant signals
-  * `FRP.Helm.Utilities` contains an assortment of useful functions,
-  * `FRP.Helm.Window` contains signals for working with the game window state.
+  * `Helm.Time` contains functions for composing units of time and time-dependant signals
+  * `Helm.Utilities` contains an assortment of useful functions,
+  * `Helm.Window` contains signals for working with the game window state.
 
 ## Example
 
 The simplest example of a Helm game that doesn't require any input from the user is the following:
 
 ```haskell
-import FRP.Helm
-import qualified FRP.Helm.Window as Window
+import Helm
+import qualified Helm.Window as Window
 
 render :: (Int, Int) -> Element
 render (w, h) = collage w h [move (100, 100) $ filled red $ square 64]
@@ -75,9 +73,9 @@ an accumulated state that depends on the values sampled from signals (e.g. mouse
 You should see a white square on the screen and pressing the arrow keys allows you to move it.
 
 ```haskell
-import FRP.Helm
-import qualified FRP.Helm.Keyboard as Keyboard
-import qualified FRP.Helm.Window as Window
+import Helm
+import qualified Helm.Keyboard as Keyboard
+import qualified Helm.Window as Window
 
 data State = State { mx :: Double, my :: Double }
 
