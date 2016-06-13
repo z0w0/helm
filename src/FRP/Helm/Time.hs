@@ -22,6 +22,7 @@ module FRP.Helm.Time (
 
 
 import Control.Monad
+import Control.Applicative
 import FRP.Elerea.Param hiding (delay, Signal, until)
 import qualified FRP.Elerea.Param as Elerea (Signal, until)
 import Data.Time.Clock.POSIX (getPOSIXTime)

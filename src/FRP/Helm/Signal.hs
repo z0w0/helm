@@ -23,6 +23,7 @@ module FRP.Helm.Signal(
   lift8
 ) where
 import Control.Applicative
+import Data.Traversable 
 
 import FRP.Elerea.Param hiding (Signal)
 import qualified FRP.Elerea.Param as Elerea (Signal)

@@ -9,6 +9,7 @@ module FRP.Helm.Keyboard (
 ) where
 
 import Data.List
+import Control.Applicative
 import Foreign hiding (shift)
 import Foreign.C.Types
 import FRP.Elerea.Param hiding (Signal)

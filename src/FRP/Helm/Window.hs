@@ -7,6 +7,7 @@ module FRP.Helm.Window (
   position
 ) where
 
+import Control.Applicative
 import FRP.Elerea.Param hiding (Signal)
 import FRP.Helm.Engine
 import FRP.Helm.Sample

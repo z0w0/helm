@@ -9,6 +9,7 @@ module FRP.Helm.Mouse
   clicks
 ) where
 
+import Control.Applicative
 import FRP.Elerea.Param hiding (Signal)
 import FRP.Helm.Sample
 import FRP.Helm.Signal
