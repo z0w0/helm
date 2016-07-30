@@ -22,8 +22,8 @@ module FRP.Helm.Time (
 
 
 import Control.Monad
-import FRP.Elerea.Param hiding (delay, Signal, until)
-import qualified FRP.Elerea.Param as Elerea (Signal, until)
+import FRP.Elerea.Param hiding (delay, Signal, till)
+import qualified FRP.Elerea.Param as Elerea (Signal, till)
 import Data.Time.Clock.POSIX (getPOSIXTime)
 import FRP.Helm.Signal
 import FRP.Helm.Sample
@@ -134,10 +134,10 @@ delay t (Signal gen) = Signal $ (fmap . fmap) fst $
     update_ _ waiting new (old, olds) = if waiting then (old, new:olds)
                                         else (last olds, new:init olds)
     timeout = every'' t >>= transfer False (\_ (time,delta) _ -> time /= delta)
-                        -- 'Elerea.until' will lose the reference to the input so
+                        -- 'Elerea.till will lose the reference to the input so
                         -- we don't keep looking up the time even though the
                         -- output can never change again
-                        >>= Elerea.until
+                        >>= Elerea.till
                         >>= transfer True (\_ new old -> old && not new)
 
 {-| Takes a time t and any signal. The resulting boolean signal is true for
