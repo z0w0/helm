@@ -26,7 +26,7 @@ instance Num Transform where
   fromInteger n = Transform $ V3 (V3 (fromInteger n) 0 0) (V3 (fromInteger n) 0 0) (V3 0 0 1)
 
 identity :: Transform
-identity = Transform $ Matrix.identity
+identity = Transform Matrix.identity
 
 matrix :: Double -> Double -> Double -> Double -> Double -> Double -> Transform
 matrix a b c d x y = Transform $ V3 (V3 a b x) (V3 c d y) (V3 0 0 1)

@@ -1,19 +1,26 @@
 {-| Contains subscriptions to events from the keyboard. -}
-module Helm.Keyboard (
-  -- * Subscriptions
-  presses,
-  downs,
-  ups
-) where
+module Helm.Keyboard
+  (
+    -- * Types
+    Key(..)
+    -- * Subscriptions
+  , presses
+  , downs
+  , ups
+  ) where
 
-import SDL.Input.Keyboard.Codes (Keycode)
-import Helm (Sub(..))
+import FRP.Elerea.Param (input, snapshot)
 
-presses :: (Keycode -> a) -> Sub a
-presses _ = Sub $ return $ return []
+import Helm.Engine (Engine(..), Sub(..), Key(..))
 
-downs :: (Keycode -> a) -> Sub a
+presses :: Engine e => (Key -> a) -> Sub e a
+presses f = Sub $  do
+  engine <- input >>= snapshot
+
+  fmap (fmap f) <$> keyboardPressSignal engine
+
+downs :: Engine e => (Key -> a) -> Sub e a
 downs _ = Sub $ return $ return []
 
-ups :: (Keycode -> a) -> Sub a
+ups :: Engine e => (Key -> a) -> Sub e a
 ups _ = Sub $ return $ return []

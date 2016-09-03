@@ -263,7 +263,7 @@ data Path = Path [(Double, Double)] deriving (Show, Eq, Ord, Read)
 
 {-| Creates a path for a collection of points. -}
 path :: [(Double, Double)] -> Path
-path points = Path points
+path = Path
 
 {-| Creates a path from a line segment, i.e. a start and end point. -}
 segment :: (Double, Double) -> (Double, Double) -> Path

@@ -1,26 +1,23 @@
-{-| Contains the subscription type and related utilities. -}
-module Helm.Sub (
-  -- * Types
-  Sub(..),
-  -- * Utilities
-  batch,
-  none
-) where
+{-| Contains the subscription related utilities. -}
+module Helm.Sub
+  (
+    -- * Types
+    Sub(..)
+    -- * Utilities
+  , batch
+  , none
+  ) where
 
-import FRP.Elerea.Param (SignalGen, Signal)
+import Helm.Engine (Engine, Sub(..))
 
-import Helm.Engine (Engine)
-
-data Sub a = Sub (SignalGen Engine (Signal [a]))
-
-batch :: [Sub a] -> Sub a
+batch :: Engine e => [Sub e a] -> Sub e a
 batch subs = Sub $ do
-  signals <- sequence $ map (\(Sub gen) -> gen) subs
+  signals <- mapM (\(Sub gen) -> gen) subs
 
   return $ do
     lists <- sequence signals
 
     return $ concat lists
 
-none :: Sub a
-none = Sub $ return $ return []
+none :: Engine e => Sub e a
+none = Sub . return $ return []

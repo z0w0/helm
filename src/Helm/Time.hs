@@ -1,24 +1,25 @@
 {-| Contains functions for composing units of time and
     subscriptions to events from the game clock. -}
-module Helm.Time (
-  -- * Types
-  Time,
-  -- * Units
-  millisecond,
-  second,
-  minute,
-  hour,
-  inMilliseconds,
-  inSeconds,
-  inMinutes,
-  inHours,
-  -- * Commands
-  now,
-  -- * Subscriptions
-  every,
-) where
+module Helm.Time
+  (
+    -- * Types
+    Time
+    -- * Units
+  , millisecond
+  , second
+  , minute
+  , hour
+  , inMilliseconds
+  , inSeconds
+  , inMinutes
+  , inHours
+    -- * Commands
+  , now
+    -- * Subscriptions
+  , every
+  ) where
 
-import Helm (Cmd(..), Sub(..))
+import Helm.Engine (Cmd(..), Sub(..), Engine(..))
 
 {-| A type describing an amount of time in an arbitary unit. Use the time
     composing/converting functions to manipulate time values. -}
@@ -56,8 +57,8 @@ inMinutes n = n / minute
 inHours :: Time -> Double
 inHours n = n / hour
 
-now :: Cmd Time
+now :: Engine e => Cmd e Time
 now = Cmd $ return []
 
-every :: Time -> (Time -> a) -> Sub a
+every :: Engine e => Time -> (Time -> a) -> Sub e a
 every _ _ = Sub $ return $ return []

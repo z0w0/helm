@@ -1,4 +1,4 @@
-{-| Contains the command type and related utilities. -}
+{-| Contains the command related utilities. -}
 module Helm.Cmd (
   -- * Types
   Cmd(..),
@@ -9,22 +9,19 @@ module Helm.Cmd (
 ) where
 
 import Control.Monad.Trans.Class (lift)
-import Control.Monad.Trans.State (StateT)
 
-import Helm.Engine (Engine)
+import Helm.Engine (Engine, Cmd(..))
 
-data Cmd a = Cmd (StateT Engine IO [a])
-
-batch :: [Cmd a] -> Cmd a
+batch :: Engine e => [Cmd e a] -> Cmd e a
 batch cmds = Cmd $ do
-  lists <- sequence $ map (\(Cmd monad) -> monad) cmds
+  lists <- mapM (\(Cmd m) -> m) cmds
 
   return $ concat lists
 
-none :: Cmd a
+none :: Engine e => Cmd e a
 none = Cmd $ return []
 
-execute :: IO a -> (a -> b) -> Cmd b
+execute :: Engine e => IO a -> (a -> b) -> Cmd e b
 execute monad f = Cmd $ do
   result <- f <$> lift monad
 

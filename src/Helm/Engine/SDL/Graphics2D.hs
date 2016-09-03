@@ -1,53 +1,35 @@
-module Helm.Render.Cairo (
-  -- * Rendering
-  render
-) where
-
-import Control.Monad.Trans.Class (lift)
-import Control.Monad.Trans.State (get)
+{-| Contains the SDL implementation 2D graphics rendering implementation (uses Cairo). -}
+module Helm.Engine.SDL.Graphics2D (render) where
 
 import Data.Foldable (forM_)
-import qualified Data.Text as T
-import Linear.V2 (V2(V2))
-import Linear.V3 (V3(V3))
+import Foreign.C.Types (CInt)
 import Foreign.Ptr (castPtr)
 
-import Helm.Engine (Engine(..))
-import Helm.Render (Render(..))
+import Graphics.Rendering.Cairo.Matrix (Matrix(..))
+import Linear.V2 (V2(V2))
+import Linear.V3 (V3(V3))
+
 import Helm.Color (Color(..), Gradient(..))
 import Helm.Graphics2D
 
-import Graphics.Rendering.Cairo.Matrix (Matrix(..))
+import qualified Data.Text as T
 import qualified Graphics.Rendering.Cairo as Cairo
 import qualified Graphics.Rendering.Pango as Pango
-
-import qualified SDL
-import qualified SDL.Video as Video
 import qualified SDL.Video.Renderer as Renderer
 
-render :: Element -> Render ()
-render element = Render $ do
-  Engine { window, renderer } <- get
+render :: Renderer.Texture -> V2 CInt -> Element -> IO ()
+render texture (V2 w h) element = do
+  (pixels, pitch) <- Renderer.lockTexture texture Nothing
 
-  lift $ do
-    dims@(V2 w h) <- SDL.get $ Video.windowSize window
+  Cairo.withImageSurfaceForData (castPtr pixels) Cairo.FormatARGB32 (fromIntegral w) (fromIntegral h) (fromIntegral pitch) $ \surface ->
+    Cairo.renderWith surface $ do
+      Cairo.setSourceRGB 0 0 0
+      Cairo.rectangle 0 0 (fromIntegral w) (fromIntegral h)
+      Cairo.fill
 
-    texture <- Renderer.createTexture renderer Renderer.ARGB8888 Renderer.TextureAccessStreaming dims
-    (pixels, pitch) <- Renderer.lockTexture texture Nothing
+      renderElement element
 
-    Cairo.withImageSurfaceForData (castPtr pixels) Cairo.FormatARGB32 (fromIntegral w) (fromIntegral h) (fromIntegral pitch) $ \surface ->
-      Cairo.renderWith surface $ do
-        Cairo.setSourceRGB 0 0 0
-        Cairo.rectangle 0 0 (fromIntegral w) (fromIntegral h)
-        Cairo.fill
-
-        renderElement element
-
-    Renderer.unlockTexture texture
-    Renderer.clear renderer
-    Renderer.copy renderer texture Nothing Nothing
-    Renderer.destroyTexture texture
-    Renderer.present renderer
+  Renderer.unlockTexture texture
 
 renderElement :: Element -> Cairo.Render ()
 renderElement (CollageElement w h center forms) = do
@@ -60,10 +42,9 @@ renderElement (CollageElement w h center forms) = do
 
   Cairo.restore
 
-renderElement (ImageElement (sx, sy) sw sh src stretch) = do
-  return ()
+renderElement (ImageElement (sx, sy) sw sh src stretch) = return ()
 
-renderElement (TextElement (Text { textColor = (Color r g b a), .. })) = do
+renderElement (TextElement Text { textColor = (Color r g b a), .. }) = do
     Cairo.save
 
     layout <- Pango.createLayout textUTF8
@@ -75,7 +56,7 @@ renderElement (TextElement (Text { textColor = (Color r g b a), .. })) = do
       , Pango.AttrSize   { paStart = i, paEnd = j, paSize = textHeight }
       ]
 
-    Pango.PangoRectangle x y w h <- fmap snd $ Cairo.liftIO $ Pango.layoutGetExtents layout
+    Pango.PangoRectangle x y w h <- fmap snd . Cairo.liftIO $ Pango.layoutGetExtents layout
 
     Cairo.translate ((-w / 2) -x) ((-h / 2) - y)
     Cairo.setSourceRGBA r g b a
@@ -129,7 +110,7 @@ setLineJoin join = case join of
     to render with a line style and then strokes afterwards. Assumes
     that all drawing paths have already been setup before being called. -}
 setLineStyle :: LineStyle -> Cairo.Render ()
-setLineStyle (LineStyle { lineColor = Color r g b a, .. }) = do
+setLineStyle LineStyle { lineColor = Color r g b a, .. } = do
   Cairo.setSourceRGBA r g b a
   setLineCap lineCap
   setLineJoin lineJoin
@@ -145,22 +126,21 @@ setFillStyle (Solid (Color r g b a)) = do
   Cairo.setSourceRGBA r g b a
   Cairo.fill
 
-setFillStyle (Texture src) = do
-  return ()
+setFillStyle (Texture src) = return ()
 
 setFillStyle (Gradient (Linear (sx, sy) (ex, ey) points)) =
-  Cairo.withLinearPattern sx sy ex ey $ \pattern ->
-    setGradientFill pattern points
+  Cairo.withLinearPattern sx sy ex ey $ \ptn ->
+    setGradientFill ptn points
 
 setFillStyle (Gradient (Radial (sx, sy) sr (ex, ey) er points)) =
-  Cairo.withRadialPattern sx sy sr ex ey er $ \pattern ->
-    setGradientFill pattern points
+  Cairo.withRadialPattern sx sy sr ex ey er $ \ptn ->
+    setGradientFill ptn points
 
 {-| A utility function that adds color stops to a pattern and then fills it. -}
 setGradientFill :: Cairo.Pattern -> [(Double, Color)] -> Cairo.Render ()
-setGradientFill pattern points = do
-  Cairo.setSource pattern
-  mapM_ (\(o, Color r g b a) -> Cairo.patternAddColorStopRGBA pattern o r g b a) points
+setGradientFill ptn points = do
+  Cairo.setSource ptn
+  mapM_ (\(o, Color r g b a) -> Cairo.patternAddColorStopRGBA ptn o r g b a) points
   Cairo.fill
 
 {-| A utility that renders a form. -}

@@ -7,7 +7,7 @@ homepage: http://github.com/switchface/helm
 bug-reports: http://github.com/switchface/helm/issues
 license: MIT
 license-file: LICENSE
-tested-with: GHC == 7.10.3
+tested-with: GHC == 8.0.1
 extra-source-files: LICENSE, README.md
 author: Zack Corr
 maintainer: Zack Corr <zack@z0w0.me>
@@ -24,21 +24,24 @@ library
   hs-source-dirs: src
   default-language: Haskell2010
   default-extensions: RecordWildCards, NamedFieldPuns
-  ghc-options: -Wall -fno-warn-unused-do-bind
+  ghc-options: -Wall
 
   exposed-modules:
     Helm
+    Helm.Asset
     Helm.Cmd
     Helm.Color
     Helm.Engine
-    Helm.Game
+    Helm.Engine.SDL
+    Helm.Engine.SDL.Graphics2D
+    Helm.Engine.SDL.Keyboard
+    Helm.Engine.SDL.Mouse
+    Helm.Graphics
     Helm.Graphics2D
     Helm.Graphics2D.Text
     Helm.Graphics2D.Transform
     Helm.Keyboard
     Helm.Mouse
-    Helm.Render
-    Helm.Render.Cairo
     Helm.Sub
     Helm.Time
     Helm.Window
@@ -48,7 +51,7 @@ library
     cairo >= 0.13 && < 0.14,
     pango >= 0.13 && < 0.14,
     containers >= 0.5 && < 1,
-    elerea >= 2.7 && < 3,
+    elerea >= 2.8 && < 3,
     sdl2 >= 2 && < 3,
     linear >= 1 && < 2,
     text >= 1.1.1.3 && < 2,
@@ -60,12 +63,14 @@ library
     build-depends: ghc-prim
 
 executable helm-example-hello
+  default-language: Haskell2010
   main-is: Main.hs
   hs-source-dirs: examples/hello
 
   build-depends:
     base >= 4 && < 5,
-    helm >= 1 && < 2
+    helm >= 1 && < 2,
+    linear >= 1 && < 2
 
 test-suite helm-tests
   type: exitcode-stdio-1.0
@@ -78,7 +83,7 @@ test-suite helm-tests
   build-depends:
     base >= 4 && < 5,
     containers >= 0.5 && < 1,
-    elerea >= 2.7 && < 3,
+    elerea >= 2.8 && < 3,
     sdl2 >= 2 && < 3,
     HUnit >= 1.2 && < 2,
     test-framework >= 0.8 && < 1,

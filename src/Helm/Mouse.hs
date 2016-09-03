@@ -1,37 +1,43 @@
 {-| Contains subscriptions to events from the mouse. -}
 module Helm.Mouse
-(
-  -- * Subscriptions
-  moves,
-  clicks,
-  downs,
-  ups,
-  buttonClicks,
-  buttonDowns,
-  buttonUps
-) where
+  (
+    -- * Types
+    MouseButton(..)
+    -- * Subscriptions
+  , moves
+  , clicks
+  , downs
+  , ups
+  , buttonClicks
+  , buttonDowns
+  , buttonUps
+  ) where
 
+import FRP.Elerea.Param (input, snapshot)
 import Linear.V2 (V2(V2))
-import Helm (Sub(..))
-import SDL.Input.Mouse (MouseButton(ButtonLeft))
 
-moves :: (V2 Int -> a) -> Sub a
-moves _ = Sub $ return $ return []
+import Helm.Engine (Sub(..), Engine(..), MouseButton(..))
 
-buttonClicks :: MouseButton -> (V2 Int -> a) -> Sub a
+moves :: Engine e => (V2 Int -> a) -> Sub e a
+moves f = Sub $ do
+  engine <- input >>= snapshot
+
+  fmap (fmap f) <$> mouseMoveSignal engine
+
+buttonClicks :: Engine e => MouseButton -> (V2 Int -> a) -> Sub e a
 buttonClicks _ _ = Sub $ return $ return []
 
-buttonDowns :: MouseButton -> (V2 Int -> a) -> Sub a
+buttonDowns :: Engine e => MouseButton -> (V2 Int -> a) -> Sub e a
 buttonDowns _ _ = Sub $ return $ return []
 
-buttonUps :: MouseButton -> (V2 Int -> a) -> Sub a
+buttonUps :: Engine e => MouseButton -> (V2 Int -> a) -> Sub e a
 buttonUps _ _ = Sub $ return $ return []
 
-clicks :: (V2 Int -> a) -> Sub a
-clicks = buttonClicks ButtonLeft
+clicks :: Engine e => (V2 Int -> a) -> Sub e a
+clicks = buttonClicks LeftButton
 
-downs :: (V2 Int -> a) -> Sub a
-downs = buttonDowns ButtonLeft
+downs :: Engine e => (V2 Int -> a) -> Sub e a
+downs = buttonDowns LeftButton
 
-ups :: (V2 Int -> a) -> Sub a
-ups = buttonUps ButtonLeft
+ups :: Engine e => (V2 Int -> a) -> Sub e a
+ups = buttonUps LeftButton
