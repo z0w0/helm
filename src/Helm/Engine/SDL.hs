@@ -17,7 +17,6 @@ import           Control.Monad.Trans.State.Lazy (evalStateT)
 import           Data.Int (Int32)
 import qualified Data.Text as T
 import           Data.Word (Word32)
-import           Debug.Trace (traceShow)
 
 import           FRP.Elerea.Param
 import           Linear.Affine (Point(P))
@@ -52,7 +51,6 @@ data SDLEngine = SDLEngine
   { window :: Video.Window
   , renderer :: Video.Renderer
   , engineConfig :: SDLEngineConfig
-  , lastMousePress :: Maybe (Word32, V2 Int32)
 
   , mouseMoveEventSignal :: SignalGen SDLEngine (Signal [V2 Int])
   , mouseMoveEventSink :: V2 Int -> IO ()
@@ -80,6 +78,7 @@ data SDLGame m a = SDLGame
   , gameModel :: m
   , running :: Bool
   , actionSmp :: SDLEngine -> IO [a]
+  , lastMousePress :: Maybe (Word32, V2 Int32)
   }
 
 instance Engine SDLEngine where
@@ -141,7 +140,6 @@ startupWith config@SDLEngineConfig{..} = do
     { window = window
     , renderer = renderer
     , engineConfig = config
-    , lastMousePress = Nothing
 
     , mouseMoveEventSignal = fst mouseMoveEvent
     , mouseMoveEventSink = snd mouseMoveEvent
@@ -208,6 +206,7 @@ prepare engine config@GameConfig { initialFn, subscriptionsFn = Sub gen } = do
     , gameModel = fst initialFn
     , running = True
     , actionSmp = smp
+    , lastMousePress = Nothing
     }
 
 render :: SDLEngine -> Graphics -> IO ()
@@ -238,31 +237,31 @@ sinkEvents engine game = do
         return game { running = False }
 
       Just Event.Event { .. } ->
-        sinkEvent engine eventPayload >> sinkEvents engine game
+        sinkEvent engine game eventPayload >>= sinkEvents engine
 
       Nothing -> return game
 
 depoint :: Point f a -> (f a)
 depoint (P x) = x
 
-sinkEvent :: SDLEngine -> Event.EventPayload -> IO SDLEngine
-sinkEvent engine (Event.WindowResizedEvent Event.WindowResizedEventData { .. }) = do
+sinkEvent :: SDLEngine -> SDLGame m a -> Event.EventPayload -> IO (SDLGame m a)
+sinkEvent engine game (Event.WindowResizedEvent Event.WindowResizedEventData { .. }) = do
   windowResizeEventSink engine $ fromIntegral <$> windowResizedEventSize
 
-  return engine
+  return game
 
-sinkEvent engine (Event.MouseMotionEvent Event.MouseMotionEventData { .. }) = do
+sinkEvent engine game (Event.MouseMotionEvent Event.MouseMotionEventData { .. }) = do
   mouseMoveEventSink engine $ fromIntegral <$> depoint mouseMotionEventPos
 
-  return engine
+  return game
 
-sinkEvent engine (Event.MouseButtonEvent Event.MouseButtonEventData { .. }) = do
+sinkEvent engine game (Event.MouseButtonEvent Event.MouseButtonEventData { .. }) = do
   case mouseButtonEventMotion of
     Event.Pressed -> do
       ticks <- Time.ticks
       mouseDownEventSink engine tup
 
-      return engine { lastMousePress = Just (ticks, pos) }
+      return game { lastMousePress = Just (ticks, pos) }
 
     Event.Released -> do
       mouseUpEventSink engine tup
@@ -276,21 +275,20 @@ sinkEvent engine (Event.MouseButtonEvent Event.MouseButtonEventData { .. }) = do
         Just (lastTicks, (V2 lastX lastY)) -> do
           ticks <- Time.ticks
 
-          traceShow (ticks - lastTicks) (return ())
-
+          -- Check that it's a expected amount of time for a click and that the mouse has basically stayed in place
           if ticks - lastTicks < clickMs && (abs (lastX - x) <= clickRadius && abs (lastY - y) <= clickRadius)
-          then traceShow "clickeroo" (mouseClickEventSink engine tup)
+          then mouseClickEventSink engine tup
           else return ()
 
         Nothing -> return ()
 
-      return engine
+      return game
 
   where
-    SDLEngine { lastMousePress } = engine
+    SDLGame { lastMousePress } = game
     clickMs = 500  -- How long between mouse down/up to recognise clicks
     clickRadius = 1  -- The pixel radius to be considered a click.
     pos@(V2 x y) = depoint mouseButtonEventPos
     tup = (mapMouseButton mouseButtonEventButton, fromIntegral <$> pos)
 
-sinkEvent engine _ = return engine
+sinkEvent _ game _ = return game
