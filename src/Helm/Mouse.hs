@@ -8,9 +8,6 @@ module Helm.Mouse
   , clicks
   , downs
   , ups
-  , buttonClicks
-  , buttonDowns
-  , buttonUps
   ) where
 
 import FRP.Elerea.Param (input, snapshot)
@@ -24,20 +21,20 @@ moves f = Sub $ do
 
   fmap (fmap f) <$> mouseMoveSignal engine
 
-buttonClicks :: Engine e => MouseButton -> (V2 Int -> a) -> Sub e a
-buttonClicks _ _ = Sub $ return $ return []
+clicks :: Engine e => (MouseButton -> V2 Int -> a) -> Sub e a
+clicks _ = Sub $ do
+  engine <- input >>= snapshot
 
-buttonDowns :: Engine e => MouseButton -> (V2 Int -> a) -> Sub e a
-buttonDowns _ _ = Sub $ return $ return []
+  fmap (fmap (\(b, p) -> f b p)) <$> mouseClickSignal engine
 
-buttonUps :: Engine e => MouseButton -> (V2 Int -> a) -> Sub e a
-buttonUps _ _ = Sub $ return $ return []
+downs :: Engine e => (MouseButton -> V2 Int -> a) -> Sub e a
+downs _ = Sub $ do
+  engine <- input >>= snapshot
 
-clicks :: Engine e => (V2 Int -> a) -> Sub e a
-clicks = buttonClicks LeftButton
+  fmap (fmap (\(b, p) -> f b p)) <$> mouseDownSignal engine
 
-downs :: Engine e => (V2 Int -> a) -> Sub e a
-downs = buttonDowns LeftButton
+ups :: Engine e => (MouseButton -> V2 Int -> a) -> Sub e a
+ups f = Sub $ do
+  engine <- input >>= snapshot
 
-ups :: Engine e => (V2 Int -> a) -> Sub e a
-ups = buttonUps LeftButton
+  fmap (fmap (\(b, p) -> f b p)) <$> mouseUpSignal engine

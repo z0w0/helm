@@ -14,13 +14,19 @@ import FRP.Elerea.Param (input, snapshot)
 import Helm.Engine (Engine(..), Sub(..), Key(..))
 
 presses :: Engine e => (Key -> a) -> Sub e a
-presses f = Sub $  do
+presses f = Sub $ do
   engine <- input >>= snapshot
 
   fmap (fmap f) <$> keyboardPressSignal engine
 
 downs :: Engine e => (Key -> a) -> Sub e a
-downs _ = Sub $ return $ return []
+downs f = Sub $ do
+  engine <- input >>= snapshot
+
+  fmap (fmap f) <$> keyboardDownSignal engine
 
 ups :: Engine e => (Key -> a) -> Sub e a
-ups _ = Sub $ return $ return []
+ups f = Sub $ do
+  engine <- input >>= snapshot
+
+  fmap (fmap f) <$> keyboardUpSignal engine

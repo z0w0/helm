@@ -42,4 +42,4 @@ resizes :: Engine e => (V2 Int -> a) -> Sub e a
 resizes f = Sub $ do
   engine <- input >>= snapshot
 
-  fmap (fmap f) <$> windowResizeSignal engine
+  fmap (map f) <$> windowResizeSignal engine

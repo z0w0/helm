@@ -21,12 +21,13 @@ import           Data.Word (Word32)
 import           FRP.Elerea.Param
 import           Linear.Affine (Point(P))
 import           Linear.V2 (V2(V2))
-import           SDL.Video (WindowConfig(..))
 import qualified SDL
 import qualified SDL.Event as Event
 import qualified SDL.Init as Init
+import           SDL.Input.Keyboard (Keysym(..))
 import qualified SDL.Time as Time
 import qualified SDL.Video as Video
+import           SDL.Video (WindowConfig(..))
 import qualified SDL.Video.Renderer as Renderer
 
 import           Helm.Asset
@@ -161,7 +162,7 @@ startupWith config@SDLEngineConfig{..} = do
     , windowResizeEventSink = snd windowResizeEvent
     }
   where
-    (w,h) = windowDimensions
+    (w, h) = windowDimensions
     rendererConfig = Video.RendererConfig Video.AcceleratedVSyncRenderer False
     windowConfig = Video.defaultWindow
       { windowInitialSize = V2 (fromIntegral w) (fromIntegral h)
@@ -254,6 +255,25 @@ sinkEvent engine game (Event.MouseMotionEvent Event.MouseMotionEventData { .. })
   mouseMoveEventSink engine $ fromIntegral <$> depoint mouseMotionEventPos
 
   return game
+
+sinkEvent engine game (Event.KeyboardEvent Event.KeyboardEventData { .. }) = do
+  case keyboardEventKeyMotion of
+    Event.Pressed -> do
+      keyboardDownEventSink engine key
+
+      if keyboardEventRepeat
+      then keyboardPressEventSink engine key >> return game
+      else return game
+
+    Event.Released -> do
+      keyboardUpEventSink engine key
+      keyboardPressEventSink engine key
+
+      return game
+
+  where
+    Keysym { .. } = keyboardEventKeysym
+    key = mapKey keysymKeycode
 
 sinkEvent engine game (Event.MouseButtonEvent Event.MouseButtonEventData { .. }) = do
   case mouseButtonEventMotion of
