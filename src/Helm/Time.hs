@@ -19,6 +19,9 @@ module Helm.Time
   , every
   ) where
 
+import Control.Monad.State (get)
+import Control.Monad.IO.Class (liftIO)
+
 import Helm.Engine (Cmd(..), Sub(..), Engine(..))
 
 {-| A type describing an amount of time in an arbitary unit. Use the time
@@ -57,8 +60,12 @@ inMinutes n = n / minute
 inHours :: Time -> Double
 inHours n = n / hour
 
-now :: Engine e => Cmd e Time
-now = Cmd $ return []
+now :: Engine e => (Time -> a) -> Cmd e a
+now f = Cmd $ do
+  engine <- get
+  ticks <- liftIO $ f <$> runningTime engine
+
+  return [ticks]
 
 every :: Engine e => Time -> (Time -> a) -> Sub e a
 every _ _ = Sub $ return $ return []

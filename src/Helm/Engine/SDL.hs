@@ -97,6 +97,7 @@ instance Engine SDLEngine where
 
   windowResizeSignal = windowResizeEventSignal
 
+  runningTime _ = fromIntegral <$> Time.ticks
   windowSize SDLEngine { window } =
     fmap (fmap fromIntegral) . SDL.get $ Video.windowSize window
 

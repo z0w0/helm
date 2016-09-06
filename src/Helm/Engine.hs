@@ -23,6 +23,7 @@ class Engine e where
   run        :: e -> GameConfig e m a -> IO ()
 
   windowSize :: e -> IO (V2 Int)
+  runningTime :: e -> IO Double
 
   mouseMoveSignal :: e -> SignalGen e (Signal [V2 Int])
   mouseDownSignal :: e -> SignalGen e (Signal [(MouseButton, V2 Int)])
