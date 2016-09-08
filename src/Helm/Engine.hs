@@ -20,7 +20,9 @@ import Helm.Graphics (Graphics)
 class Engine e where
   loadImage  :: e -> IO Image
   loadSound  :: e -> IO Sound
-  run        :: e -> GameConfig e m a -> IO ()
+  render     :: e -> Graphics -> IO ()
+  sinkEvents :: e -> IO (Maybe e)
+  cleanup    :: e -> IO ()
 
   windowSize :: e -> IO (V2 Int)
   runningTime :: e -> IO Double

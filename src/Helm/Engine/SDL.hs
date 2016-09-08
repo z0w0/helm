@@ -11,9 +11,6 @@ module Helm.Engine.SDL
   ,startupWith)
   where
 
-import           Control.Exception (finally)
-import           Control.Monad (foldM, void)
-import           Control.Monad.Trans.State.Lazy (evalStateT)
 import           Data.Int (Int32)
 import qualified Data.Text as T
 import           Data.Word (Word32)
@@ -31,8 +28,7 @@ import           SDL.Video (WindowConfig(..))
 import qualified SDL.Video.Renderer as Renderer
 
 import           Helm.Asset
-import           Helm.Engine (GameConfig(..), Cmd(..), Sub(..),
-                              Engine(..), Key, MouseButton)
+import           Helm.Engine (Engine(..), Key, MouseButton)
 import           Helm.Graphics (Graphics(..))
 import           Helm.Graphics2D (Element)
 import           Helm.Engine.SDL.Keyboard (mapKey)
@@ -52,6 +48,7 @@ data SDLEngine = SDLEngine
   { window :: Video.Window
   , renderer :: Video.Renderer
   , engineConfig :: SDLEngineConfig
+  , lastMousePress :: Maybe (Word32, V2 Int32)
 
   , mouseMoveEventSignal :: SignalGen SDLEngine (Signal [V2 Int])
   , mouseMoveEventSink :: V2 Int -> IO ()
@@ -73,18 +70,25 @@ data SDLEngine = SDLEngine
   , windowResizeEventSink :: V2 Int -> IO ()
   }
 
-{-| A data structure describing a game's state (that is running under an engine). -}
-data SDLGame m a = SDLGame
-  { gameConfig :: GameConfig SDLEngine m a
-  , gameModel :: m
-  , running :: Bool
-  , actionSmp :: SDLEngine -> IO [a]
-  , lastMousePress :: Maybe (Word32, V2 Int32)
-  }
-
 instance Engine SDLEngine where
   loadImage _ = return $ Image ()
   loadSound _ = return $ Sound ()
+
+  render engine (Graphics2D element) = render2d engine element
+  cleanup _ = Init.quit
+
+  sinkEvents engine = do
+    mayhaps <- Event.pumpEvents >> Event.pollEvent
+
+    case mayhaps of
+      -- Handle the quit event exclusively first to simplify our code
+      Just Event.Event { eventPayload = Event.QuitEvent } ->
+        return Nothing
+
+      Just Event.Event { .. } ->
+        sinkEvent engine eventPayload >>= sinkEvents
+
+      Nothing -> return $ Just engine
 
   mouseMoveSignal = mouseMoveEventSignal
   mouseDownSignal = mouseDownEventSignal
@@ -100,9 +104,6 @@ instance Engine SDLEngine where
   runningTime _ = fromIntegral <$> Time.ticks
   windowSize SDLEngine { window } =
     fmap (fmap fromIntegral) . SDL.get $ Video.windowSize window
-
-  run engine config =
-    void $ (prepare engine config >>= step engine) `finally` Init.quit
 
 {-| Creates the default configuration for the engine. You should change the
     values where necessary. -}
@@ -142,6 +143,7 @@ startupWith config@SDLEngineConfig{..} = do
     { window = window
     , renderer = renderer
     , engineConfig = config
+    , lastMousePress = Nothing
 
     , mouseMoveEventSignal = fst mouseMoveEvent
     , mouseMoveEventSink = snd mouseMoveEvent
@@ -173,47 +175,6 @@ startupWith config@SDLEngineConfig{..} = do
       , windowResizable = windowIsResizable
       }
 
-step :: SDLEngine -> SDLGame m a -> IO (SDLGame m a)
-step engine game@SDLGame{actionSmp,gameModel,gameConfig = GameConfig{viewFn}} = do
-  sunkGame <- sinkEvents engine game
-
-  if running sunkGame
-  then do
-    actions <- actionSmp engine
-    model <- foldM (stepModel engine game) gameModel actions
-
-    render engine $ viewFn model
-    step engine $ sunkGame { gameModel = model }
-  else return sunkGame
-
-stepModel :: SDLEngine -> SDLGame m a -> m -> a -> IO m
-stepModel engine game@SDLGame { gameConfig = GameConfig { updateFn } } model action =
-  evalStateT monad engine >>= foldM (stepModel engine game) model
-
-  where
-    (model, Cmd monad) = updateFn model action
-
-prepare :: SDLEngine -> GameConfig SDLEngine m a -> IO (SDLGame m a)
-prepare engine config@GameConfig { initialFn, subscriptionsFn = Sub gen } = do
-  {- The call to 'embed' here is a little bit hacky, but seems necessary
-     to get this working. This is because 'start' actually computes the signal
-     gen passed to it, and all of our signal gens try to fetch
-     the 'input' value within the top layer signal gen (rather than in the
-     contained signal). But we haven't sampled with the input value yet, so it'll
-     be undefined unless we 'embed'. -}
-  smp <- start $ embed (return engine) gen
-
-  return SDLGame
-    { gameConfig = config
-    , gameModel = fst initialFn
-    , running = True
-    , actionSmp = smp
-    , lastMousePress = Nothing
-    }
-
-render :: SDLEngine -> Graphics -> IO ()
-render engine (Graphics2D element) = render2d engine element
-
 render2d :: SDLEngine -> Element -> IO ()
 render2d SDLEngine{window,renderer} element = do
   dims <- SDL.get $ Video.windowSize window
@@ -229,60 +190,46 @@ render2d SDLEngine{window,renderer} element = do
     mode = Renderer.ARGB8888
     access = Renderer.TextureAccessStreaming
 
-sinkEvents :: SDLEngine -> SDLGame m a -> IO (SDLGame m a)
-sinkEvents engine game = do
-  mayhaps <- Event.pumpEvents >> Event.pollEvent
-
-  case mayhaps of
-      -- Handle the quit event exclusively first to simplify our code
-      Just Event.Event { eventPayload = Event.QuitEvent } ->
-        return game { running = False }
-
-      Just Event.Event { .. } ->
-        sinkEvent engine game eventPayload >>= sinkEvents engine
-
-      Nothing -> return game
-
-depoint :: Point f a -> (f a)
+depoint :: Point f a -> f a
 depoint (P x) = x
 
-sinkEvent :: SDLEngine -> SDLGame m a -> Event.EventPayload -> IO (SDLGame m a)
-sinkEvent engine game (Event.WindowResizedEvent Event.WindowResizedEventData { .. }) = do
+sinkEvent :: SDLEngine -> Event.EventPayload -> IO SDLEngine
+sinkEvent engine (Event.WindowResizedEvent Event.WindowResizedEventData { .. }) = do
   windowResizeEventSink engine $ fromIntegral <$> windowResizedEventSize
 
-  return game
+  return engine
 
-sinkEvent engine game (Event.MouseMotionEvent Event.MouseMotionEventData { .. }) = do
+sinkEvent engine (Event.MouseMotionEvent Event.MouseMotionEventData { .. }) = do
   mouseMoveEventSink engine $ fromIntegral <$> depoint mouseMotionEventPos
 
-  return game
+  return engine
 
-sinkEvent engine game (Event.KeyboardEvent Event.KeyboardEventData { .. }) = do
+sinkEvent engine (Event.KeyboardEvent Event.KeyboardEventData { .. }) =
   case keyboardEventKeyMotion of
     Event.Pressed -> do
       keyboardDownEventSink engine key
 
       if keyboardEventRepeat
-      then keyboardPressEventSink engine key >> return game
-      else return game
+      then keyboardPressEventSink engine key >> return engine
+      else return engine
 
     Event.Released -> do
       keyboardUpEventSink engine key
       keyboardPressEventSink engine key
 
-      return game
+      return engine
 
   where
     Keysym { .. } = keyboardEventKeysym
     key = mapKey keysymKeycode
 
-sinkEvent engine game (Event.MouseButtonEvent Event.MouseButtonEventData { .. }) = do
+sinkEvent engine (Event.MouseButtonEvent Event.MouseButtonEventData { .. }) =
   case mouseButtonEventMotion of
     Event.Pressed -> do
       ticks <- Time.ticks
       mouseDownEventSink engine tup
 
-      return game { lastMousePress = Just (ticks, pos) }
+      return engine { lastMousePress = Just (ticks, pos) }
 
     Event.Released -> do
       mouseUpEventSink engine tup
@@ -293,7 +240,7 @@ sinkEvent engine game (Event.MouseButtonEvent Event.MouseButtonEventData { .. })
          event being in a very close proximity to a previous mouse down event.
          We manually calculate whether this was a click or not. -}
       case lastMousePress of
-        Just (lastTicks, (V2 lastX lastY)) -> do
+        Just (lastTicks, V2 lastX lastY) -> do
           ticks <- Time.ticks
 
           -- Check that it's a expected amount of time for a click and that the mouse has basically stayed in place
@@ -303,13 +250,13 @@ sinkEvent engine game (Event.MouseButtonEvent Event.MouseButtonEventData { .. })
 
         Nothing -> return ()
 
-      return game
+      return engine
 
   where
-    SDLGame { lastMousePress } = game
+    SDLEngine { lastMousePress } = engine
     clickMs = 500  -- How long between mouse down/up to recognise clicks
     clickRadius = 1  -- The pixel radius to be considered a click.
     pos@(V2 x y) = depoint mouseButtonEventPos
     tup = (mapMouseButton mouseButtonEventButton, fromIntegral <$> pos)
 
-sinkEvent _ game _ = return game
+sinkEvent engine _ = return engine

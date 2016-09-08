@@ -1,4 +1,4 @@
-{-| Contains signals that sample input from the game window. -}
+-- | Contains signals that sample input from the game window.
 module Helm.Window
   (
     -- * Commands
@@ -15,14 +15,22 @@ import Linear.V2 (V2)
 
 import Helm.Engine (Engine(..), Cmd(..), Sub(..))
 
-size :: Engine e => (V2 Int -> a) -> Cmd e a
+-- | Map the game window size to a game action.
+size ::
+  Engine e
+  => (V2 Int -> a)  -- ^ The function to map the window size to an action.
+  -> Cmd e a        -- ^ The mapped command.
 size f = Cmd $ do
   engine <- get
   sized <- liftIO $ f <$> windowSize engine
 
   return [sized]
 
-resizes :: Engine e => (V2 Int -> a) -> Sub e a
+-- | Subscribe to the resize events from the game window and map to a game action.
+resizes ::
+  Engine e
+  => (V2 Int -> a)  -- ^ The function to map the changed window size to an action.
+  -> Sub e a        -- ^ The mapped subscription.
 resizes f = Sub $ do
   engine <- input >>= snapshot
 

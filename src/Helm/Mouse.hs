@@ -11,30 +11,48 @@ module Helm.Mouse
   ) where
 
 import FRP.Elerea.Param (input, snapshot)
-import Linear.V2 (V2(V2))
+import Linear.V2 (V2)
 
 import Helm.Engine (Sub(..), Engine(..), MouseButton(..))
 
-moves :: Engine e => (V2 Int -> a) -> Sub e a
+-- | Subscribe to mouse movement events and map to a game action.
+moves ::
+  Engine e
+  => (V2 Int -> a)  -- ^ The function to map a mouse position to an action.
+  -> Sub e a        -- ^ The mapped subscription.
 moves f = Sub $ do
   engine <- input >>= snapshot
 
   fmap (fmap f) <$> mouseMoveSignal engine
 
-clicks :: Engine e => (MouseButton -> V2 Int -> a) -> Sub e a
-clicks _ = Sub $ do
+-- | Subscribe to mouse click events and map to a game action.
+-- This subscription is for all mouse buttons - you'll need to
+-- match over a mouse button if you want to capture a specific one.
+clicks ::
+  Engine e
+  => (MouseButton -> V2 Int -> a)  -- ^ The function to map a mouse button and position to an action.
+  -> Sub e a                       -- ^ The mapped subscription.
+clicks f = Sub $ do
   engine <- input >>= snapshot
 
-  fmap (fmap (\(b, p) -> f b p)) <$> mouseClickSignal engine
+  fmap (fmap (uncurry f)) <$> mouseClickSignal engine
 
-downs :: Engine e => (MouseButton -> V2 Int -> a) -> Sub e a
-downs _ = Sub $ do
+-- | Subscribe to mouse button down events and map to a game action.
+downs ::
+  Engine e
+  => (MouseButton -> V2 Int -> a)  -- ^ The function to map a mouse button and position to an action.
+  -> Sub e a                       -- ^ The mapped subscription.
+downs f = Sub $ do
   engine <- input >>= snapshot
 
-  fmap (fmap (\(b, p) -> f b p)) <$> mouseDownSignal engine
+  fmap (fmap (uncurry f)) <$> mouseDownSignal engine
 
-ups :: Engine e => (MouseButton -> V2 Int -> a) -> Sub e a
+-- | Subscribe to mouse button up events and map to a game action.
+ups ::
+  Engine e
+  => (MouseButton -> V2 Int -> a)  -- ^ The function to map a mouse button and position to an action.
+  -> Sub e a                       -- ^ The mapped subscription.
 ups f = Sub $ do
   engine <- input >>= snapshot
 
-  fmap (fmap (\(b, p) -> f b p)) <$> mouseUpSignal engine
+  fmap (fmap (uncurry f)) <$> mouseUpSignal engine

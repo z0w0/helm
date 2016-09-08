@@ -10,7 +10,14 @@ module Helm.Sub
 
 import Helm.Engine (Engine, Sub(..))
 
-batch :: Engine e => [Sub e a] -> Sub e a
+-- | Combine a list of mapped subscriptions into a single one.
+-- This is allows for subscriptions to multiple input events to be
+-- combined into one mapped subscription that encompasses all the actions
+-- mapped from events.
+batch ::
+  Engine e
+  => [Sub e a]  -- ^ The list of mapped subscriptions.
+  -> Sub e a    -- ^ The mapped subscriptions accumulated.
 batch subs = Sub $ do
   signals <- mapM (\(Sub gen) -> gen) subs
 
@@ -19,5 +26,6 @@ batch subs = Sub $ do
 
     return $ concat lists
 
+-- | A mapped subscription that does nothing.
 none :: Engine e => Sub e a
 none = Sub . return $ return []

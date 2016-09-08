@@ -12,16 +12,19 @@ the [Elerea FRP framework](https://github.com/cobbpg/elerea). Helm was
 originally inspired by the [Elm programming language](http://elm-lang.org).
 
 In Helm, every piece of input that can be gathered from a user (or the operating system)
-is hidden behind a subscription. For those unfamiliar with FRP, signals are essentially
-a value that changes over time. This sort of architecture used for a game allows for pretty
-simplistic (and in my opinion, artistic) code.
+is contained in a subscription, which is essentially 
+as a collection of input events changing over time. Think of it this way - when you hold down
+the w and s keys, two keyboard events are being captured at every moment. In this case, a subscription to keyboard presses
+would then yield you with a collection of two events at every game tick.
 
-Documentation of the Helm API is available on [Hackage](http://hackage.haskell.org/package/helm).
-There is currently a heavily work-in-progress guide on [Helm's website](http://helm-engine.org/guide),
-which is a resource aiming to give thorough explanations of the way Helm and its API work through examples.
-You can [ask on the mailing list](https://groups.google.com/d/forum/helm-dev) if you're having any trouble
-with using the engine for games or working on the engine itself, or if you just want to chit-chat about
-Helm.
+Helm provides a structure similar to MVC (model-view-controller).
+There is a model (which represents the state of your game), 
+a view of the current model (i.e. what's actually shown on the screen) and a controller that folds the model
+forward based off of input actions (which are mapped from the subscription events).
+
+This presents a powerful paradigm shift for game development. Instead of writing event listeners,
+Helm treats input events as first-class citizens of the type system, and the actual interaction between
+the game state and input events becomes immediately clearer.
 
 ## Features
 
@@ -51,67 +54,37 @@ Helm.
   * `Helm.Utilities` contains an assortment of useful functions,
   * `Helm.Window` contains signals for working with the game window state.
 
-## Example
-
-The simplest example of a Helm game that doesn't require any input from the user is the following:
-
-```haskell
-import Helm
-import qualified Helm.Window as Window
-
-render :: (Int, Int) -> Element
-render (w, h) = collage w h [move (100, 100) $ filled red $ square 64]
-
-main :: IO ()
-main = run defaultConfig $ render <~ Window.dimensions
-```
-
-It renders a red square at the position `(100, 100)` with a side length of `64`.
-
-The next example is the barebones of a game that depends on input. It shows how to create
-an accumulated state that depends on the values sampled from signals (e.g. mouse input).
-You should see a white square on the screen and pressing the arrow keys allows you to move it.
-
-```haskell
-import Helm
-import qualified Helm.Keyboard as Keyboard
-import qualified Helm.Window as Window
-
-data State = State { mx :: Double, my :: Double }
-
-step :: (Int, Int) -> State -> State
-step (dx, dy) state = state { mx = (10 * (realToFrac dx)) + mx state,
-                              my = (10 * (realToFrac dy)) + my state }
-
-render :: (Int, Int) -> State -> Element
-render (w, h) (State { mx = mx, my = my }) =
-  centeredCollage w h [move (mx, my) $ filled white $ square 100]
-
-main :: IO ()
-main = run defaultConfig $ render <~ Window.dimensions ~~ stepper
-  where
-    state = State { mx = 0, my = 0 }
-    stepper = foldp step state Keyboard.arrows
-```
-
 ## Installing and Building
 
-Helm requires GHC 7.6 (Elerea doesn't work with older versions due to a compiler bug).
-To install the latest (stable) version from the Hackage repository, use:
+Before you can install Helm, you'll to follow the
+[Gtk2Hs installation guide](https://wiki.haskell.org/Gtk2Hs/Installation)
+(which is required for the Haskell Cairo bindings). Additionally, Helm
+requires a GHC version of 7.6 or higher.
+
+To install the latest stable version from the Hackage repository, use:
 
 ```
 cabal install helm
 ```
 
-Alternatively to get the latest development version, you can clone this repository and then run:
+Alternatively to get the latest development version run:
 
 ```
+git clone git://github.com/z0w0/helm.git
+cd helm
 cabal install
 ```
 
-You may need to jump a few hoops to install the Cairo bindings (which are a dependency),
-which unfortunately is out of my hands. Read the [installing guide](http://helm-engine.org/guide/installing/)
-on the website for a few platform-specific instructions.
+## Getting Started
+
+Check out the `examples` directory for some examples; the `hello` example is a particularly good start.
+Unfortunately, there's little to no example games yet, so if you end up making something cool and lightweight
+that you'd think would be a good example, feel free to open a pull request!
+
+## Documentation
+
+API documentation for the latest stable version of Helm is available on [Hackage](http://hackage.haskell.org/package/helm).
+Alternatively, if you've cloned this repo, you can build the documentation manually using Haddock.
 
 ## License
 
@@ -124,12 +97,5 @@ Helm would benefit from either of the following contributions:
 1. Try out the engine, reporting any issues or suggestions you have.
 2. Look through the source, get a feel for the code and then
    contribute some features or fixes. If you plan on contributing
-   code please submit a pull request and follow the formatting
-   styles set out in the current code: 2 space indents, documentation
-   on every top-level function, favouring monad operators over
-   do blocks when there is a logical flow of data, spaces between operators
-   and after commas, etc. Please also confirm that the code passes under
-   HLint.
-
-There are a number of issues [tagged with the bounty tag](https://github.com/switchface/helm/issues?labels=bounty&state=open),
-meaning they have associated bounties on [Bountysource](https://www.bountysource.com/trackers/290443-helm).
+   code, please follow [Johan Tibell's Haskell style guide](https://github.com/tibbe/haskell-style-guide/blob/master/haskell-style.md)
+   - with one exception allowed - line length may be up to 120 characters (wide screens for life).
