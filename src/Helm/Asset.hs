@@ -1,9 +1,7 @@
-{-| Contains the types for loading game assets, e.g. images, audio, etc. -}
+{-| Contains the types for game assets, e.g. images, audio, etc. -}
 module Helm.Asset (
   -- * Types
-  Image(..),
-  Sound(..)
+  Image(..)
 ) where
 
-newtype Image = Image ()
-newtype Sound = Sound ()
+newtype Image a = Image a

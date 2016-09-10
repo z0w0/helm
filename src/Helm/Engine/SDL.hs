@@ -35,7 +35,8 @@ import           Helm.Engine.SDL.Keyboard (mapKey)
 import           Helm.Engine.SDL.Mouse (mapMouseButton)
 import qualified Helm.Engine.SDL.Graphics2D as Graphics2D
 
-{-| A data structure describing how to run the engine. -}
+-- | A data structure describing how to run the SDL engine.
+-- Use 'defaultConfig' and then only change the data fields that you need to.
 data SDLEngineConfig = SDLEngineConfig
   { windowDimensions :: (Int, Int)
   , windowIsFullscreen :: Bool
@@ -43,7 +44,7 @@ data SDLEngineConfig = SDLEngineConfig
   , windowTitle :: String
   }
 
-{-| A data structure describing the game engine's state. -}
+-- | A data structure describing the SDL engine's state.
 data SDLEngine = SDLEngine
   { window :: Video.Window
   , renderer :: Video.Renderer
@@ -72,12 +73,11 @@ data SDLEngine = SDLEngine
 
 instance Engine SDLEngine where
   loadImage _ = return $ Image ()
-  loadSound _ = return $ Sound ()
 
   render engine (Graphics2D element) = render2d engine element
   cleanup _ = Init.quit
 
-  sinkEvents engine = do
+  tick engine = do
     mayhaps <- Event.pumpEvents >> Event.pollEvent
 
     case mayhaps of
@@ -86,7 +86,7 @@ instance Engine SDLEngine where
         return Nothing
 
       Just Event.Event { .. } ->
-        sinkEvent engine eventPayload >>= sinkEvents
+        sinkEvent engine eventPayload >>= tick
 
       Nothing -> return $ Just engine
 
@@ -102,11 +102,9 @@ instance Engine SDLEngine where
   windowResizeSignal = windowResizeEventSignal
 
   runningTime _ = fromIntegral <$> Time.ticks
-  windowSize SDLEngine { window } =
-    fmap (fmap fromIntegral) . SDL.get $ Video.windowSize window
+  windowSize SDLEngine { window } = fmap (fmap fromIntegral) . SDL.get $ Video.windowSize window
 
-{-| Creates the default configuration for the engine. You should change the
-    values where necessary. -}
+-- | Creates the default configuration for the engine. You should change the values where necessary.
 defaultConfig :: SDLEngineConfig
 defaultConfig = SDLEngineConfig
   { windowDimensions = (800, 600)
@@ -115,12 +113,11 @@ defaultConfig = SDLEngineConfig
   , windowTitle = "Helm"
   }
 
-{-| Initialises a new engine with default configuration.
-    The engine can then be run later using 'run'. -}
+-- | Initialises a new engine with default configuration. The engine can then be run later using 'run'.
 startup :: IO SDLEngine
 startup = startupWith defaultConfig
 
-{-| Initializes a new engine with some configration. -}
+-- | Initializes a new engine with some configration.
 startupWith :: SDLEngineConfig -> IO SDLEngine
 startupWith config@SDLEngineConfig{..} = do
   Init.initializeAll
@@ -175,8 +172,9 @@ startupWith config@SDLEngineConfig{..} = do
       , windowResizable = windowIsResizable
       }
 
+-- | Renders a 2D element to the engine screen.
 render2d :: SDLEngine -> Element -> IO ()
-render2d SDLEngine{window,renderer} element = do
+render2d SDLEngine { window, renderer } element = do
   dims <- SDL.get $ Video.windowSize window
   texture <- Renderer.createTexture renderer mode access dims
 
@@ -190,9 +188,13 @@ render2d SDLEngine{window,renderer} element = do
     mode = Renderer.ARGB8888
     access = Renderer.TextureAccessStreaming
 
+-- | Turns a point containing a vector into a regular vector.
 depoint :: Point f a -> f a
 depoint (P x) = x
 
+-- | Sinks an SDL event into the Elerea sinks initialized at startup.
+-- These sinks then provide an Elerea signal to the subscriptions provided
+-- throughout the engine.
 sinkEvent :: SDLEngine -> Event.EventPayload -> IO SDLEngine
 sinkEvent engine (Event.WindowResizedEvent Event.WindowResizedEventData { .. }) = do
   windowResizeEventSink engine $ fromIntegral <$> windowResizedEventSize
@@ -234,11 +236,11 @@ sinkEvent engine (Event.MouseButtonEvent Event.MouseButtonEventData { .. }) =
     Event.Released -> do
       mouseUpEventSink engine tup
 
-      {- Weirdly enough, SDL provides a value that says how many clicks there
-         were, but this value is always set to one even if it's just a regular
-         mouse up event. Note that here we're defining a click as a mouse up
-         event being in a very close proximity to a previous mouse down event.
-         We manually calculate whether this was a click or not. -}
+      -- Weirdly enough, SDL provides a value that says how many clicks there
+      -- were, but this value is always set to one even if it's just a regular
+      -- mouse up event. Note that here we're defining a click as a mouse up
+      -- event being in a very close proximity to a previous mouse down event.
+      -- We manually calculate whether this was a click or not.
       case lastMousePress of
         Just (lastTicks, V2 lastX lastY) -> do
           ticks <- Time.ticks

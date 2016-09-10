@@ -98,4 +98,6 @@ Helm would benefit from either of the following contributions:
 2. Look through the source, get a feel for the code and then
    contribute some features or fixes. If you plan on contributing
    code, please follow [Johan Tibell's Haskell style guide](https://github.com/tibbe/haskell-style-guide/blob/master/haskell-style.md)
-   - with one exception allowed - line length may be up to 120 characters (wide screens for life).
+   - with the following exceptions:
+   * Up to 120 characters per line are allowed (widescreens for life).
+   * Please use a 2 space indent

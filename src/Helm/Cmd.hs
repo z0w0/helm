@@ -1,4 +1,4 @@
-{-| Contains the command related utilities. -}
+-- | Contains the command related utilities.
 module Helm.Cmd (
   -- * Types
   Cmd(..),

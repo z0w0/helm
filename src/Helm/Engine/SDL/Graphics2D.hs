@@ -1,22 +1,23 @@
 {-| Contains the SDL implementation 2D graphics rendering implementation (uses Cairo). -}
 module Helm.Engine.SDL.Graphics2D (render) where
 
-import Data.Foldable (forM_)
-import Foreign.C.Types (CInt)
-import Foreign.Ptr (castPtr)
+import           Data.Foldable (forM_)
+import           Foreign.C.Types (CInt)
+import           Foreign.Ptr (castPtr)
 
-import Graphics.Rendering.Cairo.Matrix (Matrix(..))
-import Linear.V2 (V2(V2))
-import Linear.V3 (V3(V3))
+import           Graphics.Rendering.Cairo.Matrix (Matrix(..))
+import           Linear.V2 (V2(V2))
+import           Linear.V3 (V3(V3))
 
-import Helm.Color (Color(..), Gradient(..))
-import Helm.Graphics2D
+import           Helm.Color (Color(..), Gradient(..))
+import           Helm.Graphics2D
 
 import qualified Data.Text as T
 import qualified Graphics.Rendering.Cairo as Cairo
 import qualified Graphics.Rendering.Pango as Pango
 import qualified SDL.Video.Renderer as Renderer
 
+-- | Renders a 2D element to an SDL texture (under a width and height).
 render :: Renderer.Texture -> V2 CInt -> Element -> IO ()
 render texture (V2 w h) element = do
   (pixels, pitch) <- Renderer.lockTexture texture Nothing
@@ -31,6 +32,7 @@ render texture (V2 w h) element = do
 
   Renderer.unlockTexture texture
 
+-- | Render an element to a cairo surface monad.
 renderElement :: Element -> Cairo.Render ()
 renderElement (CollageElement w h center forms) = do
   Cairo.save
@@ -67,22 +69,21 @@ renderElement (TextElement Text { textColor = (Color r g b a), .. }) = do
     i = 0
     j = length textUTF8
 
-{-| A utility function that maps to a Pango font weight based off our variant. -}
+-- | A utility function that maps to a Pango font weight based off our variant.
 mapFontWeight :: FontWeight -> Pango.Weight
 mapFontWeight weight = case weight of
   LightWeight  -> Pango.WeightLight
   NormalWeight -> Pango.WeightNormal
   BoldWeight   -> Pango.WeightBold
 
-{-| A utility function that maps to a Pango font style based off our variant. -}
+-- | A utility function that maps to a Pango font style based off our variant.
 mapFontStyle :: FontStyle -> Pango.FontStyle
 mapFontStyle style = case style of
   NormalStyle  -> Pango.StyleNormal
   ObliqueStyle -> Pango.StyleOblique
   ItalicStyle  -> Pango.StyleItalic
 
-{-| A utility function that goes into a state of transformation and then pops
-    it when finished. -}
+-- | A utility function that goes into a state of transformation and then pops it when finished.
 withTransform :: Double -> Double -> Double -> Double -> Cairo.Render () -> Cairo.Render ()
 withTransform s t x y f = do
   Cairo.save
@@ -92,23 +93,23 @@ withTransform s t x y f = do
   f
   Cairo.restore
 
-{-| A utility function that sets the Cairo line cap based off of our version. -}
+-- | A utility function that sets the Cairo line cap based off of our version.
 setLineCap :: LineCap -> Cairo.Render ()
 setLineCap cap = case cap of
   FlatCap   -> Cairo.setLineCap Cairo.LineCapButt
   RoundCap  -> Cairo.setLineCap Cairo.LineCapRound
   PaddedCap -> Cairo.setLineCap Cairo.LineCapSquare
 
-{-| A utility function that sets the Cairo line style based off of our version. -}
+-- | A utility function that sets the Cairo line style based off of our version.
 setLineJoin :: LineJoin -> Cairo.Render ()
 setLineJoin join = case join of
   SmoothJoin    -> Cairo.setLineJoin Cairo.LineJoinRound
   SharpJoin lim -> Cairo.setLineJoin Cairo.LineJoinMiter >> Cairo.setMiterLimit lim
   ClippedJoin   -> Cairo.setLineJoin Cairo.LineJoinBevel
 
-{-| A utility function that sets up all the necessary settings with Cairo
-    to render with a line style and then strokes afterwards. Assumes
-    that all drawing paths have already been setup before being called. -}
+-- | A utility function that sets up all the necessary settings with Cairo
+-- to render with a line style and then strokes afterwards. Assumes
+-- that all drawing paths have already been setup before being called.
 setLineStyle :: LineStyle -> Cairo.Render ()
 setLineStyle LineStyle { lineColor = Color r g b a, .. } = do
   Cairo.setSourceRGBA r g b a
@@ -118,9 +119,9 @@ setLineStyle LineStyle { lineColor = Color r g b a, .. } = do
   Cairo.setDash lineDashing lineDashOffset
   Cairo.stroke
 
-{-| A utility function that sets up all the necessary settings with Cairo
-    to render with a fill style and then fills afterwards. Assumes
-    that all drawing paths have already been setup before being called. -}
+-- | A utility function that sets up all the necessary settings with Cairo
+-- to render with a fill style and then fills afterwards. Assumes
+-- that all drawing paths have already been setup before being called.
 setFillStyle :: FillStyle -> Cairo.Render ()
 setFillStyle (Solid (Color r g b a)) = do
   Cairo.setSourceRGBA r g b a
@@ -136,14 +137,14 @@ setFillStyle (Gradient (Radial (sx, sy) sr (ex, ey) er points)) =
   Cairo.withRadialPattern sx sy sr ex ey er $ \ptn ->
     setGradientFill ptn points
 
-{-| A utility function that adds color stops to a pattern and then fills it. -}
+-- | A utility function that adds color stops to a pattern and then fills it.
 setGradientFill :: Cairo.Pattern -> [(Double, Color)] -> Cairo.Render ()
 setGradientFill ptn points = do
   Cairo.setSource ptn
   mapM_ (\(o, Color r g b a) -> Cairo.patternAddColorStopRGBA ptn o r g b a) points
   Cairo.fill
 
-{-| A utility that renders a form. -}
+-- | A utility that renders a form.
 renderForm :: Form -> Cairo.Render ()
 renderForm Form { .. } = withTransform formScale formTheta formX formY $
   case formStyle of

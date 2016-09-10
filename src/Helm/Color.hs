@@ -1,5 +1,5 @@
 {-# LANGUAGE DeriveGeneric #-}
-{-| Contains all data structures and functions for composing colors. -}
+-- | Contains all data structures and functions for composing colors.
 module Helm.Color (
   -- * Types
   Color(..),
@@ -17,16 +17,16 @@ module Helm.Color (
 
 import GHC.Generics
 
-{-| A data structure describing a color. It is represented interally as an RGBA
-    color, but the utility functions 'hsva', 'hsv', etc. can be used to convert
-    from other popular formats to this structure. -}
-data Color = Color Double Double Double Double deriving (Show, Eq, Ord, Read, Generic)
+-- | A data structure describing a color. It is represented interally as an RGBA
+-- color, but the utility functions 'hsva', 'hsv', etc. can be used to convert
+-- from other popular formats to this structure.
+data Color = Color !Double !Double !Double !Double deriving (Show, Eq, Ord, Read, Generic)
 
-{-| Creates an RGB color. -}
+-- | Creates an RGB color.
 rgb :: Double -> Double -> Double -> Color
 rgb r g b = rgba r g b 1
 
-{-| Creates an RGB color, with transparency. -}
+-- | Creates an RGB color, with transparency.
 rgba :: Double -> Double -> Double -> Double -> Color
 rgba r g b a
   | r < 0 || r > 1 ||
@@ -35,8 +35,8 @@ rgba r g b a
     a < 0 || a > 1 = error "Helm.Color.rgba: color components must be between 0 and 1"
   | otherwise = Color r g b a
 
-{-| Takes a list of colors and turns it into a single color by
-    averaging the color components. -}
+-- | Takes a list of colors and turns it into a single color by
+-- averaging the color components.
 blend :: [Color] -> Color
 blend colors =
   (\(Color r g b a) -> Color (r / denom) (g / denom) (b / denom) (a / denom)) $ foldl blend' black colors
@@ -45,12 +45,12 @@ blend colors =
     black = rgb 0 0 0
     denom = fromIntegral $ length colors
 
-{-| A utility function that adds colors together. -}
+-- | A utility function that adds colors together.
 blend' :: Color -> Color -> Color
 blend' (Color r1 g1 b1 a1) (Color r2 g2 b2 a2) = Color (r1 + r2) (g1 + g2) (b1 + b2) (a1 + a2)
 
-{-| Calculate a complementary color for a provided color. Useful for outlining
-    a filled shape in a color clearly distinguishable from the fill color. -}
+-- | Calculate a complementary color for a provided color. Useful for outlining
+-- a filled shape in a color clearly distinguishable from the fill color.
 complement :: Color -> Color
 complement (Color r g b a) = hsva (fromIntegral ((round (h + 180) :: Int) `mod` 360)) (s / mx) mx a
   where
@@ -62,7 +62,7 @@ complement (Color r g b a) = hsva (fromIntegral ((round (h + 180) :: Int) `mod` 
       | mx == b = (r - g) / s * 60 + 240
       | otherwise = undefined
 
-{-| Create an RGBA color from HSVA values. -}
+-- | Create an RGBA color from HSVA values.
 hsva :: Double -> Double -> Double -> Double -> Color
 hsva h s v a
   | h'' == 0 = rgba v t p a
@@ -81,33 +81,34 @@ hsva h s v a
     q = v * (1 - f * s)
     t = v * (1 - (1 - f) * s)
 
-{-| Create an RGB color from HSV values. -}
+-- | Create an RGB color from HSV values.
 hsv :: Double -> Double -> Double -> Color
 hsv h s v = hsva h s v 1
 
-{-| A data structure describing a gradient. There are two types of gradients:
-    radial and linear. Radial gradients are based on a set of colors transitioned
-    over certain radii in an arc pattern. Linear gradients are a set of colors
-    transitioned in a straight line. -}
-data Gradient = Linear (Double, Double) (Double, Double) [(Double, Color)] |
-                Radial (Double, Double) Double (Double, Double) Double [(Double, Color)] deriving (Show, Eq, Ord, Read)
+-- | A data structure describing a gradient. There are two types of gradients:
+-- radial and linear. Radial gradients are based on a set of colors transitioned
+-- over certain radii in an arc pattern. Linear gradients are a set of colors
+-- transitioned in a straight line.
+data Gradient
+  = Linear !(Double, Double) !(Double, Double) ![(Double, Color)] -- ^ A linear gradient.
+  | Radial !(Double, Double) !Double !(Double, Double) !Double ![(Double, Color)] -- ^ A radial gradient.
+  deriving (Show, Eq, Ord, Read)
 
-{-| Creates a linear gradient. Takes a starting position, ending position and a list
-    of color stops (which are colors combined with a floating value between /0.0/ and /1.0/
-    that describes at what step along the line between the starting position
-    and ending position the paired color should be transitioned to).
-
-	> linear (0, 0) (100, 100) [(0, black), (1, white)]
-
-	The above example creates a gradient that starts at /(0, 0)/
-	and ends at /(100, 100)/. In other words, it's a diagonal gradient, transitioning from the top-left
-	to the bottom-right. The provided color stops result in the gradient transitioning from
-	black to white.
- -}
+-- | Creates a linear gradient. Takes a starting position, ending position and a list
+-- of color stops (which are colors combined with a floating value between /0.0/ and /1.0/
+-- that describes at what step along the line between the starting position
+-- and ending position the paired color should be transitioned to).
+--
+-- > linear (0, 0) (100, 100) [(0, black), (1, white)]
+--
+-- The above example creates a gradient that starts at /(0, 0)/
+-- and ends at /(100, 100)/. In other words, it's a diagonal gradient, transitioning from the top-left
+-- to the bottom-right. The provided color stops result in the gradient transitioning from
+-- black to white.
 linear :: (Double, Double) -> (Double, Double) -> [(Double, Color)] -> Gradient
 linear = Linear
 
-{-| Creates a radial gradient. Takes a starting position and radius, ending position and radius
-    and a list of color stops. See the document for 'linear' for more information on color stops. -}
+-- | Creates a radial gradient. Takes a starting position and radius, ending position and radius
+-- and a list of color stops. See the document for 'linear' for more information on color stops.
 radial :: (Double, Double) -> Double -> (Double, Double) -> Double -> [(Double, Color)] -> Gradient
 radial = Radial

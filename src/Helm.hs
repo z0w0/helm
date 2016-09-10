@@ -52,7 +52,7 @@ run engine config = void $ (prepare engine config >>= step engine) `finally` cle
 
 step :: Engine e => e -> Game e m a -> IO ()
 step engine game = do
-  mayhaps <- sinkEvents engine
+  mayhaps <- tick engine
 
   case mayhaps of
     Nothing -> return ()
