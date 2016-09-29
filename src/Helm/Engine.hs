@@ -1,4 +1,3 @@
-{-# LANGUAGE TypeFamilies #-}
 -- | Contains the core engine types and classes.
 module Helm.Engine (
   -- * Typeclasses
