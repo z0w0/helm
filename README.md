@@ -8,51 +8,58 @@
 ## Introduction
 
 Helm is a purely functional game engine written in Haskell and built with
-the [Elerea FRP framework](https://github.com/cobbpg/elerea). Helm was
-originally inspired by the [Elm programming language](http://elm-lang.org).
+the [Elerea functionally-reactive programming framework](https://github.com/cobbpg/elerea)
+and [SDL2](https://www.libsdl.org/). Helm was originally inspired by the
+[Elm programming language](http://elm-lang.org).
 
 In Helm, every piece of input that can be gathered from a user (or the operating system)
 is contained in a subscription, which is essentially 
-as a collection of input events changing over time. Think of it this way - when you hold down
-the w and s keys, two keyboard events are being captured at every moment. In this case, a subscription to keyboard presses
-would then yield you with a collection of two events at every game tick.
+as a collection of input events changing over time mapped to game interactions.
 
-Helm provides a structure similar to MVC (model-view-controller).
+Think of it this way - when you hold down the w and a keys, two keyboard events are being captured at every moment.
+You might want your game to move your character forward by pressing `w`.
+When you add a subscription to your game, you choose how to map these two input events
+into a game action type (which you provide, the engine doesn't have any concept
+of how the action works). So if you mapped the `w` key to some game action variant (game
+actions are usually represented as a collection of data type variants), and the `w` key was held down,
+then at every game tick the game would produce a `w` key press event and turn this into
+the relevant game action.
+
+On top of subscriptions, Helm has another core concept called commands.
+Commands are essentially IO-like monads that have context about the engine state.
+Like subscriptions, commands are mapped directly to game actions. This
+means that when interacting with IO through Helm, you directly
+specify how the result maps to a game action and allows you to make logical
+conclusions about how certain monadic results should interact with your game.
+
+Helm provides a structure familiar to MVC-based framework developers.
 There is a model (which represents the state of your game), 
-a view of the current model (i.e. what's actually shown on the screen) and a controller that folds the model
-forward based off of input actions (which are mapped from the subscription events).
+a view of the current model (i.e. what's actually shown on the screen) and a function similiar
+to a controller that folds the model forward based off of input actions (which are in turn
+mapped to from subscription events).
 
 This presents a powerful paradigm shift for game development. Instead of writing event listeners,
-Helm treats input events as first-class citizens of the type system, and the actual interaction between
-the game state and input events becomes immediately clearer.
+Helm treats input events as first-class citizens of the type system, and the actual interaction
+between the game state and input events becomes immediately clearer.
 
 ## Features
 
-* Allows you to express game logic dependent on input in a straightforward manner,
-  treating events as first class values (the essence of FRP).
-* Vector graphics based rendering, allow you to either write art
-  designed for any resolution or still load generic images and render
-  those as you would with any pixel-blitting engine.
-* Straightforward API heavily inspired by the Elm programming language. The API
-  is broken up into the following areas:
-  * `Helm` contains the main code for interfacing with the game engine but
-    also includes some utility functions and the modules `Helm.Color`, `Helm.Utilities`
-    and `Helm.Graphics` in the style of a sort of prelude library, allowing it to be included
-    and readily make the most basic of games.
-  * `Helm.Color` contains the `Color` data structure, functions for composing
-    colors and a few pre-defined colors that are usually used in games.
-  * `Helm.Graphics` contains all the graphics data structures, functions
-    for composing these structures and other general graphical utilities.
-  * `Helm.Keyboard` contains signals for working with keyboard state.
-  * `Helm.Mouse` contains signals for working with mouse state.
-  * `Helm.Random` contains signals for generating random values
-  * `Helm.Signal`  constains useful functions for working with signals such
-     as lifting/folding
-  * `Helm.Text` contains functions for composing text, formatting it
-    and then turning it into an element.
-  * `Helm.Time` contains functions for composing units of time and time-dependant signals
-  * `Helm.Utilities` contains an assortment of useful functions,
-  * `Helm.Window` contains signals for working with the game window state.
+* Interactions between input and game logic is made clear by events and game actions being treated
+  first-class by the engine
+* Color composition via `Helm.Color`
+* 2D vector graphics rendering via `Helm.Graphics2D`
+  * Advanced text rendering via `Helm.Graphics2D.Text`
+  * Matrix-based 2D transformations (for advanced techniques like skewing) via `Helm.Graphics2D.Transform`
+* Keyboard event interactions via `Helm.Keyboard`
+* Mouse event interactions via `Helm.Mouse`
+* Command-related utilities such as batching via `Helm.Cmd`
+* Subscription-related utilities, such as batching and lifting IO-likes via `Helm.Sub`
+* Time-based event interactions via `Helm.Time`
+* Window event interactions and other utilities via `Helm.Window`
+* The base functionality of Helm is separate from the backend engine implementation, so
+  custom media frameworks (which generally handle rendering, input, etc.) can be integrated
+  with Helm quite easily. At the moment, the only available implementation is SDL2
+  (which is currently bundled with the game engine) however the plan is to have more options in the future.
 
 ## Installing and Building
 
