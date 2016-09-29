@@ -7,7 +7,7 @@ homepage: http://github.com/switchface/helm
 bug-reports: http://github.com/switchface/helm/issues
 license: MIT
 license-file: LICENSE
-tested-with: GHC == 8.0.1
+tested-with: GHC == 7.10.2
 extra-source-files: LICENSE, README.md
 author: Zack Corr
 maintainer: Zack Corr <zack@z0w0.me>
@@ -23,7 +23,7 @@ source-repository head
 library
   hs-source-dirs: src
   default-language: Haskell2010
-  default-extensions: RecordWildCards, NamedFieldPuns
+  default-extensions: RecordWildCards, NamedFieldPuns, TypeFamilies
   ghc-options: -Wall
 
   exposed-modules:
@@ -33,6 +33,8 @@ library
     Helm.Color
     Helm.Engine
     Helm.Engine.SDL
+    Helm.Engine.SDL.Asset
+    Helm.Engine.SDL.Engine
     Helm.Engine.SDL.Graphics2D
     Helm.Engine.SDL.Keyboard
     Helm.Engine.SDL.Mouse
@@ -51,7 +53,7 @@ library
     cairo >= 0.13 && < 0.14,
     pango >= 0.13 && < 0.14,
     containers >= 0.5 && < 1,
-    elerea >= 2.8 && < 3,
+    elerea >= 2.9 && < 3,
     sdl2 >= 2 && < 3,
     linear >= 1 && < 2,
     text >= 1.1.1.3 && < 2,

@@ -3,7 +3,9 @@
 module Helm.Graphics2D.Text
   (
     -- * Types
-    Text
+    Text(..)
+  , FontWeight(..)
+  , FontStyle(..)
     -- * Composing
   , defaultText
   , toText
@@ -57,7 +59,8 @@ defaultText = Text {
   textStyle = NormalStyle
 }
 
--- | Creates a text from a string.
+-- | Creates a text from a string. By default, this text will be 14pt,
+-- black and unstyled.
 toText :: String -> Text
 toText str = defaultText { textString = str }
 

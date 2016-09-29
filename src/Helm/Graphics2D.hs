@@ -1,9 +1,10 @@
--- | Contains all the data structures and functions for composing
+-- | Contains all the types and functions for composing
 -- and rendering 2D graphics.
 module Helm.Graphics2D
   (
     -- * Types
-    Form(..)
+    Collage(..)
+  , Form(..)
   , FormStyle(..)
   , FillStyle(..)
   , LineCap(..)
@@ -11,6 +12,7 @@ module Helm.Graphics2D
   , LineStyle(..)
   , Path(..)
   , Shape(..)
+  , ShapeStyle(..)
   , Transform(..)
   -- * Collages
   , collage
@@ -53,6 +55,7 @@ module Helm.Graphics2D
 
 import Linear.V2 (V2(V2))
 
+import Helm.Asset (Image)
 import Helm.Color (Color, rgb, Gradient)
 import Helm.Graphics2D.Text (Text)
 import Helm.Graphics2D.Transform (Transform(..), identity)
@@ -65,11 +68,11 @@ import Helm.Graphics2D.Transform (Transform(..), identity)
 -- collage itself knows nothing about the window state. It only knows
 -- what will be rendered to the screen (which in this case, is a series of forms)
 -- and the order in which they will be rendered.
-data Collage i = Collage
+data Collage e = Collage
   { collageDims :: Maybe (V2 Double)    -- ^ The optional dimensions of the collage. It will be clipped to these dims.
-  , collageForms :: [Form i]            -- ^ The collection of forms under the collage.
+  , collageForms :: [Form e]            -- ^ The collection of forms under the collage.
   , collageCenter :: Maybe (V2 Double)  -- ^ The optional center of the collage.
-  } deriving (Show, Eq)
+  }
 
 -- | Creates a collage from a list of forms.
 -- By default, the collage will not be clipped
@@ -77,7 +80,7 @@ data Collage i = Collage
 -- forms will be the top-left of the collage (which in the case of rendering
 -- a collage to the screen, is coincidently the top-left of the game window).
 -- See 'center' and 'clip'.
-collage :: [Form i] -> Collage i
+collage :: [Form e] -> Collage e
 collage forms = Collage
   { collageDims = Nothing
   , collageForms = forms
@@ -92,8 +95,8 @@ collage forms = Collage
 -- the top left of the collage to
 center ::
      V2 Double  -- ^ The position to center the collage at.
-  -> Collage i  -- ^ The source collage.
-  -> Collage i  -- ^ The centered collage.
+  -> Collage e  -- ^ The source collage.
+  -> Collage e  -- ^ The centered collage.
 center pos col = col { collageCenter = Just pos }
 
 -- | Clips a collage by provided dimensions. Note that by default,
@@ -115,27 +118,26 @@ center pos col = col { collageCenter = Just pos }
 -- of forms that aren't even in the screen's bounds.
 clip ::
      V2 Double  -- ^ The dimensions to clip the collage with.
-  -> Collage i  -- ^ The source collage.
-  -> Collage i  -- ^ The clipped collage.
+  -> Collage e  -- ^ The source collage.
+  -> Collage e  -- ^ The clipped collage.
 clip dims col = col { collageDims = Just dims }
 
 -- Creates a form from a collage. This might seem a little strange (as
 -- a collage is generally what you provide to the engine to render the 2D graphics)
 -- but by allowing this functionality, you can compose collages from other collages,
-toForm :: Collage i -> Form i
+toForm :: Collage e -> Form e
 toForm = defaultForm . CollageForm
 
 -- | The style of forms available. The form style holds data specific
 -- to a variation of form, and the 'Form' is instead a general version of this
 -- with positioning information, rotation, scale, etc.
-data FormStyle i
-  = PathForm LineStyle Path              -- ^ A form composed of a path
-  | ShapeForm (ShapeStyle i) Shape       -- ^ A form composed of a shape.
-  | TextForm Text                        -- ^ A form composed of a piece of text, including string and style info.
-  | ImageForm i (V2 Double) (V2 Double)  -- ^ A form composed of an image.
-  | GroupForm Transform [Form i]         -- ^ A form composed of a group of forms, with a transformation.
-  | CollageForm (Collage i)              -- ^ A form composed of a collage (which in turn is a collection of forms).
-    deriving (Show, Eq)
+data FormStyle e
+  = PathForm LineStyle Path                   -- ^ A form composed of a path
+  | ShapeForm (ShapeStyle e) Shape            -- ^ A form composed of a shape.
+  | TextForm Text                             -- ^ A form composed of a piece of text, including string and style info.
+  | ImageForm (Image e) (V2 Double) (V2 Double) Bool  -- ^ A form composed of an image
+  | GroupForm Transform [Form e]              -- ^ A form composed of a group of forms, with a transformation.
+  | CollageForm (Collage e)                   -- ^ A form composed of a collage (which in turn is a collection of forms).
 
 -- | The form type represents something that can be rendered to the screen (
 -- under a collage). There are many different types of forms, which can be composed
@@ -143,20 +145,19 @@ data FormStyle i
 --
 -- A form might be an image, or a rectangle, or a circle, or even a collection
 -- of forms (which in turn can be those same things).
-data Form i = Form
+data Form e = Form
   { formTheta :: Double       -- ^ The rotation of the form (in radians).
   , formScale :: Double       -- ^ The scale factor of the form.
   , formPos :: V2 Double      -- ^ The position of the form. This will be rendered relative to the collage origin.
   , formAlpha :: Double       -- ^ The alpha channel of the form.
-  , formStyle :: FormStyle i  -- ^ The style of form.
-  } deriving (Show, Eq)
+  , formStyle :: FormStyle e  -- ^ The style of form.
+  }
 
 -- | The style of shape filling available.
-data FillStyle i
+data FillStyle e
   = Solid Color        -- ^ The shape will be filled with a solid color.
-  | Texture i          -- ^ The shape will be filled with a texture (a.k.a. image).
+  | Texture (Image e)  -- ^ The shape will be filled with a texture (a.k.a. image).
   | Gradient Gradient  -- ^ The shape will be filled with a gradient (which can be linear or radial).
-    deriving (Show, Eq, Ord, Read)
 
 -- | The shape of the ends of a line.
 data LineCap
@@ -256,7 +257,7 @@ defaultLine = LineStyle
 
 -- | Creates a initial form from a specific form style.
 -- The form will be at the origin point (0, 0).
-defaultForm :: FormStyle i -> Form i
+defaultForm :: FormStyle e -> Form e
 defaultForm style = Form
   { formTheta = 0
   , formScale = 1
@@ -266,10 +267,9 @@ defaultForm style = Form
   }
 
 -- | The styled used for drawing a shape.
-data ShapeStyle i
+data ShapeStyle e
   = OutlinedShape LineStyle    -- ^ Stroke/outline the shape, with a specific line style.
-  | FilledShape (FillStyle i)  -- ^ Fill the shape, with a specific fill style.
-    deriving (Show, Eq)
+  | FilledShape (FillStyle e)  -- ^ Fill the shape, with a specific fill style.
 
 -- | Create a solid line style with a color.
 solid :: Color -> LineStyle
@@ -284,66 +284,66 @@ dotted :: Color -> LineStyle
 dotted color = defaultLine { lineColor = color, lineDashing = [3, 3] }
 
 -- | Fill a shape with a specific fill style.
-fill :: FillStyle i -> Shape -> Form i
+fill :: FillStyle e -> Shape -> Form e
 fill style shape = defaultForm (ShapeForm (FilledShape style) shape)
 
 -- | Fill a shape with a color.
-filled :: Color -> Shape -> Form i
+filled :: Color -> Shape -> Form e
 filled color = fill (Solid color)
 
 -- | Fill a shape with a texture. The texture should
 -- be an image loaded by the engine.
-textured :: i -> Shape -> Form i
+textured :: Image e -> Shape -> Form e
 textured img = fill (Texture img)
 
 -- | Fill a shape with a gradient (either 'linear' or 'radial').
-gradient :: Gradient -> Shape -> Form i
+gradient :: Gradient -> Shape -> Form e
 gradient grad = fill (Gradient grad)
 
 -- | Creates a form from a shape by outlining it with a specific line style.
-outlined :: LineStyle -> Shape -> Form i
+outlined :: LineStyle -> Shape -> Form e
 outlined style shape = defaultForm (ShapeForm (OutlinedShape style) shape)
 
 -- | Creates a form from a path by tracing it with a specific line style.
-traced :: LineStyle -> Path -> Form i
+traced :: LineStyle -> Path -> Form e
 traced style p = defaultForm (PathForm style p)
 
 -- | Creates a empty form, useful for having forms rendered only at some state.
-blank :: Form i
+blank :: Form e
 blank = group []
 
 -- | Creates a form from an image. If the image dimensions are not the
 -- same as provided, then it will stretch/shrink to fit.
-image :: V2 Double -> i -> Form i
-image dims img = defaultForm $ ImageForm img (V2 0 0) dims
+image :: V2 Double -> Image e -> Form e
+image dims img = defaultForm $ ImageForm img (V2 0 0) dims True
 
 -- | Creates a form from an image with a 2D vector describing its dimensions.
 -- If the image dimensions are not the same as given, then it will only use the relevant pixels
 -- (i.e. cut out the given dimensions instead of scaling). If the given dimensions are bigger than
 -- the actual image, than irrelevant pixels are ignored.
-fittedImage :: V2 Double -> i -> Form i
-fittedImage dims img = defaultForm $ ImageForm img (V2 0 0) dims
+fittedImage :: V2 Double -> Image e -> Form e
+fittedImage dims img = defaultForm $ ImageForm img (V2 0 0) dims False
 
 -- | Create an element from an image by cropping it with a certain position, width, height
 -- and image file path. This can be used to divide a single image up into smaller ones (
 -- for example, drawing a single sprite from a sprite sheet).
-croppedImage :: V2 Double -> V2 Double -> i -> Form i
-croppedImage pos dims img = defaultForm $ ImageForm img pos dims
+croppedImage :: V2 Double -> V2 Double -> Image e -> Form e
+croppedImage pos dims img = defaultForm $ ImageForm img pos dims False
 
 -- | Group a list of forms into one. They will be drawn in their
 -- sequential order within the list.
-group :: [Form i] -> Form i
+group :: [Form e] -> Form e
 group forms = defaultForm (GroupForm identity forms)
 
 -- Group a list of forms into one, while also applying a matrix
 -- transformation.
-groupTransform :: Transform -> [Form i] -> Form i
+groupTransform :: Transform -> [Form e] -> Form e
 groupTransform matrix forms = defaultForm (GroupForm matrix forms)
 
 -- | Move a form by a given 2D vector. The movement is relative,
 -- i.e. the translation vector provided will be added to the form's
 -- current position.
-move :: V2 Double -> Form i -> Form i
+move :: V2 Double -> Form e -> Form e
 move trans form = form { formPos = formPos form + trans }
 
 -- | Scale a form by a scalar factor. Scaling by 2 will double the size
@@ -351,25 +351,24 @@ move trans form = form { formPos = formPos form + trans }
 -- 'move', the scale function is relative - i.e. if you scaled by 0.5
 -- and then scaled by 0.5 a gain, the final scale would be 0.25 or
 -- a quarter of the form's initial scale.
-scale :: Double -> Form i -> Form i
+scale :: Double -> Form e -> Form e
 scale factor form = form { formScale = factor * formScale form }
 
 -- | Rotate a form by a given angle (in radians).
 -- Like 'move' and 'scale', the rotation is relative.
-rotate :: Double -> Form i -> Form i
+rotate :: Double -> Form e -> Form e
 rotate theta form = form { formTheta = formTheta form + theta }
 
 -- | Change the alpha value of a form (i.e. its transparency).
 -- By default, forms will have an alpha value of 1, in other words,
 -- they are fully opaque. Alternatively, a value of 0 will mean the
 -- form is completely hidden.
-alpha :: Double -> Form i -> Form i
+alpha :: Double -> Form e -> Form e
 alpha x form = form { formAlpha = x }
 
 -- | Create a form from a `Text` structure, which in turn
 -- contains all of the text values and styling. This allows
 -- you to render a the text graphically (and in turn it's a regular old
 -- form, so it can be translated, rotated, etc.).
-text :: Text -> Form i
+text :: Text -> Form e
 text = defaultForm . TextForm
-

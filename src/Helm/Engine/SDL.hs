@@ -1,23 +1,26 @@
-{-| Contains the SDL implementation of Helm. -}
+{-# LANGUAGE TypeFamilies #-}
+-- | Contains the SDL implementation of Helm.
 module Helm.Engine.SDL
   (
-   -- * Types
-   SDLEngine
-  ,SDLEngineConfig(..)
-  ,
-   -- * Utilities
-   defaultConfig
-  ,startup
-  ,startupWith)
-  where
+    -- * Types
+    SDLEngine
+  , SDLEngineConfig(..)
+    -- * Startup
+  , defaultConfig
+  , startup
+  , startupWith
+    -- * Asset Loading
+  , withImage
+  ) where
 
-import           Data.Int (Int32)
+import           Control.Monad (when)
 import qualified Data.Text as T
-import           Data.Word (Word32)
 
 import           FRP.Elerea.Param
 import           Linear.Affine (Point(P))
+import           Linear.Metric (distance)
 import           Linear.V2 (V2(V2))
+
 import qualified SDL
 import qualified SDL.Event as Event
 import qualified SDL.Init as Init
@@ -27,55 +30,24 @@ import qualified SDL.Video as Video
 import           SDL.Video (WindowConfig(..))
 import qualified SDL.Video.Renderer as Renderer
 
-import           Helm.Asset
-import           Helm.Engine (Engine(..), Key, MouseButton)
-import           Helm.Graphics (Graphics(..))
-import           Helm.Graphics2D (Element)
+import           Helm.Engine (Engine(..))
+import           Helm.Engine.SDL.Asset (withImage)
+import           Helm.Engine.SDL.Engine (SDLEngine(..), SDLEngineConfig(..))
+import qualified Helm.Engine.SDL.Graphics2D as Graphics2D
 import           Helm.Engine.SDL.Keyboard (mapKey)
 import           Helm.Engine.SDL.Mouse (mapMouseButton)
-import qualified Helm.Engine.SDL.Graphics2D as Graphics2D
+import           Helm.Graphics (Graphics(..))
+import           Helm.Graphics2D (Collage)
 
--- | A data structure describing how to run the SDL engine.
--- Use 'defaultConfig' and then only change the data fields that you need to.
-data SDLEngineConfig = SDLEngineConfig
-  { windowDimensions :: (Int, Int)
-  , windowIsFullscreen :: Bool
-  , windowIsResizable :: Bool
-  , windowTitle :: String
-  }
-
--- | A data structure describing the SDL engine's state.
-data SDLEngine = SDLEngine
-  { window :: Video.Window
-  , renderer :: Video.Renderer
-  , engineConfig :: SDLEngineConfig
-  , lastMousePress :: Maybe (Word32, V2 Int32)
-
-  , mouseMoveEventSignal :: SignalGen SDLEngine (Signal [V2 Int])
-  , mouseMoveEventSink :: V2 Int -> IO ()
-  , mouseDownEventSignal :: SignalGen SDLEngine (Signal [(MouseButton, V2 Int)])
-  , mouseDownEventSink :: (MouseButton, V2 Int) -> IO ()
-  , mouseUpEventSignal :: SignalGen SDLEngine (Signal [(MouseButton, V2 Int)])
-  , mouseUpEventSink :: (MouseButton, V2 Int) -> IO ()
-  , mouseClickEventSignal :: SignalGen SDLEngine (Signal [(MouseButton, V2 Int)])
-  , mouseClickEventSink :: (MouseButton, V2 Int) -> IO ()
-
-  , keyboardDownEventSignal :: SignalGen SDLEngine (Signal [Key])
-  , keyboardDownEventSink :: Key -> IO ()
-  , keyboardUpEventSignal :: SignalGen SDLEngine (Signal [Key])
-  , keyboardUpEventSink :: Key -> IO ()
-  , keyboardPressEventSignal :: SignalGen SDLEngine (Signal [Key])
-  , keyboardPressEventSink :: Key -> IO ()
-
-  , windowResizeEventSignal :: SignalGen SDLEngine (Signal [V2 Int])
-  , windowResizeEventSink :: V2 Int -> IO ()
-  }
-
+-- FIXME: Find a nice and easy way to have this instance with the SDLEngine type.
+-- Can't avoid the orphan instance without dependency hell right now.
 instance Engine SDLEngine where
-  loadImage _ = return $ Image ()
-
-  render engine (Graphics2D element) = render2d engine element
-  cleanup _ = Init.quit
+  render engine (Graphics2D coll) = render2d engine coll
+  cleanup SDLEngine { window, renderer, texture } = do
+    Renderer.destroyTexture texture
+    Video.destroyWindow window
+    Video.destroyRenderer renderer
+    Init.quit
 
   tick engine = do
     mayhaps <- Event.pumpEvents >> Event.pollEvent
@@ -107,7 +79,7 @@ instance Engine SDLEngine where
 -- | Creates the default configuration for the engine. You should change the values where necessary.
 defaultConfig :: SDLEngineConfig
 defaultConfig = SDLEngineConfig
-  { windowDimensions = (800, 600)
+  { windowDimensions = V2 800 600
   , windowIsFullscreen = False
   , windowIsResizable = True
   , windowTitle = "Helm"
@@ -117,13 +89,23 @@ defaultConfig = SDLEngineConfig
 startup :: IO SDLEngine
 startup = startupWith defaultConfig
 
--- | Initializes a new engine with some configration.
+-- | Prepare a texture for streamed rendering based of a window size.
+prepTexture :: V2 Int -> Video.Renderer -> IO Renderer.Texture
+prepTexture dims renderer =
+  Renderer.createTexture renderer mode access $ fromIntegral <$> dims
+
+  where
+    mode = Renderer.ARGB8888
+    access = Renderer.TextureAccessStreaming
+
+-- | Initializes a new engine with some configration, ready to be 'run'.
 startupWith :: SDLEngineConfig -> IO SDLEngine
-startupWith config@SDLEngineConfig{..} = do
+startupWith config@SDLEngineConfig { .. } = do
   Init.initializeAll
 
   window <- Video.createWindow (T.pack windowTitle) windowConfig
   renderer <- Video.createRenderer window (-1) rendererConfig
+  texture <- prepTexture windowDimensions renderer
 
   mouseMoveEvent <- externalMulti
   mouseDownEvent <- externalMulti
@@ -139,6 +121,7 @@ startupWith config@SDLEngineConfig{..} = do
   return SDLEngine
     { window = window
     , renderer = renderer
+    , texture = texture
     , engineConfig = config
     , lastMousePress = Nothing
 
@@ -162,10 +145,9 @@ startupWith config@SDLEngineConfig{..} = do
     , windowResizeEventSink = snd windowResizeEvent
     }
   where
-    (w, h) = windowDimensions
     rendererConfig = Video.RendererConfig Video.AcceleratedVSyncRenderer False
     windowConfig = Video.defaultWindow
-      { windowInitialSize = V2 (fromIntegral w) (fromIntegral h)
+      { windowInitialSize = fromIntegral <$> windowDimensions
       , windowMode = if windowIsFullscreen
                      then Video.Fullscreen
                      else Video.Windowed
@@ -173,20 +155,14 @@ startupWith config@SDLEngineConfig{..} = do
       }
 
 -- | Renders a 2D element to the engine screen.
-render2d :: SDLEngine -> Element -> IO ()
-render2d SDLEngine { window, renderer } element = do
+render2d :: SDLEngine -> Collage SDLEngine -> IO ()
+render2d SDLEngine { window, renderer, texture } element = do
   dims <- SDL.get $ Video.windowSize window
-  texture <- Renderer.createTexture renderer mode access dims
 
   Graphics2D.render texture dims element
   Renderer.clear renderer
   Renderer.copy renderer texture Nothing Nothing
-  Renderer.destroyTexture texture
   Renderer.present renderer
-
-  where
-    mode = Renderer.ARGB8888
-    access = Renderer.TextureAccessStreaming
 
 -- | Turns a point containing a vector into a regular vector.
 depoint :: Point f a -> f a
@@ -197,9 +173,16 @@ depoint (P x) = x
 -- throughout the engine.
 sinkEvent :: SDLEngine -> Event.EventPayload -> IO SDLEngine
 sinkEvent engine (Event.WindowResizedEvent Event.WindowResizedEventData { .. }) = do
-  windowResizeEventSink engine $ fromIntegral <$> windowResizedEventSize
+  windowResizeEventSink engine dims
+  Renderer.destroyTexture texture
 
-  return engine
+  resized <- prepTexture dims renderer
+
+  return engine { texture = resized }
+
+  where
+    dims = fromIntegral <$> windowResizedEventSize
+    SDLEngine { texture, renderer } = engine
 
 sinkEvent engine (Event.MouseMotionEvent Event.MouseMotionEventData { .. }) = do
   mouseMoveEventSink engine $ fromIntegral <$> depoint mouseMotionEventPos
@@ -231,7 +214,7 @@ sinkEvent engine (Event.MouseButtonEvent Event.MouseButtonEventData { .. }) =
       ticks <- Time.ticks
       mouseDownEventSink engine tup
 
-      return engine { lastMousePress = Just (ticks, pos) }
+      return engine { lastMousePress = Just (ticks, dubPos) }
 
     Event.Released -> do
       mouseUpEventSink engine tup
@@ -242,13 +225,13 @@ sinkEvent engine (Event.MouseButtonEvent Event.MouseButtonEventData { .. }) =
       -- event being in a very close proximity to a previous mouse down event.
       -- We manually calculate whether this was a click or not.
       case lastMousePress of
-        Just (lastTicks, V2 lastX lastY) -> do
+        Just (lastTicks, lastPos) -> do
           ticks <- Time.ticks
 
-          -- Check that it's a expected amount of time for a click and that the mouse has basically stayed in place
-          if ticks - lastTicks < clickMs && (abs (lastX - x) <= clickRadius && abs (lastY - y) <= clickRadius)
-          then mouseClickEventSink engine tup
-          else return ()
+          -- Check that it's a expected amount of time for a click and that the mouse
+          -- has basically stayed in place
+          when (distance dubPos lastPos <= clickRadius && ticks - lastTicks < clickMs)
+               (mouseClickEventSink engine tup)
 
         Nothing -> return ()
 
@@ -256,9 +239,10 @@ sinkEvent engine (Event.MouseButtonEvent Event.MouseButtonEventData { .. }) =
 
   where
     SDLEngine { lastMousePress } = engine
-    clickMs = 500  -- How long between mouse down/up to recognise clicks
+    clickMs = 500    -- How long between mouse down/up to recognise clicks
     clickRadius = 1  -- The pixel radius to be considered a click.
-    pos@(V2 x y) = depoint mouseButtonEventPos
+    pos = depoint mouseButtonEventPos
+    dubPos = fromIntegral <$> pos
     tup = (mapMouseButton mouseButtonEventButton, fromIntegral <$> pos)
 
 sinkEvent engine _ = return engine

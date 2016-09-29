@@ -22,6 +22,8 @@ module Helm.Time
 import Control.Monad.State (get)
 import Control.Monad.IO.Class (liftIO)
 
+import FRP.Elerea.Param (transfer, input, snapshot, effectful)
+
 import Helm.Engine (Cmd(..), Sub(..), Engine(..))
 
 -- | A type describing an amount of time in an arbitary unit.
@@ -63,8 +65,8 @@ inHours n = n / hour
 -- | Map the running time of the engine to a game action.
 -- Note that this is not the current clock time but rather the engine time,
 -- i.e. when the engine first starts running, the applied value will be zero.
-now ::
-  Engine e
+now
+  :: Engine e
   => (Time -> a)  -- ^ The function to map the running time to an action.
   -> Cmd e a      -- ^ The mapped command.
 now f = Cmd $ do
@@ -75,9 +77,20 @@ now f = Cmd $ do
 
 -- | Subscribe to the running time of the engine and map to a game action,
 -- producing events at a provided interval.
-every ::
-  Engine e
+every
+  :: Engine e
   => Time         -- ^ The interval of time to produce events at.
   -> (Time -> a)  -- ^ The function to map the running time to an action.
   -> Sub e a      -- ^ The mapped subscription.
-every _ _ = Sub $ return $ return []
+every interval f = Sub $ do
+  engine <- input >>= snapshot
+  time <- effectful $ runningTime engine
+  sig <- transfer (0, []) step time
+
+  return $ map f . snd <$> sig
+
+  where
+    step _ t (lt, _) =
+      if t - lt >= interval
+      then (t, [t])  -- Use new t value with t event
+      else (lt, [])  -- Use old t value with no event

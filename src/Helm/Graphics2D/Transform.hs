@@ -78,6 +78,6 @@ translation (V2 x y) = Transform $ V3 (V3 1 0 x) (V3 0 1 y) (V3 0 0 1)
 scale :: V2 Double -> Transform
 scale (V2 x y) = Transform $ V3 (V3 x 0 0) (V3 y 0 0) (V3 0 0 1)
 
--- Multiply two transformatio nmatrices together..
+-- | Multiply two transformatio nmatrices together..
 multiply :: Transform -> Transform -> Transform
 multiply (Transform a) (Transform b) = Transform $ a * b

@@ -16,8 +16,8 @@ import Linear.V2 (V2)
 import Helm.Engine (Engine(..), Cmd(..), Sub(..))
 
 -- | Map the game window size to a game action.
-size ::
-  Engine e
+size
+  :: Engine e
   => (V2 Int -> a)  -- ^ The function to map the window size to an action.
   -> Cmd e a        -- ^ The mapped command.
 size f = Cmd $ do
@@ -27,8 +27,8 @@ size f = Cmd $ do
   return [sized]
 
 -- | Subscribe to the resize events from the game window and map to a game action.
-resizes ::
-  Engine e
+resizes
+  :: Engine e
   => (V2 Int -> a)  -- ^ The function to map the changed window size to an action.
   -> Sub e a        -- ^ The mapped subscription.
 resizes f = Sub $ do

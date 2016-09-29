@@ -1,4 +1,4 @@
--- | Contains the command related utilities.
+-- | Contains the command type and related utilities.
 module Helm.Cmd (
   -- * Types
   Cmd(..),
@@ -13,8 +13,8 @@ import Control.Monad.Trans.Class (lift)
 import Helm.Engine (Engine, Cmd(..))
 
 -- | Combined a list of mapped commands into a single one.
-batch ::
-  Engine e
+batch
+  :: Engine e
   => [Cmd e a]  -- ^ The list of mapped commands.
   -> Cmd e a    -- ^ The mapped commands accumulated.
 batch cmds = Cmd $ do
@@ -28,8 +28,8 @@ none = Cmd $ return []
 
 -- | Execute an IO monad and then map it to a game action.
 -- This can be used as a kind of 'liftIO'.
-execute ::
-  Engine e
+execute
+  :: Engine e
   => IO b      -- ^ The IO monad to execute.
   -> (b -> a)  -- ^ The function to map the monad result to an action.
   -> Cmd e a   -- ^ The mapped command.

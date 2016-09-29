@@ -16,8 +16,8 @@ import Linear.V2 (V2)
 import Helm.Engine (Sub(..), Engine(..), MouseButton(..))
 
 -- | Subscribe to mouse movement events and map to a game action.
-moves ::
-  Engine e
+moves
+  :: Engine e
   => (V2 Int -> a)  -- ^ The function to map a mouse position to an action.
   -> Sub e a        -- ^ The mapped subscription.
 moves f = Sub $ do
@@ -28,8 +28,8 @@ moves f = Sub $ do
 -- | Subscribe to mouse click events and map to a game action.
 -- This subscription is for all mouse buttons - you'll need to
 -- match over a mouse button if you want to capture a specific one.
-clicks ::
-  Engine e
+clicks
+  :: Engine e
   => (MouseButton -> V2 Int -> a)  -- ^ The function to map a mouse button and position to an action.
   -> Sub e a                       -- ^ The mapped subscription.
 clicks f = Sub $ do
@@ -38,8 +38,8 @@ clicks f = Sub $ do
   fmap (fmap (uncurry f)) <$> mouseClickSignal engine
 
 -- | Subscribe to mouse button down events and map to a game action.
-downs ::
-  Engine e
+downs
+  :: Engine e
   => (MouseButton -> V2 Int -> a)  -- ^ The function to map a mouse button and position to an action.
   -> Sub e a                       -- ^ The mapped subscription.
 downs f = Sub $ do
@@ -48,8 +48,8 @@ downs f = Sub $ do
   fmap (fmap (uncurry f)) <$> mouseDownSignal engine
 
 -- | Subscribe to mouse button up events and map to a game action.
-ups ::
-  Engine e
+ups
+  :: Engine e
   => (MouseButton -> V2 Int -> a)  -- ^ The function to map a mouse button and position to an action.
   -> Sub e a                       -- ^ The mapped subscription.
 ups f = Sub $ do

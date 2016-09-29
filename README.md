@@ -2,7 +2,7 @@
   <a href="http://helm-engine.org" title="Homepage"><img src="http://helm-engine.org/img/logo-alt.png" /></a>
   <br>
   <br>
-  <a href="https://travis-ci.org/z0w0/helm" title="Travis CI"><img src="https://travis-ci.org/z0w0/helm.svg" /></a>
+  <a href="https://circleci.com/gh/z0w0/helm" title="CircleCI"><img src="https://circleci.com/gh/z0w0/helm.svg?style=svg" /></a>
 </p>
 
 ## Introduction
@@ -97,7 +97,10 @@ Helm would benefit from either of the following contributions:
 1. Try out the engine, reporting any issues or suggestions you have.
 2. Look through the source, get a feel for the code and then
    contribute some features or fixes. If you plan on contributing
-   code, please follow [Johan Tibell's Haskell style guide](https://github.com/tibbe/haskell-style-guide/blob/master/haskell-style.md)
-   - with the following exceptions:
+   code, please follow
+   [Johan Tibell's Haskell style guide](https://github.com/tibbe/haskell-style-guide/blob/master/haskell-style.md)
+   with the following exceptions:
    * Up to 120 characters per line are allowed (widescreens for life).
-   * Please use a 2 space indent
+   * Use a two space indent.
+   * Acronyms in all caps for identifiers (while maintaing camel-case), i.e. SDL or 2D/3D.
+   

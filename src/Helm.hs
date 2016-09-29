@@ -1,23 +1,24 @@
-{-| Contains the main functions for interfacing with the engine. -}
+-- | Contains the main functions for interfacing with the engine.
+-- This can be thought of Helm's own Prelude.
 module Helm
   (
-   -- * Types
-   Engine
-  ,GameConfig(..)
-  ,Cmd(..)
-  ,Sub(..)
-  ,Graphics(..)
-   -- * Engine
-  ,run
-  ,loadImage
-  ,loadSound)
-  where
+    -- * Types
+    Cmd(..)
+  , Engine
+  , GameConfig(..)
+  , Graphics(..)
+  , Image
+  , Sub(..)
+    -- * Engine
+  , run
+  ) where
 
 import Control.Exception (finally)
 import Control.Monad (foldM, void)
 import Control.Monad.Trans.State.Lazy (evalStateT)
 import FRP.Elerea.Param (start, embed)
 
+import Helm.Asset (Image)
 import Helm.Engine (Cmd(..), Sub(..), GameConfig(..), Engine(..))
 import Helm.Graphics
 

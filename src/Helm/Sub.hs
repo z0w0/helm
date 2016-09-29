@@ -1,4 +1,4 @@
-{-| Contains the subscription related utilities. -}
+{-| Contains the subscription type and related utilities. -}
 module Helm.Sub
   (
     -- * Types
@@ -14,8 +14,8 @@ import Helm.Engine (Engine, Sub(..))
 -- This is allows for subscriptions to multiple input events to be
 -- combined into one mapped subscription that encompasses all the actions
 -- mapped from events.
-batch ::
-  Engine e
+batch
+  :: Engine e
   => [Sub e a]  -- ^ The list of mapped subscriptions.
   -> Sub e a    -- ^ The mapped subscriptions accumulated.
 batch subs = Sub $ do
