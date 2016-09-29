@@ -1,0 +1,11 @@
+machine:
+  ghc:
+    version: 7.10.2
+
+dependencies:
+  pre:
+    - sudo apt-get update
+    - sudo apt-get install libsdl2-dev libcairo2-dev
+
+  post:
+    - cabal install gtk2hs-buildtools
