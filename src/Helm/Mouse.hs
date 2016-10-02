@@ -28,6 +28,10 @@ moves f = Sub $ do
 -- | Subscribe to mouse click events and map to a game action.
 -- This subscription is for all mouse buttons - you'll need to
 -- match over a mouse button if you want to capture a specific one.
+--
+-- Note that Helm defines a mouse click as a mouse up event which
+-- came after a very recent mouse down event in a close radius
+-- of the mouse down event.
 clicks
   :: Engine e
   => (MouseButton -> V2 Int -> a)  -- ^ The function to map a mouse button and position to an action.

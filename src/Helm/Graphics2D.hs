@@ -14,6 +14,7 @@ module Helm.Graphics2D
   , Shape(..)
   , ShapeStyle(..)
   , Transform(..)
+  , Text(..)
   -- * Collages
   , collage
   , clip
@@ -57,10 +58,10 @@ import Linear.V2 (V2(V2))
 
 import Helm.Asset (Image)
 import Helm.Color (Color, rgb, Gradient)
-import Helm.Graphics2D.Text (Text)
+import Helm.Graphics2D.Text (Text(..))
 import Helm.Graphics2D.Transform (Transform(..), identity)
 
--- | A collage is a collection of forms, which in turn are rendereable
+-- | Represents a collection of forms, which in turn are rendereable
 -- shapes and lines. In Helm, the collage is the main structure
 -- representing 2D graphics and is passed directly to the engine
 -- to be rendered by your view function. It's best to think of a collage
@@ -74,7 +75,7 @@ data Collage e = Collage
   , collageCenter :: Maybe (V2 Double)  -- ^ The optional center of the collage.
   }
 
--- | Creates a collage from a list of forms.
+-- | Create a collage from a list of forms.
 -- By default, the collage will not be clipped
 -- and will not be centered. The origin point of the contained
 -- forms will be the top-left of the collage (which in the case of rendering
@@ -87,7 +88,7 @@ collage forms = Collage
   , collageCenter = Nothing
   }
 
--- | Centers a collage around a fixed point. This is useful to implement
+-- | Center a collage around a fixed point. This is useful to implement
 -- 2D game cameras - usually, you have the center of the screen
 -- at the position of the game camera (which in a 2D platformer,
 -- is usually your game character). Note that this will center
@@ -99,7 +100,7 @@ center ::
   -> Collage e  -- ^ The centered collage.
 center pos col = col { collageCenter = Just pos }
 
--- | Clips a collage by provided dimensions. Note that by default,
+-- | Clip a collage by provided dimensions. Note that by default,
 -- a collage will not be clipped and anything beyond the window dimensions
 -- will still technically be rendered (although obviously it will not appear
 -- on the game screen). By composing a collage with this function,
@@ -114,7 +115,7 @@ center pos col = col { collageCenter = Just pos }
 -- indeed speed up the performance, but it is down to the engine implementation for how much
 -- this actually helps.
 --
--- In that sense, it's up to the user of Helm to make sure they're not rendering huge amounts
+-- In that sense, it's up to the library user to make sure they're not rendering huge amounts
 -- of forms that aren't even in the screen's bounds.
 clip ::
      V2 Double  -- ^ The dimensions to clip the collage with.
@@ -122,25 +123,25 @@ clip ::
   -> Collage e  -- ^ The clipped collage.
 clip dims col = col { collageDims = Just dims }
 
--- Creates a form from a collage. This might seem a little strange (as
+-- | Create a form from a collage. This might seem a little strange (as
 -- a collage is generally what you provide to the engine to render the 2D graphics)
--- but by allowing this functionality, you can compose collages from other collages,
+-- but by allowing this functionality, you can compose collages from other collages.
 toForm :: Collage e -> Form e
 toForm = defaultForm . CollageForm
 
--- | The style of forms available. The form style holds data specific
+-- | Represents the styles of forms available. The form style holds data specific
 -- to a variation of form, and the 'Form' is instead a general version of this
 -- with positioning information, rotation, scale, etc.
 data FormStyle e
-  = PathForm LineStyle Path                   -- ^ A form composed of a path
-  | ShapeForm (ShapeStyle e) Shape            -- ^ A form composed of a shape.
-  | TextForm Text                             -- ^ A form composed of a piece of text, including string and style info.
+  = PathForm LineStyle Path                           -- ^ A form composed of a path
+  | ShapeForm (ShapeStyle e) Shape                    -- ^ A form composed of a shape.
+  | TextForm Text                                     -- ^ A form composed of a piece of text, including string and style info.
   | ImageForm (Image e) (V2 Double) (V2 Double) Bool  -- ^ A form composed of an image
-  | GroupForm Transform [Form e]              -- ^ A form composed of a group of forms, with a transformation.
-  | CollageForm (Collage e)                   -- ^ A form composed of a collage (which in turn is a collection of forms).
+  | GroupForm Transform [Form e]                      -- ^ A form composed of a group of forms, with a transformation.
+  | CollageForm (Collage e)                           -- ^ A form composed of a collage (which in turn is a collection of forms).
 
--- | The form type represents something that can be rendered to the screen (
--- under a collage). There are many different types of forms, which can be composed
+-- | Represents something that can be rendered to the screen (
+-- contained under a collage). There are many different types of forms, which can be composed
 -- below but are generally represented by the 'FormStyle' type.
 --
 -- A form might be an image, or a rectangle, or a circle, or even a collection
@@ -153,27 +154,27 @@ data Form e = Form
   , formStyle :: FormStyle e  -- ^ The style of form.
   }
 
--- | The style of shape filling available.
+-- | Represents the style of shape filling available.
 data FillStyle e
   = Solid Color        -- ^ The shape will be filled with a solid color.
   | Texture (Image e)  -- ^ The shape will be filled with a texture (a.k.a. image).
   | Gradient Gradient  -- ^ The shape will be filled with a gradient (which can be linear or radial).
 
--- | The shape of the ends of a line.
+-- | Represents the shape of the ends of a line.
 data LineCap
   = FlatCap
   | RoundCap
   | PaddedCap
     deriving (Show, Eq, Ord, Read)
 
--- | The shape of the joints between line segments.
+-- | Represents the shape of the joints between line segments.
 data LineJoin
   = SmoothJoin
   | SharpJoin Double
   | ClippedJoin
     deriving (Show, Eq, Ord, Read)
 
--- | The style used for drawing lines. It's best
+-- | Represents the style used for drawing lines. It's best
 -- to use 'defaultLine' and then only change the fields
 -- you need to.
 data LineStyle = LineStyle
@@ -185,7 +186,7 @@ data LineStyle = LineStyle
   , lineDashOffset :: Double
   } deriving (Show, Eq)
 
--- | A path, which is a series of 2D points which will be drawn in sequence.
+-- | Represents a series of 2D points which will be drawn in sequence.
 -- Like a 'Shape', a path on its own holds no styling information.
 data Path = Path [V2 Double] deriving (Show, Eq, Ord, Read)
 
@@ -193,7 +194,7 @@ data Path = Path [V2 Double] deriving (Show, Eq, Ord, Read)
 path :: [V2 Double] -> Path
 path = Path
 
--- | A shape, which is a collection of points that when drawn in order
+-- | Represents a collection of points that when drawn in order
 -- will result in a closed polygon. They have no style information -
 -- rather, you compose shapes into a form with fill or line style
 -- and that affects their appearance.
@@ -209,32 +210,32 @@ data Shape
   | ArcShape (V2 Double) Double Double Double (V2 Double)
     deriving (Show, Eq, Ord, Read)
 
--- | Create a arbitary-sided polygon from a path.
+-- | Create an arbitary-sided polygon from a path.
 -- The points provided should refer to each corner of the -gon,
 -- however the points do not need to loop around (i.e. the final point
 -- will automatically connect to the first point).
 polygon :: Path -> Shape
 polygon = PolygonShape
 
--- | Creates a rectangular shape from a 2D vector, with
+-- | Create a rectangular shape from a 2D vector, with
 -- x and y representing width and height, respectively.
 rect :: V2 Double -> Shape
 rect = RectangleShape
 
--- | Creates a square shape with a side length.
+-- | Create a square shape with a side length.
 square :: Double -> Shape
 square n = rect (V2 n n)
 
--- | Creates an oval shape with a width and height.
+-- | Create an oval shape with a width and height.
 oval :: Double -> Double -> Shape
 oval w h = ArcShape (V2 0 0) 0 (2 * pi) 1 (V2 (w / 2) (h / 2))
 
--- | Creates a circle shape with a radius.
+-- | Create a circle shape with a radius.
 circle :: Double -> Shape
 circle r = ArcShape (V2 0 0) 0 (2 * pi) r (V2 1 1)
 
-{-| Creates a generic n-sided polygon (e.g. octagon, pentagon, etc) with
-    an amount of sides and a radius. -}
+-- | Create a generic n-sided polygon (e.g. octagon, pentagon, etc) with
+-- a side count and radius.
 ngon :: Int -> Double -> Shape
 ngon n r = polygon $ path $ map point series
   where
@@ -243,7 +244,7 @@ ngon n r = polygon $ path $ map point series
     m = fromIntegral n
     t = 2 * pi / m
 
--- | Creates the default line style. By default, the line is black with a width of 1,
+-- | Create the default line style. By default, the line is black with a width of 1,
 -- flat caps and regular sharp joints.
 defaultLine :: LineStyle
 defaultLine = LineStyle
@@ -255,7 +256,7 @@ defaultLine = LineStyle
   , lineDashOffset = 0
   }
 
--- | Creates a initial form from a specific form style.
+-- | Create a initial form from a specific form style.
 -- The form will be at the origin point (0, 0).
 defaultForm :: FormStyle e -> Form e
 defaultForm style = Form
@@ -266,7 +267,7 @@ defaultForm style = Form
   , formStyle = style
   }
 
--- | The styled used for drawing a shape.
+-- | Represents the style used for drawing a shape.
 data ShapeStyle e
   = OutlinedShape LineStyle    -- ^ Stroke/outline the shape, with a specific line style.
   | FilledShape (FillStyle e)  -- ^ Fill the shape, with a specific fill style.
@@ -300,31 +301,31 @@ textured img = fill (Texture img)
 gradient :: Gradient -> Shape -> Form e
 gradient grad = fill (Gradient grad)
 
--- | Creates a form from a shape by outlining it with a specific line style.
+-- | Create a form from a shape by outlining it with a specific line style.
 outlined :: LineStyle -> Shape -> Form e
 outlined style shape = defaultForm (ShapeForm (OutlinedShape style) shape)
 
--- | Creates a form from a path by tracing it with a specific line style.
+-- | Create a form from a path by tracing it with a specific line style.
 traced :: LineStyle -> Path -> Form e
 traced style p = defaultForm (PathForm style p)
 
--- | Creates a empty form, useful for having forms rendered only at some state.
+-- | Create an empty form, useful for having forms rendered only at some state.
 blank :: Form e
 blank = group []
 
--- | Creates a form from an image. If the image dimensions are not the
+-- | Create a form from an image. If the image dimensions are not the
 -- same as provided, then it will stretch/shrink to fit.
 image :: V2 Double -> Image e -> Form e
 image dims img = defaultForm $ ImageForm img (V2 0 0) dims True
 
--- | Creates a form from an image with a 2D vector describing its dimensions.
+-- | Create a form from an image with a 2D vector describing its dimensions.
 -- If the image dimensions are not the same as given, then it will only use the relevant pixels
 -- (i.e. cut out the given dimensions instead of scaling). If the given dimensions are bigger than
 -- the actual image, than irrelevant pixels are ignored.
 fittedImage :: V2 Double -> Image e -> Form e
 fittedImage dims img = defaultForm $ ImageForm img (V2 0 0) dims False
 
--- | Create an element from an image by cropping it with a certain position, width, height
+-- | Create a form from an image by cropping it with a certain position, width, height
 -- and image file path. This can be used to divide a single image up into smaller ones (
 -- for example, drawing a single sprite from a sprite sheet).
 croppedImage :: V2 Double -> V2 Double -> Image e -> Form e
@@ -335,7 +336,7 @@ croppedImage pos dims img = defaultForm $ ImageForm img pos dims False
 group :: [Form e] -> Form e
 group forms = defaultForm (GroupForm identity forms)
 
--- Group a list of forms into one, while also applying a matrix
+-- | Group a list of forms into one, while also applying a matrix
 -- transformation.
 groupTransform :: Transform -> [Form e] -> Form e
 groupTransform matrix forms = defaultForm (GroupForm matrix forms)

@@ -1,4 +1,7 @@
--- | Contains the SDL implementation 2D graphics rendering implementation (uses Cairo).
+-- | Contains the SDL implementation 2D graphics rendering implementation.
+--
+-- The SDL engine uses Cairo for its 2D vector graphics, which is hardware accelerated
+-- and generally pretty fast.
 module Helm.Engine.SDL.Graphics2D (render) where
 
 import           Data.Foldable (forM_)
@@ -19,7 +22,7 @@ import           Helm.Engine.SDL.Engine (SDLEngine)
 import           Helm.Graphics2D
 import           Helm.Graphics2D.Text
 
--- | Renders a 2D element to an SDL texture (under a width and height).
+-- | Render a 2D element to an SDL texture (with a width and height).
 render :: Renderer.Texture -> V2 CInt -> Collage SDLEngine -> IO ()
 render tex (V2 w h) coll = do
   (pixels, pitch) <- Renderer.lockTexture tex Nothing
@@ -34,6 +37,7 @@ render tex (V2 w h) coll = do
 
   Renderer.unlockTexture tex
 
+-- | Render a collage (a group of forms with context).
 renderCollage :: Collage SDLEngine -> Cairo.Render ()
 renderCollage Collage { .. } = do
   Cairo.save
@@ -47,22 +51,28 @@ renderCollage Collage { .. } = do
 
   Cairo.restore
 
--- | A utility function that maps to a Pango font weight based off our variant.
+-- | Map a 'FontWeight' to a Pango font weight.
 mapFontWeight :: FontWeight -> Pango.Weight
 mapFontWeight weight = case weight of
   LightWeight  -> Pango.WeightLight
   NormalWeight -> Pango.WeightNormal
   BoldWeight   -> Pango.WeightBold
 
--- | A utility function that maps to a Pango font style based off our variant.
+-- | Map a 'FontStyle' variant to a Pango font style.
 mapFontStyle :: FontStyle -> Pango.FontStyle
 mapFontStyle style = case style of
   NormalStyle  -> Pango.StyleNormal
   ObliqueStyle -> Pango.StyleOblique
   ItalicStyle  -> Pango.StyleItalic
 
--- | A utility function that goes into a state of transformation and then pops it when finished.
-withTransform :: Double -> Double -> Double -> Double -> Cairo.Render () -> Cairo.Render ()
+-- | Setup a transformation state, render something with it, and then restore the old state.
+withTransform
+  :: Double           -- ^ The x and y scale factor of the state.
+  -> Double           -- ^ The theta rotation of the state, in radians.
+  -> Double           -- ^ The x translation value for the state.
+  -> Double           -- ^ The y translation value for the state.
+  -> Cairo.Render ()  -- ^ The render monad to run with the transformation state.
+  -> Cairo.Render ()  -- ^ The final render monad.
 withTransform s t x y f = do
   Cairo.save
   Cairo.scale s s
@@ -71,22 +81,23 @@ withTransform s t x y f = do
   f
   Cairo.restore
 
--- | A utility function that sets the Cairo line cap based off of our version.
+-- | Set the Cairo line cap from a 'LineCap'.
 setLineCap :: LineCap -> Cairo.Render ()
 setLineCap cap = case cap of
   FlatCap   -> Cairo.setLineCap Cairo.LineCapButt
   RoundCap  -> Cairo.setLineCap Cairo.LineCapRound
   PaddedCap -> Cairo.setLineCap Cairo.LineCapSquare
 
--- | A utility function that sets the Cairo line style based off of our version.
+-- | Set the Cairo line join from a 'LineJoin'.
 setLineJoin :: LineJoin -> Cairo.Render ()
 setLineJoin join = case join of
   SmoothJoin    -> Cairo.setLineJoin Cairo.LineJoinRound
-  SharpJoin lim -> Cairo.setLineJoin Cairo.LineJoinMiter >> Cairo.setMiterLimit lim
   ClippedJoin   -> Cairo.setLineJoin Cairo.LineJoinBevel
+  SharpJoin lim -> do Cairo.setLineJoin Cairo.LineJoinMiter
+                      Cairo.setMiterLimit lim
 
--- | A utility function that sets up all the necessary settings with Cairo
--- to render with a line style and then strokes afterwards. Assumes
+-- | Set up all the necessary settings with Cairo
+-- to render with a line style (and then stroke the line). Assumes
 -- that all drawing paths have already been setup before being called.
 setLineStyle :: LineStyle -> Cairo.Render ()
 setLineStyle LineStyle { lineColor = Color r g b a, .. } = do
@@ -97,8 +108,8 @@ setLineStyle LineStyle { lineColor = Color r g b a, .. } = do
   Cairo.setDash lineDashing lineDashOffset
   Cairo.stroke
 
--- | A utility function that sets up all the necessary settings with Cairo
--- to render with a fill style and then fills afterwards. Assumes
+-- | Set up all the necessary settings with Cairo
+-- to render with a fill style (and then fill the line). Assumes
 -- that all drawing paths have already been setup before being called.
 setFillStyle :: FillStyle SDLEngine -> Cairo.Render ()
 setFillStyle (Solid (Color r g b a)) = do
@@ -118,14 +129,14 @@ setFillStyle (Gradient (Radial (sx, sy) sr (ex, ey) er points)) =
   Cairo.withRadialPattern sx sy sr ex ey er $ \ptn ->
     setGradientFill ptn points
 
--- | A utility function that adds color stops to a pattern and then fills it.
+-- | Add color stops to a pattern and then fill it.
 setGradientFill :: Cairo.Pattern -> [(Double, Color)] -> Cairo.Render ()
 setGradientFill ptn points = do
   Cairo.setSource ptn
   mapM_ (\(o, Color r g b a) -> Cairo.patternAddColorStopRGBA ptn o r g b a) points
   Cairo.fill
 
--- | A utility that renders a form.
+-- | Render a form.
 renderForm :: Form SDLEngine -> Cairo.Render ()
 renderForm Form { formPos = V2 x y, .. } = withTransform formScale formTheta x y $ do
   Cairo.save
@@ -157,8 +168,6 @@ renderForm Form { formPos = V2 x y, .. } = withTransform formScale formTheta x y
         FilledShape fs -> setFillStyle fs
 
     TextForm Text { textColor = Color r g b a, .. } -> do
-      Cairo.save
-
       layout <- Pango.createLayout textString
 
       Cairo.liftIO $ Pango.layoutSetAttributes layout
@@ -173,7 +182,6 @@ renderForm Form { formPos = V2 x y, .. } = withTransform formScale formTheta x y
       Cairo.translate ((-w / 2) - tx) ((-h / 2) - ty)
       Cairo.setSourceRGBA r g b a
       Pango.showLayout layout
-      Cairo.restore
 
       where
         i = 0
@@ -198,7 +206,7 @@ renderForm Form { formPos = V2 x y, .. } = withTransform formScale formTheta x y
         Cairo.fill
 
     GroupForm (Transform (V3 (V3 a b lx) (V3 c d ly) _)) forms -> do
-      Cairo.setMatrix $ Matrix a b c d lx ly
+      Cairo.transform $ Matrix a b c d lx ly
       mapM_ renderForm forms
 
     CollageForm coll -> renderCollage coll

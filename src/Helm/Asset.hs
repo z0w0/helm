@@ -1,4 +1,4 @@
--- | Contains the asset types (e.g. images).
+-- | Contains the file asset types.
 module Helm.Asset
   (
     -- * Type Families

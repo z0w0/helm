@@ -6,29 +6,17 @@ module Helm.Engine.SDL.Engine
   , SDLEngineConfig(..)
   ) where
 
-import           Control.Monad (when)
 import           Data.Word (Word32)
 
-import qualified Data.Text as T
-import           FRP.Elerea.Param (Signal, SignalGen, externalMulti)
-import           Linear.Affine (Point(P))
-import           Linear.Metric (distance)
-import           Linear.V2 (V2(V2))
-import qualified SDL
-import           SDL (Keysym(..))
-import qualified SDL.Event as Event
-import qualified SDL.Init as Init
-import qualified SDL.Time as Time
+import           FRP.Elerea.Param (Signal, SignalGen)
+import           Linear.V2 (V2)
 import qualified SDL.Video as Video
-import           SDL.Video (WindowConfig(..))
 import qualified SDL.Video.Renderer as Renderer
 
-import           Helm.Engine (Engine(..), MouseButton, Key)
-import           Helm.Graphics (Graphics(..))
-import           Helm.Graphics2D (Collage)
+import           Helm.Engine (MouseButton, Key)
 
--- | A data structure describing how to run the SDL engine.
--- Use 'defaultConfig' and then only change the data fields that you need to.
+-- | Represents the configuration to run the SDL engine with.
+-- Use 'defaultConfig' and then only change the necessary fields.
 data SDLEngineConfig = SDLEngineConfig
   { windowDimensions :: V2 Int
   , windowIsFullscreen :: !Bool
@@ -36,7 +24,7 @@ data SDLEngineConfig = SDLEngineConfig
   , windowTitle :: !String
   }
 
--- | A data structure describing the SDL engine's state.
+-- | Represents the SDL engine's internal state.
 data SDLEngine = SDLEngine
   { window :: Video.Window
   , renderer :: Video.Renderer

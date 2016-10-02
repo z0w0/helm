@@ -1,5 +1,5 @@
 {-# LANGUAGE TypeFamilies #-}
--- | Contains the SDL implementation of Helm.
+-- | Contains the SDL engine implementation of Helm.
 module Helm.Engine.SDL
   (
     -- * Types
@@ -76,7 +76,7 @@ instance Engine SDLEngine where
   runningTime _ = fromIntegral <$> Time.ticks
   windowSize SDLEngine { window } = fmap (fmap fromIntegral) . SDL.get $ Video.windowSize window
 
--- | Creates the default configuration for the engine. You should change the values where necessary.
+-- | The default configuration for the engine. You should change the values where necessary.
 defaultConfig :: SDLEngineConfig
 defaultConfig = SDLEngineConfig
   { windowDimensions = V2 800 600
@@ -85,7 +85,7 @@ defaultConfig = SDLEngineConfig
   , windowTitle = "Helm"
   }
 
--- | Initialises a new engine with default configuration. The engine can then be run later using 'run'.
+-- | Initialize a new engine with default configuration. The engine can then be run later using 'run'.
 startup :: IO SDLEngine
 startup = startupWith defaultConfig
 
@@ -98,7 +98,7 @@ prepTexture dims renderer =
     mode = Renderer.ARGB8888
     access = Renderer.TextureAccessStreaming
 
--- | Initializes a new engine with some configration, ready to be 'run'.
+-- | Initialize a new engine with some configration, ready to be 'run'.
 startupWith :: SDLEngineConfig -> IO SDLEngine
 startupWith config@SDLEngineConfig { .. } = do
   Init.initializeAll
@@ -168,9 +168,9 @@ render2d SDLEngine { window, renderer, texture } element = do
 depoint :: Point f a -> f a
 depoint (P x) = x
 
--- | Sinks an SDL event into the Elerea sinks initialized at startup.
--- These sinks then provide an Elerea signal to the subscriptions provided
--- throughout the engine.
+-- | Sink an SDL event into the Elerea sinks initialized at startup of the SDL engine.
+-- These sinks then provide the data for the Elerea signals, which will be in
+-- turn will provide the Helm subscriptions with events.
 sinkEvent :: SDLEngine -> Event.EventPayload -> IO SDLEngine
 sinkEvent engine (Event.WindowResizedEvent Event.WindowResizedEventData { .. }) = do
   windowResizeEventSink engine dims
@@ -240,7 +240,7 @@ sinkEvent engine (Event.MouseButtonEvent Event.MouseButtonEventData { .. }) =
   where
     SDLEngine { lastMousePress } = engine
     clickMs = 500    -- How long between mouse down/up to recognise clicks
-    clickRadius = 1  -- The pixel radius to be considered a click.
+    clickRadius = 3  -- The pixel radius to be considered a click.
     pos = depoint mouseButtonEventPos
     dubPos = fromIntegral <$> pos
     tup = (mapMouseButton mouseButtonEventButton, fromIntegral <$> pos)

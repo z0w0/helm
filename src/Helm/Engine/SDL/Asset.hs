@@ -13,12 +13,13 @@ import           Linear.V2 (V2(..))
 import           Helm.Asset (Image)
 import           Helm.Engine.SDL.Engine (SDLEngine)
 
+-- | Represents an 'Image' for the SDL engine.
 data instance Image SDLEngine = SDLImage
-  { cairoSurface :: Cairo.Surface
-  , imageDims    :: V2 Int
+  { cairoSurface :: Cairo.Surface -- ^ The Cairo surface for the image.
+  , imageDims    :: V2 Int        -- ^ The image dimensions of the image (when it was loaded).
   }
 
--- | Load a PNG image asset using the SDL engine and do
+-- | Load an  image asset using the SDL engine and do
 -- something with it. The image will be cleaned up
 -- once the provided monad completes.
 --

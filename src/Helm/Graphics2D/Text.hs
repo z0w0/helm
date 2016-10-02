@@ -22,21 +22,21 @@ module Helm.Graphics2D.Text
 
 import Helm.Color (Color(..), rgb)
 
--- | The weight for a text's font.
+-- | Represents the weight for a text's font.
 data FontWeight
   = LightWeight
   | NormalWeight
   | BoldWeight
     deriving (Show, Eq, Ord, Enum, Read)
 
--- | The style for a text's font.
+-- | Represents the style for a text's font.
 data FontStyle
   = NormalStyle
   | ObliqueStyle
   | ItalicStyle
     deriving (Show, Eq, Ord, Enum, Read)
 
--- | A structure describing a graphical piece of text,
+-- | Represents a graphical piece of text,
 -- containing a UTF-8 string and any relevant style fields.
 data Text = Text
   { textString :: String
@@ -47,7 +47,7 @@ data Text = Text
   , textStyle :: FontStyle
   } deriving (Show, Eq)
 
--- | Creates the default text. By default the text is black sans-serif
+-- | Create the default text. By default it is is black sans-serif
 -- with a height of 14pt.
 defaultText :: Text
 defaultText = Text {
@@ -59,39 +59,39 @@ defaultText = Text {
   textStyle = NormalStyle
 }
 
--- | Creates a text from a string. By default, this text will be 14pt,
+-- | Create a text from a string. By default, this text will be 14pt,
 -- black and unstyled.
 toText :: String -> Text
 toText str = defaultText { textString = str }
 
--- | Creates a text from a type instancing 'Show'.
+-- | Create a text from a type instancing 'Show'.
 showText :: Show a => a -> Text
 showText a = toText $ show a
 
--- | Sets the weight of a text to bold.
+-- | Set the weight of a text to bold.
 bold :: Text -> Text
 bold txt = txt { textWeight = BoldWeight }
 
--- | Sets the weight of a piece of text to light.
+-- | Set the weight of a piece of text to light.
 light :: Text -> Text
 light txt = txt { textWeight = LightWeight }
 
--- | Sets the slant of a piece of text to italic.
+-- | Set the slant of a piece of text to italic.
 italic :: Text -> Text
 italic txt = txt { textStyle = ItalicStyle }
 
--- | Sets the slant of a piece of text to oblique.
+-- | Set the slant of a piece of text to oblique.
 oblique :: Text -> Text
 oblique txt = txt { textStyle = ObliqueStyle }
 
--- | Sets the color of a piece of text.
+-- | Set the color of a piece of text.
 color :: Color -> Text -> Text
 color col txt = txt { textColor = col }
 
--- | Sets the typeface of the text.
+-- | Set the typeface of the text.
 typeface :: String -> Text -> Text
 typeface face txt = txt { textTypeface = face }
 
--- | Sets the size of a piece of text.
+-- | Set the size of a piece of text.
 height :: Double -> Text -> Text
 height size txt = txt { textHeight = size }

@@ -17,16 +17,16 @@ module Helm.Color (
 
 import GHC.Generics
 
--- | A data structure describing a color. It is represented interally as an RGBA
+-- | Represents a color. It is represented interally as an RGBA
 -- color, but the utility functions 'hsva', 'hsv', etc. can be used to convert
 -- from other popular formats to this structure.
 data Color = Color !Double !Double !Double !Double deriving (Show, Eq, Ord, Read, Generic)
 
--- | Creates an RGB color.
+-- | Create an RGB color.
 rgb :: Double -> Double -> Double -> Color
 rgb r g b = rgba r g b 1
 
--- | Creates an RGB color, with transparency.
+-- | Create an RGBA color.
 rgba :: Double -> Double -> Double -> Double -> Color
 rgba r g b a
   | r < 0 || r > 1 ||
@@ -35,8 +35,7 @@ rgba r g b a
     a < 0 || a > 1 = error "Helm.Color.rgba: color components must be between 0 and 1"
   | otherwise = Color r g b a
 
--- | Takes a list of colors and turns it into a single color by
--- averaging the color components.
+-- | Blends colors together by averaging out their color components.
 blend :: [Color] -> Color
 blend colors =
   (\(Color r g b a) -> Color (r / denom) (g / denom) (b / denom) (a / denom)) $ foldl blend' black colors
@@ -45,12 +44,13 @@ blend colors =
     black = rgb 0 0 0
     denom = fromIntegral $ length colors
 
--- | A utility function that adds colors together.
+-- | Adds colors together.
 blend' :: Color -> Color -> Color
 blend' (Color r1 g1 b1 a1) (Color r2 g2 b2 a2) = Color (r1 + r2) (g1 + g2) (b1 + b2) (a1 + a2)
 
--- | Calculate a complementary color for a provided color. Useful for outlining
--- a filled shape in a color clearly distinguishable from the fill color.
+-- | Calculate the complementary color for a color provided color.
+-- This is useful for outlining a filled shape in a color clearly
+-- distinguishable from the fill color.
 complement :: Color -> Color
 complement (Color r g b a) = hsva (fromIntegral ((round (h + 180) :: Int) `mod` 360)) (s / mx) mx a
   where
@@ -85,8 +85,10 @@ hsva h s v a
 hsv :: Double -> Double -> Double -> Color
 hsv h s v = hsva h s v 1
 
--- | A data structure describing a gradient. There are two types of gradients:
--- radial and linear. Radial gradients are based on a set of colors transitioned
+-- | Represents a gradient.
+--
+-- Helm supports radial and linear gradients.
+-- Radial gradients are based on a set of colors transitioned
 -- over certain radii in an arc pattern. Linear gradients are a set of colors
 -- transitioned in a straight line.
 data Gradient

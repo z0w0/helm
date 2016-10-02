@@ -17,6 +17,7 @@ module Helm.Time
   , now
     -- * Subscriptions
   , every
+  , fps
   ) where
 
 import Control.Monad.State (get)
@@ -26,7 +27,7 @@ import FRP.Elerea.Param (transfer, input, snapshot, effectful)
 
 import Helm.Engine (Cmd(..), Sub(..), Engine(..))
 
--- | A type describing an amount of time in an arbitary unit.
+-- | Represents an amount of time in an arbitary unit.
 -- This type can then be composed with the relevant utility functions.
 type Time = Double
 
@@ -75,6 +76,15 @@ now f = Cmd $ do
 
   return [ticks]
 
+-- | Generic subscription for time interval-based events.
+every' :: Engine e => (e -> Time -> (Time, [Double]) -> (Time, [Double])) -> (Time -> a) -> Sub e a
+every' step f = Sub $ do
+  engine <- input >>= snapshot
+  time <- effectful $ runningTime engine
+  sig <- transfer (0, []) step time
+
+  return $ map f . snd <$> sig
+
 -- | Subscribe to the running time of the engine and map to a game action,
 -- producing events at a provided interval.
 every
@@ -82,15 +92,25 @@ every
   => Time         -- ^ The interval of time to produce events at.
   -> (Time -> a)  -- ^ The function to map the running time to an action.
   -> Sub e a      -- ^ The mapped subscription.
-every interval f = Sub $ do
-  engine <- input >>= snapshot
-  time <- effectful $ runningTime engine
-  sig <- transfer (0, []) step time
-
-  return $ map f . snd <$> sig
-
+every interval = every' step
   where
     step _ t (lt, _) =
       if t - lt >= interval
       then (t, [t])  -- Use new t value with t event
+      else (lt, [])  -- Use old t value with no event
+
+-- | Subscribe to events that emit at a provided frames per second and map to a game action,
+-- producing events at a provided interval. The time value applied is the delta between
+-- the current and last event emission time.
+fps
+  :: Engine e
+  => Int          -- ^ The frames per second.
+  -> (Time -> a)  -- ^ The function to map the time delta to an action.
+  -> Sub e a      -- ^ The mapped subscription.
+fps frames = every' step
+  where
+    interval = 1000 / fromIntegral frames
+    step _ t (lt, _) =
+      if t - lt >= interval
+      then (t, [t - lt])  -- Use new t value with t event
       else (lt, [])  -- Use old t value with no event

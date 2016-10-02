@@ -1,3 +1,5 @@
+-- | Contains the 2D transform matrix type and functions for composing
+-- transformation matricies.
 module Helm.Graphics2D.Transform
   (
     -- * Types
@@ -15,8 +17,8 @@ import qualified Linear.Matrix as Matrix
 import           Linear.V2 (V2(V2))
 import           Linear.V3 (V3(V3))
 
--- | A transformation matrix that can be used to transform
--- forms. This has more uses than just using the composing methods
+-- | Represents a transformation matrix that can be used to transform
+-- forms. This is more useful than just using the composing methods
 -- in the graphics API, as it can perform skewing and other
 -- complex transformation techniques.
 data Transform = Transform (Matrix.M33 Double) deriving (Show, Eq, Ord, Read)

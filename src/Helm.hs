@@ -22,13 +22,14 @@ import Helm.Asset (Image)
 import Helm.Engine (Cmd(..), Sub(..), GameConfig(..), Engine(..))
 import Helm.Graphics
 
-{-| A data structure describing a game's state (that is running under an engine). -}
+-- | A data structure describing a game's state (that is running under an engine).
 data Game e m a = Game
-  { gameConfig :: GameConfig e m a
-  , gameModel :: m
-  , actionSmp :: e -> IO [a]
+  { gameConfig :: GameConfig e m a  -- ^ The configuration of the game, passed by a user.
+  , gameModel :: m                  -- ^ The current game model state.
+  , actionSmp :: e -> IO [a]        -- ^ A feedable monad that returns actions from mapped subscriptions.
   }
 
+-- | Prepare the game state from an engine and some game configuration.
 prepare :: Engine e => e -> GameConfig e m a -> IO (Game e m a)
 prepare engine config = do
   {- The call to 'embed' here is a little bit hacky, but seems necessary
@@ -48,9 +49,28 @@ prepare engine config = do
   where
     GameConfig { initialFn, subscriptionsFn = Sub gen } = config
 
+-- | Runs a Helm game using an engine and some configuration for a game.
+-- An engine should first be initialized separately to Helm, and then passed
+-- to this function. Helm is written this way so that library users can
+-- choose what backend engine they want to use (and hence Helm is engine-agnostic).
+--
+-- The best engine to get started with is the SDL implementation of Helm,
+-- which is currently bundled with the engine (although it will eventually be moved
+-- to its own package). See 'Helm.Engine.SDL.startup' for how
+-- to startup the SDL engine, which can then be run by this function.
 run :: Engine e => e -> GameConfig e m a -> IO ()
-run engine config = void $ (prepare engine config >>= step engine) `finally` cleanup engine
+run engine config@GameConfig { initialFn } =
+  void $ (prepare engine config >>= stepInitial >>= step engine) `finally` cleanup engine
 
+  where
+    Cmd monad = snd initialFn
+    stepInitial game@Game { gameModel } = do
+      actions <- evalStateT monad engine
+      model <- foldM (stepModel engine game) gameModel actions
+
+      return game { gameModel = model }
+
+-- | Step the game state forward.
 step :: Engine e => e -> Game e m a -> IO ()
 step engine game = do
   mayhaps <- tick engine
@@ -68,6 +88,7 @@ step engine game = do
   where
     Game { actionSmp, gameModel, gameConfig = GameConfig { viewFn } } = game
 
+-- | Step the game model forward with a specific game action.
 stepModel :: Engine e => e -> Game e m a -> m -> a -> IO m
 stepModel engine game model action =
   evalStateT monad engine >>= foldM (stepModel engine game) upModel

@@ -7,9 +7,8 @@ module Helm.Graphics
 
 import Helm.Graphics2D (Collage)
 
--- The graphics type contains any form of structure that
--- produces visual graphics to the screen, i.e. either 2D or 3D elements.
+-- | Represents any form of structure that produces visual
+-- graphics to the screen, e.g. 2D or 3D graphics.
 --
--- The type variable e should refer to an 'Engine' instance, however
--- is not strictly required to refer to an instance.
+-- The type variable e should refer to an 'Engine' instance.
 data Graphics e = Graphics2D (Collage e)
