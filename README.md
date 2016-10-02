@@ -63,30 +63,33 @@ between the game state and input events becomes immediately clearer.
 
 ## Installing and Building
 
-Before you can install Helm, you'll to follow the
+Before you can use Helm, you'll to follow the
 [Gtk2Hs installation guide](https://wiki.haskell.org/Gtk2Hs/Installation)
 (which is required for the Haskell Cairo bindings). Additionally, Helm
 requires a GHC version of 7.6 or higher.
 
-To install the latest stable version from the Hackage repository, use:
+Using [Stack](https://haskellstack.org) when working with Helm is recommended.
+To install Helm with Stack, use:
 
 ```
-cabal install helm
+stack install helm
 ```
 
-Alternatively to get the latest development version run:
-
-```
-git clone git://github.com/z0w0/helm.git
-cd helm
-cabal install
-```
+It's best to add Helm as a dependency in your game's Cabal file rather
+than installing it globally, however if you're new to the engine, installing
+it globally will let you run the example Helm games. See the next section.
 
 ## Getting Started
 
 Check out the `examples` directory for some examples; the `flappy` example is a particularly good start.
 Unfortunately, there's little to no example games yet, so if you end up making something cool and lightweight
 that you'd think would be a good example, feel free to open a pull request!
+
+If you have installed Helm globally using Stack, you can run the `flappy` example using:
+
+```
+stack exec helm-example-flappy
+```
 
 ## Documentation
 
