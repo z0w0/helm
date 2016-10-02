@@ -84,7 +84,7 @@ cabal install
 
 ## Getting Started
 
-Check out the `examples` directory for some examples; the `hello` example is a particularly good start.
+Check out the `examples` directory for some examples; the `flappy` example is a particularly good start.
 Unfortunately, there's little to no example games yet, so if you end up making something cool and lightweight
 that you'd think would be a good example, feel free to open a pull request!
 

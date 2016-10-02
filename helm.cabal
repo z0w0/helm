@@ -59,39 +59,33 @@ library
     text >= 1.1.1.3 && < 2,
     mtl >= 2.1 && < 3,
     stm >= 2.4 && < 3,
-    transformers >= 0.3.0.0 && < 0.5
+    transformers >= 0.3.0.0 && < 0.6
 
   if impl(ghc < 7.6)
     build-depends: ghc-prim
 
-executable helm-example-hello
+executable helm-example-flappy
   default-language: Haskell2010
   main-is: Main.hs
-  hs-source-dirs: examples/hello
+  hs-source-dirs: examples/flappy
 
   build-depends:
     base >= 4 && < 5,
-    helm >= 1 && < 2,
-    linear >= 1 && < 2
-
-test-suite helm-tests
-  type: exitcode-stdio-1.0
-  x-uses-tf: true
-  ghc-options: -threaded -Wall -rtsopts -O
-  hs-source-dirs: tests, src
-  default-language: Haskell2010
-  default-extensions: TypeFamilies
-  main-is: Main.hs
-
-  build-depends:
-    base >= 4 && < 5,
-    containers >= 0.5 && < 1,
-    elerea >= 2.8 && < 3,
-    sdl2 >= 2 && < 3,
     linear >= 1 && < 2,
-    mtl >= 2.1 && < 3,
-    transformers >= 0.3.0.0 && < 0.5,
-    HUnit >= 1.2 && < 2,
-    test-framework >= 0.8 && < 1,
-    test-framework-hunit >= 0.3 && < 1,
-    test-framework-quickcheck2 >= 0.3 && < 1
+    random == 1.*,
+    helm
+
+test-suite helm-spec
+  type: exitcode-stdio-1.0
+  ghc-options: -Wall
+  hs-source-dirs: test
+  default-language: Haskell2010
+  main-is: Spec.hs
+
+  other-modules:
+    Helm.TimeSpec
+
+  build-depends:
+    base  == 4.*,
+    hspec == 2.*,
+    helm
