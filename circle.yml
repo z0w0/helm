@@ -5,7 +5,7 @@ machine:
 dependencies:
   pre:
     - sudo apt-get update
-    - sudo apt-get install libsdl2-dev libcairo2-dev
+    - sudo apt-get install libsdl2-dev libcairo2-dev libpango1.0-dev
 
   post:
     - cabal install gtk2hs-buildtools
