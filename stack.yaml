@@ -4,4 +4,4 @@ packages:
 extra-deps:
   - elerea-2.9.0
   - text-1.2.2.0
-resolver: lts-6.19
+resolver: lts-5.5
