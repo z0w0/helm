@@ -1,5 +1,6 @@
 dependencies:
   cache_directories:
+    - ".stack-work"
     - "~/.stack"
 
   pre:
