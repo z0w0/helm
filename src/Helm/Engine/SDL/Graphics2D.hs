@@ -154,7 +154,7 @@ renderForm Form { formPos = V2 x y, .. } = withTransform formScale formTheta x y
       case shape of
         PolygonShape (Path (~ps @ (V2 hx hy : _))) -> do
           Cairo.moveTo hx hy
-          mapM_ (\(V2 lx ly) -> Cairo.lineTo lx ly) ps
+          mapM_ (\(V2 lx ly) -> Cairo.lineTo lx ly) (ps ++ [head ps])
 
         RectangleShape (V2 w h) ->
           Cairo.rectangle (-w / 2) (-h / 2) w h
