@@ -5,7 +5,7 @@
   <a href="https://circleci.com/gh/z0w0/helm" title="CircleCI"><img src="https://circleci.com/gh/z0w0/helm.svg?style=svg" /></a>
 </p>
 
-Helm is currently **unmaintained** due to lack of time. If you would like to develop Helm further, please fork the project.
+Helm is **currently looking for co-maintainers**. If you would like to help to develop Helm further, please contact me.
 
 ## Introduction
 
