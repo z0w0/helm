@@ -4,6 +4,7 @@ module Helm.Engine (
   Engine(..),
   -- * Types
   Cmd(..),
+  Game(..),
   GameConfig(..),
   Sub(..),
   MouseButton(..),
@@ -68,9 +69,9 @@ class Engine e where
 
 -- | Represents a subscription to a stream of events captured from a user's interaction with the engine.
 -- A subscription is best thought of as a collection of events over time - which is the nature of
--- functional reactive programming (the paradigm that Helm bases it's concepts on).
--- Although Helm uses a departed version of the traditional FRP paradigm, it still follows the
--- concept closely and hence an understanding of FRP will allow you to understnad the library easily.
+-- functional reactive programming (the paradigm that Helm bases its concepts on).
+-- Although Helm uses a departed version of the traditional FRP paradigm, it still shares some
+-- concepts. An understanding of FRP will allow you to understand the library easily.
 --
 -- Functions throughout the Helm library that return a subscription will first let you map the data
 -- related to the event you're subscribing to into another form (specifically, a game action).
@@ -84,7 +85,7 @@ newtype Sub e a = Sub (SignalGen e (Signal [a]))
 -- | Represents an IO-like monad with knowledge about the state of the game engine. Each command
 -- contains a collection of game actions that will be applied to your game's update function to update
 -- the game state. This is similar to a subscription in a way, with the difference being that
--- a command does not change over time, but rather is a lazy monad and hence contains a value that
+-- a command does not change over time, but rather is a lazy monad and hence contains a value
 -- from the time of the execution. A good example of the usage of a command vs. a subscription is the game
 -- window size - a command would allow you to map the current window size into an action, whereas
 -- a subscription would let you subscribe to when the window is resized and then map that event into
@@ -118,8 +119,8 @@ data GameConfig e m a = GameConfig {
   initialFn :: (m, Cmd e a),
 
   -- | Called whenever a game action is mapped from a command or subscription.
-  -- This is where the actual implementation of a Helm game is done.
-  -- The function is given a game model and the mapped action type,
+  -- This is where the actual implementation of a Helm game is provided.
+  -- The function is given a game model and an action,
   -- and should produce the new game model state based off of the action.
   --
   -- The first tuple value is the new model state, and then the second
@@ -156,6 +157,17 @@ data GameConfig e m a = GameConfig {
   -- has changed since the last render.
   viewFn :: m -> Graphics e
 }
+
+-- | Represents the state of a game being run.
+--
+-- The type variable e refers to an instance of the 'Engine' class,
+-- m refers to a game model type and a refers to a game action type.
+data Game e m a = Game
+  { gameConfig :: GameConfig e m a  -- ^ The configuration of the game, passed by a user.
+  , gameModel  :: m                 -- ^ The current game model state.
+  , dirtyModel :: Bool              -- ^ Whether or not the model has been changed and the game should be rerendered.
+  , actionSmp  :: e -> IO [a]       -- ^ A feedable monad that returns actions from mapped subscriptions.
+  }
 
 -- | Represents a mouse button that can be pressed on a mouse.
 data MouseButton
