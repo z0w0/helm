@@ -83,9 +83,10 @@ it globally will let you run the example Helm games. See the next section.
 
 ## Getting Started
 
-Check out the `examples` directory for some examples; the `flappy` example is a particularly good start.
-Unfortunately, there's little to no example games yet, so if you end up making something cool and lightweight
-that you'd think would be a good example, feel free to open a pull request!
+Check out the `examples` directory for some examples; the `hello` example is a
+particularly good start and `flappy` is a bit more advanced. We could always
+use more examples so if you end up making something cool and lightweight that
+you'd think would be a good one, feel free to open a pull request!
 
 If you have installed Helm globally using Stack, you can run the `flappy` example using:
 
