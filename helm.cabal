@@ -73,6 +73,16 @@ executable helm-example-flappy
     random == 1.*,
     helm
 
+executable helm-example-hello
+  default-language: Haskell2010
+  main-is: Main.hs
+  hs-source-dirs: examples/hello
+
+  build-depends:
+    base >= 4 && < 5,
+    linear >= 1 && < 2,
+    helm
+
 test-suite helm-spec
   type: exitcode-stdio-1.0
   ghc-options: -Wall

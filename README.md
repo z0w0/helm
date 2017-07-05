@@ -94,6 +94,12 @@ If you have installed Helm globally using Stack, you can run the `flappy` exampl
 stack exec helm-example-flappy
 ```
 
+Or the `hello` example using:
+
+```
+stack exec helm-example-hello
+```
+
 ## Documentation
 
 API documentation for the latest stable version of Helm is available on [Hackage](http://hackage.haskell.org/package/helm).
