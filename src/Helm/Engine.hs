@@ -1,11 +1,14 @@
 -- | Contains the core engine types and classes.
 module Helm.Engine (
+  -- * Functions
+  defaultFPSLimit,
   -- * Typeclasses
   Engine(..),
   -- * Types
   Cmd(..),
   Game(..),
   GameConfig(..),
+  FPSLimit(..),
   Sub(..),
   MouseButton(..),
   Key(..)
@@ -100,11 +103,23 @@ newtype Sub e a = Sub (SignalGen e (Signal [a]))
 -- and the variable a is the game action data type used by your game.
 newtype Cmd e a = Cmd (StateT e IO [a])
 
+-- | Provides default fps limit.
+defaultFPSLimit :: FPSLimit
+defaultFPSLimit = Limited 120
+
+-- | Represents how often a render should be executed.
+data FPSLimit
+  = Unlimited
+  | Limited Int
+
 -- | Represents the configuration for a Helm game.
 --
 -- The type variable e refers to an instance of the 'Engine' class,
 -- m refers to a game model type and a refers to a game action type.
 data GameConfig e m a = GameConfig {
+  -- | Represents a limit for calls of a render function.
+  fpsLimit :: FPSLimit,
+
   -- | Called when the game starts up. The first value in the tuple
   -- is the initial game model state and then the second value is an optional
   -- command to be run. The command allows you to execute some monads
@@ -167,6 +182,7 @@ data Game e m a = Game
   , gameModel  :: m                 -- ^ The current game model state.
   , dirtyModel :: Bool              -- ^ Whether or not the model has been changed and the game should be rerendered.
   , actionSmp  :: e -> IO [a]       -- ^ A feedable monad that returns actions from mapped subscriptions.
+  , lastRender :: Double            -- ^ The last time when render was called.
   }
 
 -- | Represents a mouse button that can be pressed on a mouse.
