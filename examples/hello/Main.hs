@@ -30,7 +30,8 @@ main = do
   engine <- SDL.startup
 
   run engine GameConfig
-    { initialFn       = initial
+    { fpsLimit        = defaultFPSLimit
+    , initialFn       = initial
     , updateFn        = update
     , subscriptionsFn = subscriptions
     , viewFn          = view

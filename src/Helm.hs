@@ -8,18 +8,20 @@ module Helm
   , GameConfig(..)
   , Graphics(..)
   , Image
+  , FPSLimit(..)
   , Sub(..)
     -- * Engine
   , run
+  , defaultFPSLimit
   ) where
 
 import Control.Exception (finally)
-import Control.Monad (foldM, void, when)
+import Control.Monad (foldM, void)
 import Control.Monad.Trans.State.Lazy (runStateT)
 import FRP.Elerea.Param (start, embed)
 
 import Helm.Asset (Image)
-import Helm.Engine (Cmd(..), Sub(..), Game(..), GameConfig(..), Engine(..))
+import Helm.Engine (Cmd(..), Sub(..), Game(..), GameConfig(..), Engine(..), FPSLimit(..), defaultFPSLimit)
 import Helm.Graphics
 
 -- | The context of an engine running a game.
@@ -55,6 +57,7 @@ run engine config@GameConfig { initialFn, subscriptionsFn = Sub sigGen } = void 
       , gameModel = fst initialFn
       , dirtyModel = True
       , actionSmp = smp
+      , lastRender = 0
       }
 
   step ctx `finally` cleanup engine_
@@ -64,7 +67,7 @@ step
   :: Engine e
   => EngineContext e m a       -- ^ The engine context to step forward.
   -> IO (EngineContext e m a)  -- ^ An IO monad that produces the stepped engine context.
-step ctx@(EngineContext engine game) = do
+step ctx@(EngineContext engine game@Game { actionSmp } ) = do
   -- Tick the engine to pump the signal sinks
   mayhaps <- tick engine
 
@@ -72,17 +75,8 @@ step ctx@(EngineContext engine game) = do
     -- If nothing was returned, stop the step loop
     Nothing -> return ctx
 
-    Just engine_ -> do
-      EngineContext engine__ game_ <- actionSmp engine_ >>= foldM stepAction (EngineContext engine_ game)
-
-      -- Render the game if game model has been changed this step
-      when (dirtyModel game_) $ render engine__ $ viewFn $ gameModel game_
-
-      -- Keep the loop going
-      step $ EngineContext engine__ $ game_ { dirtyModel = False }
-
-  where
-    Game { actionSmp, gameConfig = GameConfig { viewFn } } = game
+    -- If engine was returned, process action, render model, and continue looping
+    Just engine_ -> actionSmp engine_ >>= foldM stepAction (EngineContext engine_ game) >>= throttledRender >>= step
 
 -- | Step the engine context forward with a specific game action.
 stepAction
@@ -116,3 +110,29 @@ stepCmd (EngineContext engine game) (Cmd monad) = do
   -- Step any actions returned from the command
   foldM stepAction (EngineContext engine_ game) actions
 
+-- | Renders model if needed
+throttledRender :: Engine e => EngineContext e m a -> IO (EngineContext e m a)
+throttledRender = fpsThrottle (dirtyModelThrottle Helm.render)
+
+-- | Throttle operation based on GameConfig FPSLimit setting
+fpsThrottle :: Engine e => (EngineContext e m a -> IO (EngineContext e m a)) -> EngineContext e m a -> IO (EngineContext e m a)
+fpsThrottle operation context@(EngineContext engine Game { gameConfig = GameConfig { fpsLimit = Limited fpsLimit }, lastRender }) = do
+  currentTime <- runningTime engine
+  if currentTime - lastRender >= 1000 / fromIntegral fpsLimit
+  then operation context
+  else return context
+
+fpsThrottle operation context@(EngineContext _ Game { gameConfig = GameConfig { fpsLimit = Unlimited } }) = operation context
+
+-- | Throttle operation based on GameModel dirtiness
+dirtyModelThrottle :: Engine e => (EngineContext e m a -> IO (EngineContext e m a)) -> EngineContext e m a ->  IO (EngineContext e m a)
+dirtyModelThrottle operation context@(EngineContext _ game) = if (dirtyModel game)
+                                                              then operation context
+                                                              else return context
+
+-- | Renders context, resets game's model dirtiness and last render time
+render :: Engine e => EngineContext e m a -> IO (EngineContext e m a)
+render (EngineContext engine game@Game { gameModel, gameConfig = GameConfig { viewFn } }) = do
+  Helm.Engine.render engine $ viewFn gameModel
+  currentTime <- runningTime engine
+  return (EngineContext engine game { dirtyModel = False, lastRender = currentTime})
