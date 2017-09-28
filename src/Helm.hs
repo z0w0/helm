@@ -5,6 +5,7 @@ module Helm
     -- * Types
     Cmd(..)
   , Engine
+  , GameLifecycle(..)
   , GameConfig(..)
   , Graphics(..)
   , Image
@@ -12,7 +13,7 @@ module Helm
   , Sub(..)
     -- * Engine
   , run
-  , defaultFPSLimit
+  , defaultConfig
   ) where
 
 import Control.Exception (finally)
@@ -21,7 +22,7 @@ import Control.Monad.Trans.State.Lazy (runStateT)
 import FRP.Elerea.Param (start, embed)
 
 import Helm.Asset (Image)
-import Helm.Engine (Cmd(..), Sub(..), Game(..), GameConfig(..), Engine(..), FPSLimit(..), defaultFPSLimit)
+import Helm.Engine (Cmd(..), Sub(..), Game(..), GameConfig(..), GameLifecycle(..), Engine(..), FPSLimit(..), defaultConfig)
 import Helm.Graphics
 
 -- | The context of an engine running a game.
@@ -40,9 +41,10 @@ data EngineContext e m a = EngineContext e (Game e m a)
 run
   :: Engine e
   => e                 -- ^ The engine to use to run the game.
-  -> GameConfig e m a  -- ^ The configuration for running the game.
+  -> GameConfig
+  -> GameLifecycle e m a  -- ^ The configuration for running the game.
   -> IO ()             -- ^ An IO monad that blocks the main thread until the engine quits.
-run engine config@GameConfig { initialFn, subscriptionsFn = Sub sigGen } = void $ do
+run engine config lifecycle@GameLifecycle { initialFn, subscriptionsFn = Sub sigGen } = void $ do
   {- The call to 'embed' here is a little bit hacky, but seems necessary
      to get this working. This is because 'start' actually computes the signal
      gen passed to it, and all of our signal gens try to fetch
@@ -54,6 +56,7 @@ run engine config@GameConfig { initialFn, subscriptionsFn = Sub sigGen } = void 
   -- Setup the initial engine context and perform the initial game step
   ctx@(EngineContext engine_ _) <- flip stepCmd (snd initialFn) $ EngineContext engine Game
       { gameConfig = config
+      , gameLifecycle = lifecycle
       , gameModel = fst initialFn
       , dirtyModel = True
       , actionSmp = smp
@@ -84,7 +87,7 @@ stepAction
   => EngineContext e m a       -- ^ The engine context to step forward.
   -> a                         -- ^ The action to step the engine context with.
   -> IO (EngineContext e m a)  -- ^ An IO monad that produces the engine context stepped with the action.
-stepAction (EngineContext engine game@Game { gameModel, gameConfig = GameConfig { updateFn } }) action =
+stepAction (EngineContext engine game@Game { gameModel, gameLifecycle = GameLifecycle { updateFn } }) action =
   stepCmd ctx cmd
 
   where
@@ -132,7 +135,7 @@ dirtyModelThrottle operation context@(EngineContext _ game) = if (dirtyModel gam
 
 -- | Renders context, resets game's model dirtiness and last render time
 render :: Engine e => EngineContext e m a -> IO (EngineContext e m a)
-render (EngineContext engine game@Game { gameModel, gameConfig = GameConfig { viewFn } }) = do
+render (EngineContext engine game@Game { gameModel, gameLifecycle = GameLifecycle { viewFn } }) = do
   Helm.Engine.render engine $ viewFn gameModel
   currentTime <- runningTime engine
   return (EngineContext engine game { dirtyModel = False, lastRender = currentTime})

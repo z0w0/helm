@@ -29,9 +29,8 @@ main :: IO ()
 main = do
   engine <- SDL.startup
 
-  run engine GameConfig
-    { fpsLimit        = defaultFPSLimit
-    , initialFn       = initial
+  run engine defaultConfig GameLifecycle
+    { initialFn       = initial
     , updateFn        = update
     , subscriptionsFn = subscriptions
     , viewFn          = view

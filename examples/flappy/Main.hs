@@ -395,9 +395,8 @@ main = do
     , SDL.windowDimensions = windowDims
     }
 
-  run engine GameConfig
-    { fpsLimit        = defaultFPSLimit
-    , initialFn       = initial
+  run engine defaultConfig GameLifecycle
+    { initialFn       = initial
     , updateFn        = update
     , subscriptionsFn = subscriptions
     , viewFn          = view
