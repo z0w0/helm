@@ -164,7 +164,7 @@ data GameLifecycle e m a = GameLifecycle {
 
 -- | The default configuration for the helm engine. You should change the values where necessary.
 defaultConfig :: GameConfig
-defaultConfig = GameConfig { fpsLimit = Limited 120 }
+defaultConfig = GameConfig { fpsLimit = Limited 120, updateLimit = 10 }
 
 -- | Represents how often a render should be executed.
 data FPSLimit
@@ -174,6 +174,7 @@ data FPSLimit
 -- | Helm engine configuration. You should change the values where necessary.
 data GameConfig = GameConfig
   { fpsLimit :: FPSLimit -- ^ Represents how often a render should be executed.
+  , updateLimit :: Int -- ^ Represents the total amount of times an update should be called per single frame.
   }
 
 -- | Represents the state of a game being run.
@@ -186,7 +187,8 @@ data Game e m a = Game
   , gameModel  :: m                 -- ^ The current game model state.
   , dirtyModel :: Bool              -- ^ Whether or not the model has been changed and the game should be rerendered.
   , actionSmp  :: e -> IO [a]       -- ^ A feedable monad that returns actions from mapped subscriptions.
-  , lastRender :: Double            -- ^ The last time when render was called.
+  , lastRender :: Double            -- ^ The last time when a render was called.
+  , updateCount :: Int             -- ^ The total amount of time an update was called during stepping engine.
   }
 
 -- | Represents a mouse button that can be pressed on a mouse.
