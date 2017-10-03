@@ -5,6 +5,7 @@ module Helm
     -- * Types
     Cmd(..)
   , Engine
+  , GameLifecycle(..)
   , GameConfig(..)
   , Graphics(..)
   , Image
@@ -12,16 +13,17 @@ module Helm
   , Sub(..)
     -- * Engine
   , run
-  , defaultFPSLimit
+  , defaultConfig
   ) where
 
+import Control.Concurrent
 import Control.Exception (finally)
-import Control.Monad (foldM, void)
+import Control.Monad (foldM, void, (>=>))
 import Control.Monad.Trans.State.Lazy (runStateT)
 import FRP.Elerea.Param (start, embed)
 
 import Helm.Asset (Image)
-import Helm.Engine (Cmd(..), Sub(..), Game(..), GameConfig(..), Engine(..), FPSLimit(..), defaultFPSLimit)
+import Helm.Engine (Cmd(..), Sub(..), Game(..), GameConfig(..), GameLifecycle(..), Engine(..), FPSLimit(..), defaultConfig)
 import Helm.Graphics
 
 -- | The context of an engine running a game.
@@ -40,9 +42,10 @@ data EngineContext e m a = EngineContext e (Game e m a)
 run
   :: Engine e
   => e                 -- ^ The engine to use to run the game.
-  -> GameConfig e m a  -- ^ The configuration for running the game.
+  -> GameConfig
+  -> GameLifecycle e m a  -- ^ The configuration for running the game.
   -> IO ()             -- ^ An IO monad that blocks the main thread until the engine quits.
-run engine config@GameConfig { initialFn, subscriptionsFn = Sub sigGen } = void $ do
+run engine config lifecycle@GameLifecycle { initialFn, subscriptionsFn = Sub sigGen } = void $ do
   {- The call to 'embed' here is a little bit hacky, but seems necessary
      to get this working. This is because 'start' actually computes the signal
      gen passed to it, and all of our signal gens try to fetch
@@ -54,10 +57,12 @@ run engine config@GameConfig { initialFn, subscriptionsFn = Sub sigGen } = void 
   -- Setup the initial engine context and perform the initial game step
   ctx@(EngineContext engine_ _) <- flip stepCmd (snd initialFn) $ EngineContext engine Game
       { gameConfig = config
+      , gameLifecycle = lifecycle
       , gameModel = fst initialFn
       , dirtyModel = True
       , actionSmp = smp
       , lastRender = 0
+      , updateCount = 0
       }
 
   step ctx `finally` cleanup engine_
@@ -66,17 +71,39 @@ run engine config@GameConfig { initialFn, subscriptionsFn = Sub sigGen } = void 
 step
   :: Engine e
   => EngineContext e m a       -- ^ The engine context to step forward.
-  -> IO (EngineContext e m a)  -- ^ An IO monad that produces the stepped engine context.
-step ctx@(EngineContext engine game@Game { actionSmp } ) = do
-  -- Tick the engine to pump the signal sinks
-  mayhaps <- tick engine
+  -> IO (Maybe (EngineContext e m a))  -- ^ An IO monad that produces the stepped engine context.
+step = updateStep >=> maybe (return Nothing) (renderStep >=> delayWithinFPSLimit >=> step)
 
-  case mayhaps of
-    -- If nothing was returned, stop the step loop
-    Nothing -> return ctx
+-- | Continiuslu steps engine context with processing all actions while limit is not reached or Nothing returned in case engine quits.
+updateStep
+  :: Engine e
+  => EngineContext e m a       -- ^ The engine context to step forward.
+  -> IO (Maybe (EngineContext e m a))  -- ^ An IO monad that produces the engine context stepped with maximum allowed ticks and action.
+updateStep = stepTick >=> maybe (return Nothing) continueUpdateWithinLimit
 
-    -- If engine was returned, process action, render model, and continue looping
-    Just engine_ -> actionSmp engine_ >>= foldM stepAction (EngineContext engine_ game) >>= throttledRender >>= step
+-- | Proceeed to the next updateStep if updateCount is not reached yet, returns Nothing in case engine quits.
+continueUpdateWithinLimit
+  :: Engine e
+  => EngineContext e m a       -- ^ The engine context to step forward.
+  -> IO (Maybe (EngineContext e m a))  -- ^ An IO monad that produces the engine context stepped with maximum allowed ticks and action.
+continueUpdateWithinLimit context = if updateCount >= updateLimit
+                              then return (Just (EngineContext engine game { updateCount = 0 }))
+                              else updateStep (EngineContext engine game { updateCount = updateCount + 1 })
+  where (EngineContext engine game@Game { gameConfig = GameConfig { updateLimit }, updateCount }) = context
+
+-- | Step the engine context forward with all game actions available, returns Nothing in case engine quits.
+stepTick
+  :: Engine e
+  => EngineContext e m a       -- ^ The engine context to step forward.
+  -> IO (Maybe (EngineContext e m a))  -- ^ An IO monad that produces the engine context stepped with the action.
+stepTick (EngineContext engine game) = tick engine >>= maybe (return Nothing) (\engine_ -> Just <$> (stepActions game engine_))
+
+-- | Step the engine forward with all game actions available.
+stepActions :: Engine e
+  => Game e m a                -- ^ The engine context to step forward.
+  -> e                         -- ^ The action to step the engine context with.
+  -> IO (EngineContext e m a)  -- ^ An IO monad that produces the engine context stepped with all actions available.
+stepActions game@Game { actionSmp } engine = (actionSmp engine) >>= foldM stepAction (EngineContext engine game)
 
 -- | Step the engine context forward with a specific game action.
 stepAction
@@ -84,7 +111,7 @@ stepAction
   => EngineContext e m a       -- ^ The engine context to step forward.
   -> a                         -- ^ The action to step the engine context with.
   -> IO (EngineContext e m a)  -- ^ An IO monad that produces the engine context stepped with the action.
-stepAction (EngineContext engine game@Game { gameModel, gameConfig = GameConfig { updateFn } }) action =
+stepAction (EngineContext engine game@Game { gameModel, gameLifecycle = GameLifecycle { updateFn } }) action =
   stepCmd ctx cmd
 
   where
@@ -111,28 +138,38 @@ stepCmd (EngineContext engine game) (Cmd monad) = do
   foldM stepAction (EngineContext engine_ game) actions
 
 -- | Renders model if needed
-throttledRender :: Engine e => EngineContext e m a -> IO (EngineContext e m a)
-throttledRender = fpsThrottle (dirtyModelThrottle Helm.render)
-
--- | Throttle operation based on GameConfig FPSLimit setting
-fpsThrottle :: Engine e => (EngineContext e m a -> IO (EngineContext e m a)) -> EngineContext e m a -> IO (EngineContext e m a)
-fpsThrottle operation context@(EngineContext engine Game { gameConfig = GameConfig { fpsLimit = Limited fpsLimit }, lastRender }) = do
-  currentTime <- runningTime engine
-  if currentTime - lastRender >= 1000 / fromIntegral fpsLimit
-  then operation context
-  else return context
-
-fpsThrottle operation context@(EngineContext _ Game { gameConfig = GameConfig { fpsLimit = Unlimited } }) = operation context
+renderStep :: Engine e => EngineContext e m a -> IO (EngineContext e m a)
+renderStep = skipWhenDirty Helm.render
 
 -- | Throttle operation based on GameModel dirtiness
-dirtyModelThrottle :: Engine e => (EngineContext e m a -> IO (EngineContext e m a)) -> EngineContext e m a ->  IO (EngineContext e m a)
-dirtyModelThrottle operation context@(EngineContext _ game) = if (dirtyModel game)
-                                                              then operation context
-                                                              else return context
+skipWhenDirty :: Engine e => (EngineContext e m a -> IO (EngineContext e m a)) -> EngineContext e m a ->  IO (EngineContext e m a)
+skipWhenDirty operation context@(EngineContext _ game) = if (dirtyModel game)
+                                                         then operation context
+                                                         else return context
 
--- | Renders context, resets game's model dirtiness and last render time
+-- | Renders context, resets game's model dirtiness
 render :: Engine e => EngineContext e m a -> IO (EngineContext e m a)
-render (EngineContext engine game@Game { gameModel, gameConfig = GameConfig { viewFn } }) = do
+render (EngineContext engine game@Game { gameModel, gameLifecycle = GameLifecycle { viewFn } }) = do
   Helm.Engine.render engine $ viewFn gameModel
-  currentTime <- runningTime engine
-  return (EngineContext engine game { dirtyModel = False, lastRender = currentTime})
+  return (EngineContext engine game { dirtyModel = False })
+
+-- | Delays thread to satisfy FPSLimit requirement and updates when last frame was renedered.
+delayWithinFPSLimit :: Engine e => EngineContext e m a -> IO (EngineContext e m a)
+delayWithinFPSLimit context = do
+  runningTime engine >>= delayIfNeeded fpsLimit lastRender
+  runningTime engine >>= \currentTime -> return (EngineContext engine game { lastRender = currentTime })
+  where EngineContext engine game@Game { gameConfig = GameConfig { fpsLimit = fpsLimit }, lastRender } = context
+
+-- | Delays thread to satisfy FPSLimit requirement.
+delayIfNeeded
+  :: FPSLimit -- ^ FPS limit setting.
+  -> Double   -- ^ Last time when frame was rendered.
+  -> Double   -- ^ Current time.
+  -> IO ()    -- ^ An IO monad that delays the main thread to ensure that frames are not rendered faster than limit allows.
+delayIfNeeded Unlimited _ _ = return ()
+delayIfNeeded (Limited fpsLimit) lastRender currentTime =  do
+  if delay > 0
+  then threadDelay delay
+  else putStrLn "Warning: FPS degradation. You may want to tune your update or FPS limits."
+  where
+    delay = ceiling $ 1000*(currentTime - lastRender) - (fromIntegral fpsLimit)

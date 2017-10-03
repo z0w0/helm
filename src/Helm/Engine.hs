@@ -1,12 +1,13 @@
 -- | Contains the core engine types and classes.
 module Helm.Engine (
   -- * Functions
-  defaultFPSLimit,
+  defaultConfig,
   -- * Typeclasses
   Engine(..),
   -- * Types
   Cmd(..),
   Game(..),
+  GameLifecycle(..),
   GameConfig(..),
   FPSLimit(..),
   Sub(..),
@@ -103,23 +104,11 @@ newtype Sub e a = Sub (SignalGen e (Signal [a]))
 -- and the variable a is the game action data type used by your game.
 newtype Cmd e a = Cmd (StateT e IO [a])
 
--- | Provides default fps limit.
-defaultFPSLimit :: FPSLimit
-defaultFPSLimit = Limited 120
-
--- | Represents how often a render should be executed.
-data FPSLimit
-  = Unlimited
-  | Limited Int
-
 -- | Represents the configuration for a Helm game.
 --
 -- The type variable e refers to an instance of the 'Engine' class,
 -- m refers to a game model type and a refers to a game action type.
-data GameConfig e m a = GameConfig {
-  -- | Represents a limit for calls of a render function.
-  fpsLimit :: FPSLimit,
-
+data GameLifecycle e m a = GameLifecycle {
   -- | Called when the game starts up. The first value in the tuple
   -- is the initial game model state and then the second value is an optional
   -- command to be run. The command allows you to execute some monads
@@ -173,16 +162,33 @@ data GameConfig e m a = GameConfig {
   viewFn :: m -> Graphics e
 }
 
+-- | The default configuration for the helm engine. You should change the values where necessary.
+defaultConfig :: GameConfig
+defaultConfig = GameConfig { fpsLimit = Limited 120, updateLimit = 10 }
+
+-- | Represents how often a render should be executed.
+data FPSLimit
+  = Unlimited
+  | Limited Int
+
+-- | Helm engine configuration. You should change the values where necessary.
+data GameConfig = GameConfig
+  { fpsLimit :: FPSLimit -- ^ Represents how often a render should be executed.
+  , updateLimit :: Int -- ^ Represents the total amount of times an update should be called per single frame.
+  }
+
 -- | Represents the state of a game being run.
 --
 -- The type variable e refers to an instance of the 'Engine' class,
 -- m refers to a game model type and a refers to a game action type.
 data Game e m a = Game
-  { gameConfig :: GameConfig e m a  -- ^ The configuration of the game, passed by a user.
+  { gameConfig :: GameConfig -- ^ The configuration of the game engine, passed by a user.
+  , gameLifecycle :: GameLifecycle e m a  -- ^ The set of game lifeycle functions, passed by a user.
   , gameModel  :: m                 -- ^ The current game model state.
   , dirtyModel :: Bool              -- ^ Whether or not the model has been changed and the game should be rerendered.
   , actionSmp  :: e -> IO [a]       -- ^ A feedable monad that returns actions from mapped subscriptions.
-  , lastRender :: Double            -- ^ The last time when render was called.
+  , lastRender :: Double            -- ^ The last time when a render was called.
+  , updateCount :: Int             -- ^ The total amount of time an update was called during stepping engine.
   }
 
 -- | Represents a mouse button that can be pressed on a mouse.
