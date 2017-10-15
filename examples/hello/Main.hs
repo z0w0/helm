@@ -32,6 +32,6 @@ main = do
   run engine defaultConfig GameLifecycle
     { initialFn       = initial
     , updateFn        = update
-    , subscriptionsFn = subscriptions
+    , subscriptionsFn = const subscriptions
     , viewFn          = view
     }
