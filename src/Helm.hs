@@ -167,9 +167,10 @@ delayIfNeeded
   -> Double   -- ^ Current time.
   -> IO ()    -- ^ An IO monad that delays the main thread to ensure that frames are not rendered faster than limit allows.
 delayIfNeeded Unlimited _ _ = return ()
-delayIfNeeded (Limited fpsLimit) lastRender currentTime =  do
-  if delay > 0
+delayIfNeeded (Limited fpsLimit) lastRender currentTime = if delay > 0
   then threadDelay delay
   else putStrLn "Warning: FPS degradation. You may want to tune your update or FPS limits."
   where
-    delay = ceiling $ 1000*(currentTime - lastRender) - (fromIntegral fpsLimit)
+    microsecondsLimitPerFrame = ceiling $ 1000000.0 / (fromIntegral fpsLimit)
+    microsecondsForLastFrame = ceiling $ currentTime - lastRender
+    delay = microsecondsLimitPerFrame - microsecondsForLastFrame
