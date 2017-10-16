@@ -148,7 +148,7 @@ data GameLifecycle e m a = GameLifecycle {
   -- If no subscriptions are required (i.e. no user input is required),
   -- pass 'Sub.none'. Alternatively, if multiple subscriptions are required
   -- use 'Sub.batch' to combine them.
-  subscriptionsFn :: Sub e a,
+  subscriptionsFn :: m -> Sub e a,
 
   -- | Called when the engine is ready to render the game.
   -- The function is given the current state of the game model

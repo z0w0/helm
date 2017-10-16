@@ -45,17 +45,20 @@ run
   -> GameConfig
   -> GameLifecycle e m a  -- ^ The configuration for running the game.
   -> IO ()             -- ^ An IO monad that blocks the main thread until the engine quits.
-run engine config lifecycle@GameLifecycle { initialFn, subscriptionsFn = Sub sigGen } = void $ do
+run engine config lifecycle@GameLifecycle { initialFn, subscriptionsFn } = void $ do
   {- The call to 'embed' here is a little bit hacky, but seems necessary
      to get this working. This is because 'start' actually computes the signal
      gen passed to it, and all of our signal gens try to fetch
      the 'input' value within the top layer signal gen (rather than in the
      contained signal). But we haven't sampled with the input value yet, so it'll
      be undefined unless we 'embed'. -}
+  let (initialModel, initialCmds) = initialFn
+      (Sub sigGen) = subscriptionsFn initialModel
+
   smp <- start $ embed (return engine) sigGen
 
   -- Setup the initial engine context and perform the initial game step
-  ctx@(EngineContext engine_ _) <- flip stepCmd (snd initialFn) $ EngineContext engine Game
+  ctx@(EngineContext engine_ _) <- flip stepCmd initialCmds $ EngineContext engine Game
       { gameConfig = config
       , gameLifecycle = lifecycle
       , gameModel = fst initialFn
