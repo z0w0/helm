@@ -59,10 +59,14 @@ data Model = Model
   , flapperVel   :: V2 Double
   , playerStatus :: PlayerStatus
   , obstacles    :: [Obstacle]
+  -- ^ How long the player has survived (i.e. the score)
   , timeScore    :: Time
+  -- ^ How fast the flapper moves towards the obstacles (i.e. difficulty level)
   , timeSpeed    :: Double
+  -- ^ Control how often the flapper can flap
+  , lastFlap     :: Maybe Time
   -- not really part of game state, but most convenient to stuff it here
-  , assets :: M.Map String (Image SDLEngine)
+  , assets       :: M.Map String (Image SDLEngine)
   }
 
 initial :: M.Map String (Image SDLEngine) -> (Model, Cmd SDLEngine Action)
@@ -74,6 +78,7 @@ initial assets =
       , obstacles    = []
       , timeScore    = 0
       , timeSpeed    = 1
+      , lastFlap     = Nothing
       , assets       = assets
       }
   , Cmd.execute Rand.newStdGen SetupObstacles
@@ -109,6 +114,13 @@ obsOffset = (obsMargin + obsWidth) * 6
 
 showPauseHelpFor :: Time
 showPauseHelpFor = 2*second
+
+flapAnimationTime :: Time
+flapAnimationTime = 0.3*second
+
+stillFlapping :: Time -> Maybe Time -> Bool
+stillFlapping now Nothing = False
+stillFlapping now (Just lastFlap) = now < lastFlap + flapAnimationTime
 
 flapperDims :: V2 Double
 flapperDims = V2 100 100
@@ -213,16 +225,26 @@ update model@Model { .. } (Animate dt) =
 
 -- | The player has clicked using their mouse.
 -- | Process the "flap" of our flapper's wings.
-update model@Model { .. } Flap =
-  if playerStatus `notElem` [Playing, Waiting]
-  then (model, Cmd.none)
-  else
-    ( model
-      { flapperVel   = V2 0 (-flapAccel)
-      , playerStatus = Playing
-      }
-    , Cmd.none
-    )
+update model@Model { .. } Flap
+  | playerStatus == Waiting =
+      -- new game
+      ( model
+        { flapperVel   = V2 0 (-flapAccel)
+        , playerStatus = Playing
+        , lastFlap     = Nothing
+        }
+      , Cmd.none
+      )
+  | playerStatus == Playing =
+    -- flap, if allowed
+    if stillFlapping timeScore lastFlap then (model, Cmd.none) else
+      ( model
+        { flapperVel   = V2 0 (-flapAccel)
+        , lastFlap     = Just timeScore
+        }
+      , Cmd.none
+      )
+  | otherwise = (model, Cmd.none)
 
 -- | The player has pressed space while on the death screen.
 -- Restart the game.
@@ -405,9 +427,10 @@ view model@Model { .. } = Graphics2D $
     overlay Playing model = playingOverlay overlayColor model
     overlay Paused  model = playingOverlay overlayColor model
     --flapper = filled (rgb 0.36 0.25 0.22) $ rect flapperDims
-    flapper | playerStatus == Dead = image flapperDims (assets M.! "birdDead")
-            | dy < -flapAccel * 3/4 = image flapperDims (assets M.! "birdFlap")
-            | otherwise = image flapperDims (assets M.! "bird")
+    flapperSprite | playerStatus == Dead             = "birdDead"
+                  | stillFlapping timeScore lastFlap = "birdFlap"
+                  | otherwise                        = "bird"
+    flapper = image flapperDims (assets M.! flapperSprite)
       where V2 _ dy = flapperVel
     backdrop = filled (rgb 0.13 0.13 0.13) $ rect dims
     lava = move (V2 0 (h / 2 - lavaHeight / 2)) $ filled (rgb 0.72 0.11 0.11) $ rect $ V2 w lavaHeight
