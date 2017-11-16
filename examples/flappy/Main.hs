@@ -59,11 +59,11 @@ data Model = Model
   , flapperVel   :: V2 Double
   , playerStatus :: PlayerStatus
   , obstacles    :: [Obstacle]
-  -- ^ How long the player has survived (i.e. the score)
+  -- | How long the player has survived (i.e. the score)
   , timeScore    :: Time
-  -- ^ How fast the flapper moves towards the obstacles (i.e. difficulty level)
+  -- | How fast the flapper moves towards the obstacles (i.e. difficulty level)
   , timeSpeed    :: Double
-  -- ^ Control how often the flapper can flap
+  -- | Control how often the flapper can flap
   , lastFlap     :: Maybe Time
   -- not really part of game state, but most convenient to stuff it here
   , assets       :: M.Map String (Image SDLEngine)
