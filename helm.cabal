@@ -9,6 +9,7 @@ license: MIT
 license-file: LICENSE
 tested-with: GHC == 8.0.2
 extra-source-files: LICENSE, README.md
+data-files: images/bird.png images/bird-dead.png images/bird-flap.png
 author: Zack Corr
 maintainer: Zack Corr <zack@z0w0.me>
 copyright: (c) 2013-2017, Zack Corr
@@ -67,10 +68,15 @@ executable helm-example-flappy
   main-is: Main.hs
   hs-source-dirs: examples/flappy
 
+  other-modules:
+    Paths_helm
+
   build-depends:
     base >= 4 && < 5,
     linear >= 1 && < 2,
     random == 1.*,
+    containers >= 0.5,
+    filepath >= 1,
     helm
 
 executable helm-example-hello

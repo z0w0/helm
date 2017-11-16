@@ -4,11 +4,13 @@
 module Main where
 
 import           Data.List (find)
+import qualified Data.Map as M
 import           Data.Maybe (isJust)
 import           Debug.Trace (traceShow)
 import           Text.Printf (printf)
 
 import           Linear.V2 (V2(V2))
+import           System.FilePath ((</>))
 import qualified System.Random as Rand
 
 import           Helm
@@ -23,6 +25,8 @@ import qualified Helm.Mouse as Mouse
 import qualified Helm.Sub as Sub
 import qualified Helm.Time as Time
 import           Helm.Time (Time)
+
+import qualified Paths_helm as Paths
 
 -- | Represents the game actions for our game.
 data Action
@@ -55,10 +59,12 @@ data Model = Model
   , obstacles    :: [Obstacle]
   , timeScore    :: Time
   , timeSpeed    :: Double
+  -- not really part of game state, but most convenient to stuff it here
+  , assets :: M.Map String (Image SDLEngine)
   }
 
-initial :: (Model, Cmd SDLEngine Action)
-initial =
+initial :: M.Map String (Image SDLEngine) -> (Model, Cmd SDLEngine Action)
+initial assets =
   ( Model
       { flapperPos   = V2 0 0
       , flapperVel   = V2 0 0
@@ -66,6 +72,7 @@ initial =
       , obstacles    = []
       , timeScore    = 0
       , timeSpeed    = 1
+      , assets       = assets
       }
   , Cmd.execute Rand.newStdGen SetupObstacles
   )
@@ -377,7 +384,11 @@ view model@Model { .. } = Graphics2D $
     overlay Waiting _ = waitingOverlay overlayColor
     overlay Dead model = deadOverlay overlayColor model
     overlay Playing model = playingOverlay overlayColor model
-    flapper = filled (rgb 0.36 0.25 0.22) $ rect flapperDims
+    --flapper = filled (rgb 0.36 0.25 0.22) $ rect flapperDims
+    flapper | playerStatus == Dead = image flapperDims (assets M.! "birdDead")
+            | dy < -10 = image flapperDims (assets M.! "birdFlap")
+            | otherwise = image flapperDims (assets M.! "bird")
+      where V2 _ dy = flapperVel
     backdrop = filled (rgb 0.13 0.13 0.13) $ rect dims
     lava = move (V2 0 (h / 2 - lavaHeight / 2)) $ filled (rgb 0.72 0.11 0.11) $ rect $ V2 w lavaHeight
     structure NoObstacle = blank
@@ -395,9 +406,21 @@ main = do
     , SDL.windowDimensions = windowDims
     }
 
-  run engine defaultConfig GameLifecycle
-    { initialFn       = initial
-    , updateFn        = update
-    , subscriptionsFn = subscriptions
-    , viewFn          = view
-    }
+  imageDir <- (</> "images") <$> Paths.getDataDir
+  let assetList = [("bird.png", "bird"),
+                   ("bird-flap.png", "birdFlap"),
+                   ("bird-dead.png", "birdDead")
+                  ]
+      loadAssets' [] game loaded = game loaded
+      loadAssets' ((file, id):files) game loaded = do
+        SDL.withImage engine (imageDir </> file) $ \image ->
+          loadAssets' files game (M.insert id image loaded)
+      loadAssets files game = loadAssets' files game M.empty
+
+  loadAssets assetList $ \allAssets ->
+    run engine defaultConfig GameLifecycle
+      { initialFn       = initial allAssets
+      , updateFn        = update
+      , subscriptionsFn = subscriptions
+      , viewFn          = view
+      }
