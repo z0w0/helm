@@ -198,7 +198,7 @@ update model@Model { .. } (Animate dt) =
     gravity' = gravity * V2 dt' dt'
 
     -- Make the movement right faster as the player gets further across.
-    speed = logBase 10 (10 + Time.inSeconds elapsed)
+    speed = max 1 $ logBase 4 (2 + Time.inSeconds elapsed)
     vel = if dead
           then V2 0 1 * (flapperVel + gravity') -- No x-velocity while dead.
           else flapperVel + gravity'
