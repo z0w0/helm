@@ -369,7 +369,7 @@ view model@Model { .. } = Graphics2D $
   center (V2 (w / 2) (h / 2)) $ collage
     [ backdrop
     , toForm $ center (V2 (-x) 0) $ collage
-        [ move flapperPos flapper
+        [ move (flapperPos - flapperDims/2) flapper
         , group $ map structure $ relevantObs model
         ]
 
