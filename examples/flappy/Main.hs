@@ -24,7 +24,7 @@ import qualified Helm.Keyboard as Keyboard
 import qualified Helm.Mouse as Mouse
 import qualified Helm.Sub as Sub
 import qualified Helm.Time as Time
-import           Helm.Time (Time)
+import           Helm.Time (Time, second)
 
 import qualified Paths_helm as Paths
 
@@ -34,11 +34,13 @@ data Action
   | Animate Double              -- ^ Animate the player with a dt.
   | Flap                        -- ^ Flap the player.
   | Restart                     -- ^ Restart the game after dying.
+  | Pause                       -- ^ Pause or unpause the game.
   | SetupObstacles Rand.StdGen  -- ^ Setup the obstacles using an RNG.
 
 -- | Represents the status of the player (i.e. where they're at).
 data PlayerStatus
   = Playing  -- ^ The player is playing the game.
+  | Paused   -- ^ The game is paused.
   | Waiting  -- ^ The player is waiting and needs to click to start the game.
   | Dead     -- ^ The player is dead and needs to hit space to get to the waiting state.
   deriving (Eq, Ord, Show)
@@ -105,6 +107,9 @@ obsMargin = 50
 obsOffset :: Double
 obsOffset = (obsMargin + obsWidth) * 6
 
+showPauseHelpFor :: Time
+showPauseHelpFor = 2*second
+
 flapperDims :: V2 Double
 flapperDims = V2 100 100
 
@@ -160,8 +165,13 @@ shouldDie :: Model -> Bool
 shouldDie model = inLava model || touchingObs model
 
 update :: Model -> Action -> (Model, Cmd SDLEngine Action)
+update model@Model { .. } Pause
+  | playerStatus == Playing = (model { playerStatus = Paused }, Cmd.none)
+  | playerStatus == Paused  = (model { playerStatus = Playing }, Cmd.none)
+  | otherwise = (model, Cmd.none)
+
 update model@Model { .. } (Animate dt) =
-  if playerStatus == Waiting then (model, Cmd.none)
+  if playerStatus `notElem` [Playing, Dead] then (model, Cmd.none)
   else
     ( model
       { flapperPos   = if y < -hh
@@ -204,7 +214,7 @@ update model@Model { .. } (Animate dt) =
 -- | The player has clicked using their mouse.
 -- | Process the "flap" of our flapper's wings.
 update model@Model { .. } Flap =
-  if playerStatus == Dead
+  if playerStatus `notElem` [Playing, Waiting]
   then (model, Cmd.none)
   else
     ( model
@@ -308,6 +318,7 @@ subscriptions = Sub.batch
   [ Mouse.clicks $ \_ _ -> Flap
   , Keyboard.presses $ \key -> (case key of
       Keyboard.SpaceKey -> Restart
+      Keyboard.PKey     -> Pause
       _                 -> DoNothing)
   , Time.fps 60 Animate
   ]
@@ -356,15 +367,20 @@ waitingOverlay color =
 -- | The overlay when playing the game (i.e. HUD).
 playingOverlay :: Color -> Model -> Form SDLEngine
 playingOverlay color Model { .. } =
-  group
+  group $
     [
       move (V2 0 (-h / 2 + 25)) $ text $ Text.height 12 $
                                          Text.color color $
                                          Text.toText status
-    ]
+    ] ++
+    (if playerStatus == Paused then [ centerNotice "Press P to resume" ] else
+       if timeScore < showPauseHelpFor then [ centerNotice "Press P to pause" ] else
+         [])
 
   where
     status = secondsText timeScore ++ " | " ++ printf "%.2fx speed" timeSpeed
+    centerNotice msg = move (V2 0 0) $ text $
+                       Text.height 16 $ Text.color color $ Text.toText msg
     V2 _ h = fromIntegral <$> windowDims
 
 view :: Model -> Graphics SDLEngine
@@ -387,6 +403,7 @@ view model@Model { .. } = Graphics2D $
     overlay Waiting _ = waitingOverlay overlayColor
     overlay Dead model = deadOverlay overlayColor model
     overlay Playing model = playingOverlay overlayColor model
+    overlay Paused  model = playingOverlay overlayColor model
     --flapper = filled (rgb 0.36 0.25 0.22) $ rect flapperDims
     flapper | playerStatus == Dead = image flapperDims (assets M.! "birdDead")
             | dy < -flapAccel * 3/4 = image flapperDims (assets M.! "birdFlap")
