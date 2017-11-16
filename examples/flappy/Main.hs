@@ -82,7 +82,10 @@ initial assets =
 -- direction in our view is the positive end of the Y-axis.
 -- The origin (0, 0) is the center of the screen.
 gravity :: V2 Double
-gravity = V2 0 7
+gravity = V2 0 5
+
+flapAccel :: Double
+flapAccel = 10
 
 lavaHeight :: Double
 lavaHeight = 65
@@ -103,7 +106,7 @@ obsOffset :: Double
 obsOffset = (obsMargin + obsWidth) * 6
 
 flapperDims :: V2 Double
-flapperDims = V2 50 50
+flapperDims = V2 100 100
 
 -- | Only the obstacles the player has seen/can see.
 relevantObs :: Model -> [Obstacle]
@@ -205,7 +208,7 @@ update model@Model { .. } Flap =
   then (model, Cmd.none)
   else
     ( model
-      { flapperVel   = V2 0 (-17)
+      { flapperVel   = V2 0 (-flapAccel)
       , playerStatus = Playing
       }
     , Cmd.none
@@ -386,7 +389,7 @@ view model@Model { .. } = Graphics2D $
     overlay Playing model = playingOverlay overlayColor model
     --flapper = filled (rgb 0.36 0.25 0.22) $ rect flapperDims
     flapper | playerStatus == Dead = image flapperDims (assets M.! "birdDead")
-            | dy < -10 = image flapperDims (assets M.! "birdFlap")
+            | dy < -flapAccel * 3/4 = image flapperDims (assets M.! "birdFlap")
             | otherwise = image flapperDims (assets M.! "bird")
       where V2 _ dy = flapperVel
     backdrop = filled (rgb 0.13 0.13 0.13) $ rect dims
