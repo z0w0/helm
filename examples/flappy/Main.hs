@@ -65,12 +65,10 @@ data Model = Model
   , timeSpeed    :: Double
   -- | Control how often the flapper can flap
   , lastFlap     :: Maybe Time
-  -- not really part of game state, but most convenient to stuff it here
-  , assets       :: M.Map String (Image SDLEngine)
   }
 
-initial :: M.Map String (Image SDLEngine) -> (Model, Cmd SDLEngine Action)
-initial assets =
+initial :: (Model, Cmd SDLEngine Action)
+initial =
   ( Model
       { flapperPos   = V2 0 0
       , flapperVel   = V2 0 0
@@ -79,7 +77,6 @@ initial assets =
       , timeScore    = 0
       , timeSpeed    = 1
       , lastFlap     = Nothing
-      , assets       = assets
       }
   , Cmd.execute Rand.newStdGen SetupObstacles
   )
@@ -405,8 +402,8 @@ playingOverlay color Model { .. } =
                        Text.height 16 $ Text.color color $ Text.toText msg
     V2 _ h = fromIntegral <$> windowDims
 
-view :: Model -> Graphics SDLEngine
-view model@Model { .. } = Graphics2D $
+view :: M.Map String (Image SDLEngine) -> Model -> Graphics SDLEngine
+view assets model@Model { .. } = Graphics2D $
   center (V2 (w / 2) (h / 2)) $ collage
     [ backdrop
     , toForm $ center (V2 (-x) 0) $ collage
@@ -462,8 +459,8 @@ main = do
 
   loadAssets assetList $ \allAssets ->
     run engine defaultConfig GameLifecycle
-      { initialFn       = initial allAssets
+      { initialFn       = initial
       , updateFn        = update
       , subscriptionsFn = subscriptions
-      , viewFn          = view
+      , viewFn          = view allAssets
       }
