@@ -4,11 +4,13 @@
 module Main where
 
 import           Data.List (find)
+import qualified Data.Map as M
 import           Data.Maybe (isJust)
 import           Debug.Trace (traceShow)
 import           Text.Printf (printf)
 
 import           Linear.V2 (V2(V2))
+import           System.FilePath ((</>))
 import qualified System.Random as Rand
 
 import           Helm
@@ -22,7 +24,9 @@ import qualified Helm.Keyboard as Keyboard
 import qualified Helm.Mouse as Mouse
 import qualified Helm.Sub as Sub
 import qualified Helm.Time as Time
-import           Helm.Time (Time)
+import           Helm.Time (Time, second)
+
+import qualified Paths_helm as Paths
 
 -- | Represents the game actions for our game.
 data Action
@@ -30,11 +34,13 @@ data Action
   | Animate Double              -- ^ Animate the player with a dt.
   | Flap                        -- ^ Flap the player.
   | Restart                     -- ^ Restart the game after dying.
+  | Pause                       -- ^ Pause or unpause the game.
   | SetupObstacles Rand.StdGen  -- ^ Setup the obstacles using an RNG.
 
 -- | Represents the status of the player (i.e. where they're at).
 data PlayerStatus
   = Playing  -- ^ The player is playing the game.
+  | Paused   -- ^ The game is paused.
   | Waiting  -- ^ The player is waiting and needs to click to start the game.
   | Dead     -- ^ The player is dead and needs to hit space to get to the waiting state.
   deriving (Eq, Ord, Show)
@@ -53,8 +59,12 @@ data Model = Model
   , flapperVel   :: V2 Double
   , playerStatus :: PlayerStatus
   , obstacles    :: [Obstacle]
+  -- | How long the player has survived (i.e. the score)
   , timeScore    :: Time
+  -- | How fast the flapper moves towards the obstacles (i.e. difficulty level)
   , timeSpeed    :: Double
+  -- | Control how often the flapper can flap
+  , lastFlap     :: Maybe Time
   }
 
 initial :: (Model, Cmd SDLEngine Action)
@@ -66,6 +76,7 @@ initial =
       , obstacles    = []
       , timeScore    = 0
       , timeSpeed    = 1
+      , lastFlap     = Nothing
       }
   , Cmd.execute Rand.newStdGen SetupObstacles
   )
@@ -75,7 +86,10 @@ initial =
 -- direction in our view is the positive end of the Y-axis.
 -- The origin (0, 0) is the center of the screen.
 gravity :: V2 Double
-gravity = V2 0 7
+gravity = V2 0 5
+
+flapAccel :: Double
+flapAccel = 10
 
 lavaHeight :: Double
 lavaHeight = 65
@@ -95,8 +109,18 @@ obsMargin = 50
 obsOffset :: Double
 obsOffset = (obsMargin + obsWidth) * 6
 
+showPauseHelpFor :: Time
+showPauseHelpFor = 2*second
+
+flapAnimationTime :: Time
+flapAnimationTime = 0.3*second
+
+stillFlapping :: Time -> Maybe Time -> Bool
+stillFlapping now Nothing = False
+stillFlapping now (Just lastFlap) = now < lastFlap + flapAnimationTime
+
 flapperDims :: V2 Double
-flapperDims = V2 50 50
+flapperDims = V2 100 100
 
 -- | Only the obstacles the player has seen/can see.
 relevantObs :: Model -> [Obstacle]
@@ -150,8 +174,13 @@ shouldDie :: Model -> Bool
 shouldDie model = inLava model || touchingObs model
 
 update :: Model -> Action -> (Model, Cmd SDLEngine Action)
+update model@Model { .. } Pause
+  | playerStatus == Playing = (model { playerStatus = Paused }, Cmd.none)
+  | playerStatus == Paused  = (model { playerStatus = Playing }, Cmd.none)
+  | otherwise = (model, Cmd.none)
+
 update model@Model { .. } (Animate dt) =
-  if playerStatus == Waiting then (model, Cmd.none)
+  if playerStatus `notElem` [Playing, Dead] then (model, Cmd.none)
   else
     ( model
       { flapperPos   = if y < -hh
@@ -178,7 +207,7 @@ update model@Model { .. } (Animate dt) =
     gravity' = gravity * V2 dt' dt'
 
     -- Make the movement right faster as the player gets further across.
-    speed = logBase 10 (10 + Time.inSeconds elapsed)
+    speed = max 1 $ logBase 4 (2 + Time.inSeconds elapsed)
     vel = if dead
           then V2 0 1 * (flapperVel + gravity') -- No x-velocity while dead.
           else flapperVel + gravity'
@@ -193,16 +222,26 @@ update model@Model { .. } (Animate dt) =
 
 -- | The player has clicked using their mouse.
 -- | Process the "flap" of our flapper's wings.
-update model@Model { .. } Flap =
-  if playerStatus == Dead
-  then (model, Cmd.none)
-  else
-    ( model
-      { flapperVel   = V2 0 (-17)
-      , playerStatus = Playing
-      }
-    , Cmd.none
-    )
+update model@Model { .. } Flap
+  | playerStatus == Waiting =
+      -- new game
+      ( model
+        { flapperVel   = V2 0 (-flapAccel)
+        , playerStatus = Playing
+        , lastFlap     = Nothing
+        }
+      , Cmd.none
+      )
+  | playerStatus == Playing =
+    -- flap, if allowed
+    if stillFlapping timeScore lastFlap then (model, Cmd.none) else
+      ( model
+        { flapperVel   = V2 0 (-flapAccel)
+        , lastFlap     = Just timeScore
+        }
+      , Cmd.none
+      )
+  | otherwise = (model, Cmd.none)
 
 -- | The player has pressed space while on the death screen.
 -- Restart the game.
@@ -298,6 +337,7 @@ subscriptions = Sub.batch
   [ Mouse.clicks $ \_ _ -> Flap
   , Keyboard.presses $ \key -> (case key of
       Keyboard.SpaceKey -> Restart
+      Keyboard.PKey     -> Pause
       _                 -> DoNothing)
   , Time.fps 60 Animate
   ]
@@ -346,23 +386,28 @@ waitingOverlay color =
 -- | The overlay when playing the game (i.e. HUD).
 playingOverlay :: Color -> Model -> Form SDLEngine
 playingOverlay color Model { .. } =
-  group
+  group $
     [
       move (V2 0 (-h / 2 + 25)) $ text $ Text.height 12 $
                                          Text.color color $
                                          Text.toText status
-    ]
+    ] ++
+    (if playerStatus == Paused then [ centerNotice "Press P to resume" ] else
+       if timeScore < showPauseHelpFor then [ centerNotice "Press P to pause" ] else
+         [])
 
   where
     status = secondsText timeScore ++ " | " ++ printf "%.2fx speed" timeSpeed
+    centerNotice msg = move (V2 0 0) $ text $
+                       Text.height 16 $ Text.color color $ Text.toText msg
     V2 _ h = fromIntegral <$> windowDims
 
-view :: Model -> Graphics SDLEngine
-view model@Model { .. } = Graphics2D $
+view :: M.Map String (Image SDLEngine) -> Model -> Graphics SDLEngine
+view assets model@Model { .. } = Graphics2D $
   center (V2 (w / 2) (h / 2)) $ collage
     [ backdrop
     , toForm $ center (V2 (-x) 0) $ collage
-        [ move flapperPos flapper
+        [ move (flapperPos - flapperDims/2) flapper
         , group $ map structure $ relevantObs model
         ]
 
@@ -377,7 +422,13 @@ view model@Model { .. } = Graphics2D $
     overlay Waiting _ = waitingOverlay overlayColor
     overlay Dead model = deadOverlay overlayColor model
     overlay Playing model = playingOverlay overlayColor model
-    flapper = filled (rgb 0.36 0.25 0.22) $ rect flapperDims
+    overlay Paused  model = playingOverlay overlayColor model
+    --flapper = filled (rgb 0.36 0.25 0.22) $ rect flapperDims
+    flapperSprite | playerStatus == Dead             = "birdDead"
+                  | stillFlapping timeScore lastFlap = "birdFlap"
+                  | otherwise                        = "bird"
+    flapper = image flapperDims (assets M.! flapperSprite)
+      where V2 _ dy = flapperVel
     backdrop = filled (rgb 0.13 0.13 0.13) $ rect dims
     lava = move (V2 0 (h / 2 - lavaHeight / 2)) $ filled (rgb 0.72 0.11 0.11) $ rect $ V2 w lavaHeight
     structure NoObstacle = blank
@@ -395,9 +446,21 @@ main = do
     , SDL.windowDimensions = windowDims
     }
 
-  run engine defaultConfig GameLifecycle
-    { initialFn       = initial
-    , updateFn        = update
-    , subscriptionsFn = subscriptions
-    , viewFn          = view
-    }
+  imageDir <- (</> "images") <$> Paths.getDataDir
+  let assetList = [("bird.png", "bird"),
+                   ("bird-flap.png", "birdFlap"),
+                   ("bird-dead.png", "birdDead")
+                  ]
+      loadAssets' [] game loaded = game loaded
+      loadAssets' ((file, id):files) game loaded = do
+        SDL.withImage engine (imageDir </> file) $ \image ->
+          loadAssets' files game (M.insert id image loaded)
+      loadAssets files game = loadAssets' files game M.empty
+
+  loadAssets assetList $ \allAssets ->
+    run engine defaultConfig GameLifecycle
+      { initialFn       = initial
+      , updateFn        = update
+      , subscriptionsFn = subscriptions
+      , viewFn          = view allAssets
+      }
