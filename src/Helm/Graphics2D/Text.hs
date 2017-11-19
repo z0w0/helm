@@ -6,6 +6,8 @@ module Helm.Graphics2D.Text
     Text(..)
   , FontWeight(..)
   , FontStyle(..)
+  , Alignment(..)
+  , TextAlignment(..)
     -- * Composing
   , defaultText
   , toText
@@ -18,6 +20,9 @@ module Helm.Graphics2D.Text
   , color
   , typeface
   , height
+  , align
+  , alignCenter
+  , alignBottomLeft
   ) where
 
 import Helm.Color (Color(..), rgb)
@@ -36,6 +41,21 @@ data FontStyle
   | ItalicStyle
     deriving (Show, Eq, Ord, Enum, Read)
 
+-- | Represents alignment along an axis.
+data Alignment
+  = AlignBefore -- ^ draw before the origin
+  | AlignCenter -- ^ center on the origin
+  | AlignAfter  -- ^ draw after the origin
+    deriving (Show, Eq, Ord, Enum, Read)
+
+-- | Determines where text should be aligned relative to its origin.
+-- Note that the vertical axis runs from top to bottom of a screen,
+-- so AlignBefore moves text upwards and vice versa.
+data TextAlignment = TextAlignment
+  { verticalAlignment   :: Alignment
+  , horizontalAlignment :: Alignment
+  } deriving (Show, Eq)
+
 -- | Represents a graphical piece of text,
 -- containing a UTF-8 string and any relevant style fields.
 data Text = Text
@@ -45,10 +65,11 @@ data Text = Text
   , textHeight :: Double
   , textWeight :: FontWeight
   , textStyle :: FontStyle
+  , textAlign :: TextAlignment
   } deriving (Show, Eq)
 
 -- | Create the default text. By default it is is black sans-serif
--- with a height of 14pt.
+-- with a height of 14pt, centered on the origin.
 defaultText :: Text
 defaultText = Text {
   textString = "",
@@ -56,7 +77,8 @@ defaultText = Text {
   textTypeface = "sans-serif",
   textHeight = 14,
   textWeight = NormalWeight,
-  textStyle = NormalStyle
+  textStyle = NormalStyle,
+  textAlign = TextAlignment AlignCenter AlignCenter
 }
 
 -- | Create a text from a string. By default, this text will be 14pt,
@@ -95,3 +117,15 @@ typeface face txt = txt { textTypeface = face }
 -- | Set the size of a piece of text.
 height :: Double -> Text -> Text
 height size txt = txt { textHeight = size }
+
+-- | Set the alignment of a piece of text.
+align :: TextAlignment -> Text -> Text
+align alignment txt = txt { textAlign = alignment }
+
+-- | Convenience function to center text on origin.
+alignCenter :: Text -> Text
+alignCenter = align (TextAlignment AlignCenter AlignCenter)
+
+-- | Convenience function to render text to the bottom-left of the origin.
+alignBottomLeft :: Text -> Text
+alignBottomLeft = align (TextAlignment AlignAfter AlignAfter)

@@ -44,7 +44,8 @@ import           Helm.Engine.SDL.Keyboard (mapKey)
 import           Helm.Engine.SDL.Mouse (mapMouseButton)
 import           Helm.Graphics
 import qualified Helm.Graphics2D as Graphics2D
-import           Helm.Graphics2D.Text (Text(..), FontWeight(..), FontStyle(..))
+import           Helm.Graphics2D.Text (Text(..), FontWeight(..), FontStyle(..),
+                                       TextAlignment(..), Alignment(..))
 
 -- | Represents the configuration to run the SDL engine with.
 -- Use 'defaultConfig' and then only change the necessary fields.
@@ -445,7 +446,12 @@ renderForm Graphics2D.Form { formPos = V2 x y, .. } = withTransform formScale fo
 
       Pango.PangoRectangle tx ty w h <- fmap snd $ Cairo.liftIO $ Pango.layoutGetExtents layout
 
-      Cairo.translate ((-w / 2) - tx) ((-h / 2) - ty)
+      let alignOffset extent AlignBefore = -extent
+          alignOffset extent AlignCenter = -extent/2
+          alignOffset extent AlignAfter  = 0
+      Cairo.translate
+        (alignOffset w (horizontalAlignment textAlign) - tx)
+        (alignOffset h (verticalAlignment textAlign)   - ty)
       Cairo.setSourceRGBA r g b a
       Pango.showLayout layout
 
