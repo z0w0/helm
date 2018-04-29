@@ -8,6 +8,7 @@ module Helm.Mouse
   , clicks
   , downs
   , ups
+  , wheels
   ) where
 
 import FRP.Elerea.Param (input, snapshot)
@@ -60,3 +61,13 @@ ups f = Sub $ do
   engine <- input >>= snapshot
 
   fmap (fmap (uncurry f)) <$> mouseUpSignal engine
+
+-- | Subscribe to mouse wheel events and map to a game action
+wheels
+  :: Engine e
+  => (V2 Int -> a)  -- ^ The function to map a mouse wheel and wheel direction to an action.
+  -> Sub e a        -- ^ The mapped subscription
+wheels f = Sub $ do
+  engine <- input >>= snapshot
+
+  fmap (fmap f) <$> mouseWheelSignal engine

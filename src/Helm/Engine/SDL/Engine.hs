@@ -32,6 +32,7 @@ import qualified SDL
 import qualified SDL.Event as Event
 import qualified SDL.Init as Init
 import           SDL.Input.Keyboard (Keysym(..))
+import           SDL.Input.Mouse (MouseScrollDirection(..))
 import qualified SDL.Time as Time
 import qualified SDL.Video as Video
 import           SDL.Video (WindowConfig(..))
@@ -72,7 +73,9 @@ data SDLEngine = SDLEngine
   , mouseUpEventSink :: (MouseButton, V2 Int) -> IO ()                             -- ^ The mouse up event sink.
   , mouseClickEventSignal :: SignalGen SDLEngine (Signal [(MouseButton, V2 Int)])  -- ^ The mouse click event signal.
   , mouseClickEventSink :: (MouseButton, V2 Int) -> IO ()                          -- ^ The mouse click event sink.
-
+  , mouseWheelEventSignal ::
+      SignalGen SDLEngine (Signal [V2 Int])                                        -- ^ The mouse wheel event signal.
+  , mouseWheelEventSink :: V2 Int -> IO ()                                         -- ^ The mouse wheel event sink.
   , keyboardDownEventSignal :: SignalGen SDLEngine (Signal [Key])                  -- ^ The keyboard down event signal.
   , keyboardDownEventSink :: Key -> IO ()                                          -- ^ The keyboard down event sink.
   , keyboardUpEventSignal :: SignalGen SDLEngine (Signal [Key])                    -- ^ The keyboard up event signal.
@@ -153,6 +156,8 @@ instance Engine SDLEngine where
   -- | The SDL-specific mouse click signal.
   mouseClickSignal = mouseClickEventSignal
 
+  mouseWheelSignal = mouseWheelEventSignal
+
   -- | The SDL-specific keyboard down signal.
   keyboardDownSignal = keyboardDownEventSignal
 
@@ -214,6 +219,7 @@ startupWith config@SDLEngineConfig { .. } = do
   mouseDownEvent <- externalMulti
   mouseUpEvent <- externalMulti
   mouseClickEvent <- externalMulti
+  mouseWheelEvent <- externalMulti
   keyboardDownEvent <- externalMulti
   keyboardUpEvent <- externalMulti
   keyboardPressEvent <- externalMulti
@@ -237,6 +243,8 @@ startupWith config@SDLEngineConfig { .. } = do
     , mouseUpEventSink = snd mouseUpEvent
     , mouseClickEventSignal = fst mouseClickEvent
     , mouseClickEventSink = snd mouseClickEvent
+    , mouseWheelEventSignal = fst mouseWheelEvent
+    , mouseWheelEventSink = snd mouseWheelEvent
 
     , keyboardDownEventSignal = fst keyboardDownEvent
     , keyboardDownEventSink = snd keyboardDownEvent
@@ -518,6 +526,17 @@ sinkEvent engine (Event.MouseMotionEvent Event.MouseMotionEventData { .. }) = do
   mouseMoveEventSink engine $ fromIntegral <$> depoint mouseMotionEventPos
 
   return engine
+
+-- Sink mouse wheel events as mouse wheels.
+sinkEvent engine (Event.MouseWheelEvent Event.MouseWheelEventData {..}) = do
+  mouseWheelEventSink engine pos'
+
+  return engine
+  where
+    pos = fromIntegral <$> mouseWheelEventPos
+    pos' = case mouseWheelEventDirection of
+      ScrollNormal -> pos
+      ScrollFlipped -> pos * V2 (-1) (-1)
 
 -- Sink keyboard events into the relevant Elerea sinks.
 --

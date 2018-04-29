@@ -59,6 +59,9 @@ class Engine e where
   -- | The mouse click signal, with events provided by the engine.
   mouseClickSignal :: e -> SignalGen e (Signal [(MouseButton, V2 Int)])
 
+  -- | The mouse wheel signal, with events provided by the engine.
+  mouseWheelSignal :: e -> SignalGen e (Signal [V2 Int])
+
   -- | The keyboard down signal, with events provided by the engine.
   keyboardDownSignal :: e -> SignalGen e (Signal [Key])
 
