@@ -36,6 +36,7 @@ import qualified SDL.Time as Time
 import qualified SDL.Video as Video
 import           SDL.Video (WindowConfig(..))
 import qualified SDL.Video.Renderer as Renderer
+import qualified SDL.Raw.Types as Raw
 
 import           Helm.Asset (Image)
 import           Helm.Color (Color(..), Gradient(..))
@@ -79,6 +80,8 @@ data SDLEngine = SDLEngine
   , keyboardUpEventSink :: Key -> IO ()                                            -- ^ The keyboard up event sink.
   , keyboardPressEventSignal :: SignalGen SDLEngine (Signal [Key])                 -- ^ The keyboard press event signal.
   , keyboardPressEventSink :: Key -> IO ()                                         -- ^ The keyboard press event sink.
+  , keyboardTypingEventSignal :: SignalGen SDLEngine (Signal [T.Text])
+  , keyboardTypingEventSink :: T.Text -> IO ()
 
   , windowResizeEventSignal :: SignalGen SDLEngine (Signal [V2 Int])               -- ^ The window resize event signal.
   , windowResizeEventSink :: V2 Int -> IO ()                                       -- ^ The window resize event sink.
@@ -119,6 +122,7 @@ instance Engine SDLEngine where
   -- | Cleanup the engine assets and quit using SDL's init library.
   cleanup SDLEngine { window, renderer, texture } = do
     Renderer.destroyTexture texture
+    SDL.stopTextInput
     Video.destroyWindow window
     Video.destroyRenderer renderer
     Init.quit
@@ -161,6 +165,9 @@ instance Engine SDLEngine where
 
   -- | The SDL-specific keyboard press signal.
   keyboardPressSignal = keyboardPressEventSignal
+
+  -- | The SDL-specific text input signal.
+  keyboardTypingSignal = keyboardTypingEventSignal
 
   -- | The SDL-specific window resize signal.
   windowResizeSignal = windowResizeEventSignal
@@ -209,6 +216,11 @@ startupWith config@SDLEngineConfig { .. } = do
   renderer <- Video.createRenderer window (-1) rendererConfig
   texture <- prepTexture windowDimensions renderer
 
+  -- By default the SDL window isn't shown
+  Video.showWindow window
+
+  SDL.startTextInput $ Raw.Rect 0 0 1 1
+
   -- Initialize all of the sinks and signals that SDL events will be sunk into.
   mouseMoveEvent <- externalMulti
   mouseDownEvent <- externalMulti
@@ -217,10 +229,8 @@ startupWith config@SDLEngineConfig { .. } = do
   keyboardDownEvent <- externalMulti
   keyboardUpEvent <- externalMulti
   keyboardPressEvent <- externalMulti
+  keyboardTypingEvent <- externalMulti
   windowResizeEvent <- externalMulti
-
-  -- By default the SDL window isn't shown
-  Video.showWindow window
 
   return SDLEngine
     { window = window
@@ -243,7 +253,9 @@ startupWith config@SDLEngineConfig { .. } = do
     , keyboardUpEventSignal = fst keyboardUpEvent
     , keyboardUpEventSink = snd keyboardUpEvent
     , keyboardPressEventSignal = fst keyboardPressEvent
-    , keyboardPressEventSink = snd keyboardPressEvent
+        , keyboardPressEventSink = snd keyboardPressEvent
+    , keyboardTypingEventSignal = fst keyboardTypingEvent
+    , keyboardTypingEventSink = snd keyboardTypingEvent
 
     , windowResizeEventSignal = fst windowResizeEvent
     , windowResizeEventSink = snd windowResizeEvent
@@ -281,6 +293,7 @@ render2d SDLEngine { window, renderer, texture } coll = do
   Renderer.clear renderer
   Renderer.copy renderer texture Nothing Nothing
   Renderer.present renderer
+
 
 -- | Render a collage (a group of forms with context).
 renderCollage
@@ -542,6 +555,10 @@ sinkEvent engine (Event.KeyboardEvent Event.KeyboardEventData { .. }) =
     Keysym { .. } = keyboardEventKeysym
     key = mapKey keysymKeycode
 
+-- Sink text input events into the relevant Elerea sinks.
+sinkEvent engine (Event.TextInputEvent Event.TextInputEventData {..}) = do
+    keyboardTypingEventSink engine textInputEventText >> return engine
+
 -- Sink mouse events into the relevant Elerea sinks.
 sinkEvent engine (Event.MouseButtonEvent Event.MouseButtonEventData { .. }) =
   case mouseButtonEventMotion of
@@ -579,6 +596,7 @@ sinkEvent engine (Event.MouseButtonEvent Event.MouseButtonEventData { .. }) =
     pos = depoint mouseButtonEventPos
     dubPos = fromIntegral <$> pos
     tup = (mapMouseButton mouseButtonEventButton, fromIntegral <$> pos)
+
 
 -- Don't sink other events.
 sinkEvent engine _ = return engine

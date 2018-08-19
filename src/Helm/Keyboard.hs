@@ -7,9 +7,12 @@ module Helm.Keyboard
   , presses
   , downs
   , ups
+  , typing
   ) where
 
 import FRP.Elerea.Param (input, snapshot)
+
+import Data.Text
 
 import Helm.Engine (Engine(..), Sub(..), Key(..))
 
@@ -44,3 +47,18 @@ ups f = Sub $ do
   engine <- input >>= snapshot
 
   fmap (fmap f) <$> keyboardUpSignal engine
+
+
+-- | Subscribe to keyboard typing events and map to a game action.
+-- While downs and ups report back keys pressed on the keyboard they fail to
+-- report ASCII letters (e.g. Shift+x will be reported as x rather than X).
+-- Hence the need for typing which will report back the character resulting from
+-- the various key combinations.
+typing
+    :: Engine e
+    => (Text -> a)  -- ^ The function to map the character typed to an action.
+    -> Sub e a      -- ^ The mapped subscription.
+typing f = Sub $ do
+    engine <- input >>= snapshot
+
+    fmap (fmap f) <$> keyboardTypingSignal engine
