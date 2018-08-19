@@ -16,6 +16,7 @@ module Helm.Engine (
 ) where
 
 import Control.Monad.Trans.State (StateT)
+import Data.Text
 
 import FRP.Elerea.Param (SignalGen, Signal)
 import Linear.V2 (V2)
@@ -67,6 +68,9 @@ class Engine e where
 
   -- | The keyboard press signal, with events provided by the engine.
   keyboardPressSignal :: e -> SignalGen e (Signal [Key])
+
+  -- | The keyboard typing signal, with events provided by the engine
+  keyboardTypingSignal :: e -> SignalGen e (Signal [Text])
 
   -- | The window resize signal, with events provided by the engine.
   windowResizeSignal :: e -> SignalGen e (Signal [V2 Int])
