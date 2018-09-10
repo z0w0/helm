@@ -15,6 +15,7 @@ module Helm.Engine.SDL.Engine
 import           Control.Monad (when)
 
 import           Data.Foldable (forM_)
+import           Data.Maybe (fromMaybe)
 import qualified Data.Text as T
 import           Data.Word (Word32)
 import           Foreign.Ptr (castPtr)
@@ -51,6 +52,7 @@ import           Helm.Graphics2D.Text (Text(..), FontWeight(..), FontStyle(..),
 -- Use 'defaultConfig' and then only change the necessary fields.
 data SDLEngineConfig = SDLEngineConfig
   { windowDimensions :: V2 Int   -- ^ The initial SDL window size.
+  , viewportDimensions :: Maybe (V2 Int)   -- ^ The initial SDL viewport size.
   , windowIsFullscreen :: !Bool  -- ^ Whether the SDL window should start fullscreen.
   , windowIsResizable :: !Bool   -- ^ Whether the SDL window should be resizable.
   , windowTitle :: !String       -- ^ The initial SDL window title.
@@ -176,6 +178,7 @@ instance Engine SDLEngine where
 defaultConfig :: SDLEngineConfig
 defaultConfig = SDLEngineConfig
   { windowDimensions = V2 800 600
+  , viewportDimensions = Nothing
   , windowIsFullscreen = False
   , windowIsResizable = True
   , windowTitle = "Helm"
@@ -207,7 +210,7 @@ startupWith config@SDLEngineConfig { .. } = do
   -- Initialize the SDL window from our provided engine config.
   window <- Video.createWindow (T.pack windowTitle) windowConfig
   renderer <- Video.createRenderer window (-1) rendererConfig
-  texture <- prepTexture windowDimensions renderer
+  texture <- prepTexture viewportDimensions' renderer
 
   -- Initialize all of the sinks and signals that SDL events will be sunk into.
   mouseMoveEvent <- externalMulti
@@ -257,7 +260,9 @@ startupWith config@SDLEngineConfig { .. } = do
                      then Video.Fullscreen
                      else Video.Windowed
       , windowResizable = windowIsResizable
+      , windowHighDPI = True
       }
+    viewportDimensions' = fromMaybe windowDimensions viewportDimensions
 
 -- | Renders a 2D element to the engine screen.
 render2d
