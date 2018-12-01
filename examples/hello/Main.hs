@@ -29,7 +29,7 @@ main :: IO ()
 main = do
   engine <- SDL.startup
 
-  run engine defaultConfig GameLifecycle
+  run engine GameConfig
     { initialFn       = initial
     , updateFn        = update
     , subscriptionsFn = subscriptions
